@@ -88,11 +88,26 @@ export async function confirmResultsImport(data: ConfirmImportData) {
         insertedCount++;
     }
 
+    // Hook: Calculate profit sharing after import
+    let profitSharingResults: { projectId: string; projectName: string; netProfit: number; totalShare: number; formulaType: string; breakdown: { description: string; amount: number }[] }[] = [];
+    try {
+        const { calculateProfitSharingForPeriod } = await import('./profit-sharing-calc');
+        profitSharingResults = await calculateProfitSharingForPeriod(
+            validated.companyId,
+            validated.year,
+            validated.month
+        );
+    } catch (error) {
+        console.error('Error calculating profit sharing:', error);
+    }
+
     revalidatePath('/results');
+    revalidatePath('/profit-sharing');
     return {
         success: true,
         insertedCount,
         period: `${validated.year}-${String(validated.month).padStart(2, '0')}`,
+        profitSharingCalculated: profitSharingResults.length,
     };
 }
 

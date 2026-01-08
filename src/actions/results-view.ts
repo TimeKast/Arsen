@@ -139,3 +139,41 @@ export async function getAvailableResultPeriods(companyId: string): Promise<{ ye
 
     return periods;
 }
+
+/**
+ * Get flat results for export view
+ */
+export async function getResultsForView(
+    companyId: string,
+    year: number,
+    month: number
+) {
+    const session = await auth();
+    if (!session?.user) {
+        throw new Error('No autenticado');
+    }
+
+    const periodResults = await db.query.results.findMany({
+        where: and(
+            eq(results.companyId, companyId),
+            eq(results.year, year),
+            eq(results.month, month)
+        ),
+        with: {
+            project: true,
+            concept: {
+                with: {
+                    area: true,
+                },
+            },
+        },
+    });
+
+    return periodResults.map(r => ({
+        projectName: r.project?.name || 'Gastos Admin',
+        areaName: r.concept?.area?.name || '-',
+        conceptName: r.concept?.name || '-',
+        conceptType: r.concept?.type || '-',
+        amount: parseFloat(r.amount) || 0,
+    }));
+}
