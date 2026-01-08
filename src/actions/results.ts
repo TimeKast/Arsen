@@ -71,12 +71,10 @@ export async function confirmResultsImport(data: ConfirmImportData) {
         )
     );
 
-    // Insert new entries
-    let insertedCount = 0;
-    for (const entry of validated.entries) {
-        if (entry.amount === 0) continue; // Skip zero values
-
-        await db.insert(results).values({
+    // Filter out zero values and prepare batch insert data
+    const entriesToInsert = validated.entries
+        .filter(entry => entry.amount !== 0)
+        .map(entry => ({
             companyId: validated.companyId,
             projectId: entry.projectId,
             conceptId: entry.conceptId,
@@ -84,8 +82,11 @@ export async function confirmResultsImport(data: ConfirmImportData) {
             month: validated.month,
             amount: entry.amount.toFixed(2),
             importedBy: session.user.id,
-        });
-        insertedCount++;
+        }));
+
+    // Batch insert all entries at once
+    if (entriesToInsert.length > 0) {
+        await db.insert(results).values(entriesToInsert);
     }
 
     // Hook: Calculate profit sharing after import
@@ -105,7 +106,7 @@ export async function confirmResultsImport(data: ConfirmImportData) {
     revalidatePath('/profit-sharing');
     return {
         success: true,
-        insertedCount,
+        insertedCount: entriesToInsert.length,
         period: `${validated.year}-${String(validated.month).padStart(2, '0')}`,
         profitSharingCalculated: profitSharingResults.length,
     };

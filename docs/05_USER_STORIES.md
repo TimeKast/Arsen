@@ -53,7 +53,6 @@ Then veo un formulario con: nombre, email, contraseña, rol, empresas asignadas
 Given que completo el formulario con datos válidos
 When hago clic en "Guardar"
 Then el usuario es creado
-And recibe un email de bienvenida (futuro)
 
 Given que selecciono un usuario existente
 When cambio su rol o empresas asignadas

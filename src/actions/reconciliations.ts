@@ -59,11 +59,10 @@ export async function confirmReconciliationImport(data: ConfirmReconciliationImp
 
     const validated = confirmImportSchema.parse(data);
 
-    let insertedCount = 0;
-    for (const entry of validated.entries) {
-        if (entry.total === 0) continue; // Skip empty entries
-
-        await db.insert(reconciliations).values({
+    // Filter out empty entries and prepare batch insert data
+    const entriesToInsert = validated.entries
+        .filter(entry => entry.total !== 0)
+        .map(entry => ({
             companyId: validated.companyId,
             projectId: entry.projectId || null,
             conceptId: entry.conceptId || null,
@@ -77,14 +76,17 @@ export async function confirmReconciliationImport(data: ConfirmReconciliationImp
             tax: entry.tax?.toFixed(2) || null,
             total: entry.total.toFixed(2),
             createdBy: session.user.id,
-        });
-        insertedCount++;
+        }));
+
+    // Batch insert all entries at once
+    if (entriesToInsert.length > 0) {
+        await db.insert(reconciliations).values(entriesToInsert);
     }
 
     revalidatePath('/reconciliations');
     return {
         success: true,
-        insertedCount,
+        insertedCount: entriesToInsert.length,
     };
 }
 

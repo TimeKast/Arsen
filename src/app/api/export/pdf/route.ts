@@ -3,11 +3,11 @@ import { auth } from '@/lib/auth/config';
 import { db, companies } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import {
-    generateComparisonPdf,
-    generateProfitSharingPdf,
-    generateResultsPdf,
-    generateBudgetsPdf,
-} from '@/lib/export/pdf';
+    generateComparisonPdfBinary,
+    generateProfitSharingPdfBinary,
+    generateResultsPdfBinary,
+    generateBudgetsPdfBinary,
+} from '@/lib/export/pdf-binary';
 import { getComparisonData } from '@/actions/comparison';
 import { getProfitSharingResults } from '@/actions/profit-sharing-calc';
 import { getResultsForView } from '@/actions/results-view';
@@ -38,12 +38,12 @@ export async function GET(request: NextRequest) {
         const companyName = company?.name || 'Empresa';
         const period = `${year}-${String(month).padStart(2, '0')}`;
 
-        let htmlContent: string;
+        let pdfBuffer: Buffer;
 
         switch (reportType) {
             case 'comparison':
                 const comparisonData = await getComparisonData(companyId, year, month);
-                htmlContent = generateComparisonPdf(
+                pdfBuffer = generateComparisonPdfBinary(
                     companyName,
                     period,
                     comparisonData.incomeRows,
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
                 const psData = await getProfitSharingResults(companyId, year, month);
                 const totalProfit = psData.reduce((s, d) => s + d.netProfit, 0);
                 const totalShare = psData.reduce((s, d) => s + d.totalShare, 0);
-                htmlContent = generateProfitSharingPdf(
+                pdfBuffer = generateProfitSharingPdfBinary(
                     companyName,
                     period,
                     psData,
@@ -66,26 +66,25 @@ export async function GET(request: NextRequest) {
 
             case 'results':
                 const resultsData = await getResultsForView(companyId, year, month);
-                htmlContent = generateResultsPdf(companyName, period, resultsData);
+                pdfBuffer = generateResultsPdfBinary(companyName, period, resultsData);
                 break;
 
             case 'budgets':
                 const budgetsData = await getBudgetsForView(companyId, year, month);
-                htmlContent = generateBudgetsPdf(companyName, period, budgetsData);
+                pdfBuffer = generateBudgetsPdfBinary(companyName, period, budgetsData);
                 break;
 
             default:
                 return NextResponse.json({ error: 'Tipo de reporte invalido' }, { status: 400 });
         }
 
-        // Return HTML content that can be printed as PDF from browser
-        // For server-side PDF generation, would need puppeteer or similar
-        const filename = `${reportType}_${companyName.replace(/\s+/g, '_')}_${period}.html`;
+        const filename = `${reportType}_${companyName.replace(/\s+/g, '_')}_${period}.pdf`;
 
-        return new NextResponse(htmlContent, {
+        return new NextResponse(new Uint8Array(pdfBuffer), {
             headers: {
-                'Content-Type': 'text/html; charset=utf-8',
-                'Content-Disposition': `inline; filename="${filename}"`,
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `attachment; filename="${filename}"`,
+                'Content-Length': String(pdfBuffer.length),
             },
         });
     } catch (error) {

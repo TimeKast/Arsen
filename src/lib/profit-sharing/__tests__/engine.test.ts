@@ -1,7 +1,9 @@
 /**
  * Unit Tests for Profit Sharing Engine
+ * Using Vitest test framework
  */
 
+import { describe, it, expect } from 'vitest';
 import {
     calculateProfitSharing,
     calculateBatchProfitSharing,
@@ -18,179 +20,174 @@ const baseInput = {
     netProfit: 50000,
 };
 
-// ============= FIXED_ONLY Tests =============
-console.log('\n=== FIXED_ONLY Tests ===');
+describe('Profit Sharing Engine', () => {
+    describe('FIXED_ONLY', () => {
+        it('should return fixed amount for positive profit', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                rules: {
+                    formulaType: 'FIXED_ONLY',
+                    fixedAmount: 10000,
+                },
+            };
 
-const fixedOnlyInput: ProfitSharingInput = {
-    ...baseInput,
-    rules: {
-        formulaType: 'FIXED_ONLY',
-        fixedAmount: 10000,
-    },
-};
+            const result = calculateProfitSharing(input);
+            expect(result.totalShare).toBe(10000);
+            expect(result.formulaType).toBe('FIXED_ONLY');
+        });
 
-const fixedOnlyResult = calculateProfitSharing(fixedOnlyInput);
-console.log('Fixed Only Result:', fixedOnlyResult);
-console.assert(fixedOnlyResult.totalShare === 10000, 'Expected $10,000');
-console.log('✓ FIXED_ONLY passed');
+        it('should return 0 for zero profit', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                netProfit: 0,
+                rules: { formulaType: 'FIXED_ONLY', fixedAmount: 10000 },
+            };
 
-// Test with no profit
-const fixedOnlyNoProfit: ProfitSharingInput = {
-    ...baseInput,
-    netProfit: 0,
-    rules: { formulaType: 'FIXED_ONLY', fixedAmount: 10000 },
-};
-const fixedOnlyNoProfitResult = calculateProfitSharing(fixedOnlyNoProfit);
-console.assert(fixedOnlyNoProfitResult.totalShare === 0, 'Expected $0 with no profit');
-console.log('✓ FIXED_ONLY no profit passed');
+            const result = calculateProfitSharing(input);
+            expect(result.totalShare).toBe(0);
+        });
+    });
 
-// ============= PERCENT_SIMPLE Tests =============
-console.log('\n=== PERCENT_SIMPLE Tests ===');
+    describe('PERCENT_SIMPLE', () => {
+        it('should calculate correct percentage of profit', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                rules: {
+                    formulaType: 'PERCENT_SIMPLE',
+                    percentRate: 10,
+                },
+            };
 
-const percentSimpleInput: ProfitSharingInput = {
-    ...baseInput,
-    rules: {
-        formulaType: 'PERCENT_SIMPLE',
-        percentRate: 10,
-    },
-};
+            const result = calculateProfitSharing(input);
+            expect(result.totalShare).toBe(5000); // 10% of 50k
+        });
+    });
 
-const percentSimpleResult = calculateProfitSharing(percentSimpleInput);
-console.log('Percent Simple Result:', percentSimpleResult);
-console.assert(percentSimpleResult.totalShare === 5000, 'Expected $5,000 (10% of 50k)');
-console.log('✓ PERCENT_SIMPLE passed');
+    describe('FIXED_PLUS_PERCENT', () => {
+        it('should calculate fixed + percentage correctly', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                rules: {
+                    formulaType: 'FIXED_PLUS_PERCENT',
+                    fixedAmount: 2000,
+                    percentRate: 5,
+                },
+            };
 
-// ============= FIXED_PLUS_PERCENT Tests =============
-console.log('\n=== FIXED_PLUS_PERCENT Tests ===');
+            const result = calculateProfitSharing(input);
+            expect(result.totalShare).toBe(4500); // 2000 + 5% of 50k
+        });
+    });
 
-const fixedPlusPercentInput: ProfitSharingInput = {
-    ...baseInput,
-    rules: {
-        formulaType: 'FIXED_PLUS_PERCENT',
-        fixedAmount: 2000,
-        percentRate: 5,
-    },
-};
+    describe('TIERED', () => {
+        it('should apply tiered percentages correctly', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                rules: {
+                    formulaType: 'TIERED',
+                    tiers: [
+                        { minProfit: 0, maxProfit: 20000, percentRate: 5 },
+                        { minProfit: 20000, maxProfit: 40000, percentRate: 8 },
+                        { minProfit: 40000, percentRate: 12 },
+                    ],
+                },
+            };
 
-const fixedPlusPercentResult = calculateProfitSharing(fixedPlusPercentInput);
-console.log('Fixed Plus Percent Result:', fixedPlusPercentResult);
-console.assert(fixedPlusPercentResult.totalShare === 4500, 'Expected $4,500 (2000 + 5% of 50k)');
-console.log('✓ FIXED_PLUS_PERCENT passed');
+            const result = calculateProfitSharing(input);
+            // Expected: 20000*5% + 20000*8% + 10000*12% = 1000 + 1600 + 1200 = 3800
+            expect(result.totalShare).toBe(3800);
+        });
+    });
 
-// ============= TIERED Tests =============
-console.log('\n=== TIERED Tests ===');
+    describe('SPECIAL_FORMULA', () => {
+        it('should apply maximum cap', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                rules: {
+                    formulaType: 'SPECIAL_FORMULA',
+                    percentRate: 15,
+                    minimumProfit: 10000,
+                    maximumShare: 6000,
+                },
+            };
 
-const tieredInput: ProfitSharingInput = {
-    ...baseInput,
-    rules: {
-        formulaType: 'TIERED',
-        tiers: [
-            { minProfit: 0, maxProfit: 20000, percentRate: 5 },
-            { minProfit: 20000, maxProfit: 40000, percentRate: 8 },
-            { minProfit: 40000, percentRate: 12 },
-        ],
-    },
-};
+            const result = calculateProfitSharing(input);
+            // 15% of 50000 = 7500, but capped at 6000
+            expect(result.totalShare).toBe(6000);
+        });
 
-const tieredResult = calculateProfitSharing(tieredInput);
-console.log('Tiered Result:', tieredResult);
-// Expected: 20000*5% + 20000*8% + 10000*12% = 1000 + 1600 + 1200 = 3800
-console.assert(tieredResult.totalShare === 3800, 'Expected $3,800');
-console.log('✓ TIERED passed');
+        it('should return 0 below minimum profit', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                netProfit: 5000,
+                rules: {
+                    formulaType: 'SPECIAL_FORMULA',
+                    percentRate: 15,
+                    minimumProfit: 10000,
+                    maximumShare: 6000,
+                },
+            };
 
-// ============= SPECIAL_FORMULA Tests =============
-console.log('\n=== SPECIAL_FORMULA Tests ===');
+            const result = calculateProfitSharing(input);
+            expect(result.totalShare).toBe(0);
+        });
+    });
 
-const specialFormulaInput: ProfitSharingInput = {
-    ...baseInput,
-    rules: {
-        formulaType: 'SPECIAL_FORMULA',
-        percentRate: 15,
-        minimumProfit: 10000,
-        maximumShare: 6000,
-    },
-};
+    describe('GROUPED', () => {
+        it('should sum group percentages', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                rules: {
+                    formulaType: 'GROUPED',
+                    groups: [
+                        { groupName: 'Operadores', percentRate: 5, members: [] },
+                        { groupName: 'Supervisores', percentRate: 3, members: [] },
+                        { groupName: 'Gerentes', percentRate: 2, members: [] },
+                    ],
+                },
+            };
 
-const specialFormulaResult = calculateProfitSharing(specialFormulaInput);
-console.log('Special Formula Result:', specialFormulaResult);
-// 15% of 50000 = 7500, but capped at 6000
-console.assert(specialFormulaResult.totalShare === 6000, 'Expected $6,000 (capped)');
-console.log('✓ SPECIAL_FORMULA passed');
+            const result = calculateProfitSharing(input);
+            // Expected: 5% + 3% + 2% = 10% of 50000 = 5000
+            expect(result.totalShare).toBe(5000);
+        });
+    });
 
-// Test below minimum
-const specialBelowMin: ProfitSharingInput = {
-    ...baseInput,
-    netProfit: 5000,
-    rules: {
-        formulaType: 'SPECIAL_FORMULA',
-        percentRate: 15,
-        minimumProfit: 10000,
-        maximumShare: 6000,
-    },
-};
-const specialBelowMinResult = calculateProfitSharing(specialBelowMin);
-console.assert(specialBelowMinResult.totalShare === 0, 'Expected $0 below minimum');
-console.log('✓ SPECIAL_FORMULA below minimum passed');
+    describe('DYNAMIC', () => {
+        it('should calculate base + increments', () => {
+            const input: ProfitSharingInput = {
+                ...baseInput,
+                netProfit: 150000,
+                rules: {
+                    formulaType: 'DYNAMIC',
+                    baseAmount: 5000,
+                    incrementPercent: 1,
+                    incrementThreshold: 50000,
+                },
+            };
 
-// ============= GROUPED Tests =============
-console.log('\n=== GROUPED Tests ===');
+            const result = calculateProfitSharing(input);
+            // 3 increments (150k / 50k = 3) * 1% * 150k = 4500, + base 5000 = 9500
+            expect(result.totalShare).toBe(9500);
+        });
+    });
 
-const groupedInput: ProfitSharingInput = {
-    ...baseInput,
-    rules: {
-        formulaType: 'GROUPED',
-        groups: [
-            { groupName: 'Operadores', percentRate: 5, members: [] },
-            { groupName: 'Supervisores', percentRate: 3, members: [] },
-            { groupName: 'Gerentes', percentRate: 2, members: [] },
-        ],
-    },
-};
+    describe('Batch Processing', () => {
+        it('should process multiple projects', () => {
+            const inputs: ProfitSharingInput[] = [
+                { ...baseInput, projectId: 'p1', rules: { formulaType: 'FIXED_ONLY', fixedAmount: 1000 } },
+                { ...baseInput, projectId: 'p2', rules: { formulaType: 'PERCENT_SIMPLE', percentRate: 10 } },
+            ];
 
-const groupedResult = calculateProfitSharing(groupedInput);
-console.log('Grouped Result:', groupedResult);
-// Expected: 5% + 3% + 2% = 10% of 50000 = 5000
-console.assert(groupedResult.totalShare === 5000, 'Expected $5,000');
-console.log('✓ GROUPED passed');
+            const results = calculateBatchProfitSharing(inputs);
+            expect(results.length).toBe(2);
+        });
+    });
 
-// ============= DYNAMIC Tests =============
-console.log('\n=== DYNAMIC Tests ===');
-
-const dynamicInput: ProfitSharingInput = {
-    ...baseInput,
-    netProfit: 150000,
-    rules: {
-        formulaType: 'DYNAMIC',
-        baseAmount: 5000,
-        incrementPercent: 1,
-        incrementThreshold: 50000,
-    },
-};
-
-const dynamicResult = calculateProfitSharing(dynamicInput);
-console.log('Dynamic Result:', dynamicResult);
-// 3 increments (150k / 50k = 3) * 1% * 150k = 4500, + base 5000 = 9500
-console.assert(dynamicResult.totalShare === 9500, 'Expected $9,500');
-console.log('✓ DYNAMIC passed');
-
-// ============= Batch Processing Test =============
-console.log('\n=== Batch Processing Test ===');
-
-const batchInputs: ProfitSharingInput[] = [
-    { ...baseInput, projectId: 'p1', rules: { formulaType: 'FIXED_ONLY', fixedAmount: 1000 } },
-    { ...baseInput, projectId: 'p2', rules: { formulaType: 'PERCENT_SIMPLE', percentRate: 10 } },
-];
-
-const batchResults = calculateBatchProfitSharing(batchInputs);
-console.log('Batch Results:', batchResults.length, 'items');
-console.assert(batchResults.length === 2, 'Expected 2 results');
-console.log('✓ Batch processing passed');
-
-// ============= Formula Types Test =============
-console.log('\n=== Formula Types Test ===');
-const formulaTypes = getFormulaTypes();
-console.log('Available formulas:', formulaTypes.length);
-console.assert(formulaTypes.length === 7, 'Expected 7 formula types');
-console.log('✓ Formula types passed');
-
-console.log('\n✅ All tests passed!');
+    describe('Formula Types', () => {
+        it('should return all 7 formula types', () => {
+            const types = getFormulaTypes();
+            expect(types.length).toBe(7);
+        });
+    });
+});
