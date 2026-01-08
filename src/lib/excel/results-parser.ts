@@ -337,10 +337,111 @@ export function getAvailableSheets(buffer: ArrayBuffer): string[] {
     }
 }
 
-// Get month sheets (EneR, FebR, etc.)
+// Get month sheets (EneR, FebR, etc.) - original format
 export function getMonthSheets(buffer: ArrayBuffer): string[] {
     const allSheets = getAvailableSheets(buffer);
+
+    // Check for accountant format first
+    const accountantSheets = allSheets.filter(name =>
+        name.toLowerCase().includes('desglose de ingresos y costos m')
+    );
+    if (accountantSheets.length > 0) {
+        return accountantSheets;
+    }
+
+    // Fall back to original EneR/FebR format
     return allSheets.filter(name =>
         /^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)R$/i.test(name)
     );
 }
+
+// Get accountant-specific sheets
+export function getAccountantSheets(buffer: ArrayBuffer): { desglose?: string; gastosAdmin?: string } {
+    const allSheets = getAvailableSheets(buffer);
+    return {
+        desglose: allSheets.find(s => s.toLowerCase().includes('desglose de ingresos y costos m')),
+        gastosAdmin: allSheets.find(s => s.toLowerCase().includes('gastos administrativos')),
+    };
+}
+
+// Detect date from Excel file (from filename or cell content)
+export function detectDateFromFile(buffer: ArrayBuffer, filename?: string): { year: number; month: number } | null {
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth() + 1;
+
+    // Try to extract from filename first (e.g., "EF wepark 11.25.xls" = Nov 2025)
+    if (filename) {
+        // Pattern: month.year (e.g., 11.25, 11.2025)
+        const filenameMatch = filename.match(/(\d{1,2})\.(\d{2,4})/);
+        if (filenameMatch) {
+            month = parseInt(filenameMatch[1]);
+            year = parseInt(filenameMatch[2]);
+            if (year < 100) year += 2000; // Convert 25 -> 2025
+            return { year, month };
+        }
+
+        // Pattern: month name + year (e.g., "noviembre 2025")
+        const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+            'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        const lowerFilename = filename.toLowerCase();
+        for (let i = 0; i < monthNames.length; i++) {
+            if (lowerFilename.includes(monthNames[i])) {
+                month = i + 1;
+                const yearMatch = filename.match(/20\d{2}/);
+                if (yearMatch) year = parseInt(yearMatch[0]);
+                return { year, month };
+            }
+        }
+    }
+
+    // Try to extract from Excel date cell (row 4 contains Excel date number)
+    try {
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const accountantSheet = workbook.SheetNames.find(s =>
+            s.toLowerCase().includes('desglose de ingresos y costos m')
+        );
+
+        if (accountantSheet) {
+            const sheet = workbook.Sheets[accountantSheet];
+            const data: (string | number | null)[][] = XLSX.utils.sheet_to_json(sheet, {
+                header: 1,
+                defval: null
+            });
+
+            // Row 4 (index 3) contains the Excel date
+            if (data[3] && data[3][0] && typeof data[3][0] === 'number') {
+                const excelDate = data[3][0];
+                // Excel date to JS date conversion
+                const jsDate = new Date((excelDate - 25569) * 86400 * 1000);
+                return { year: jsDate.getFullYear(), month: jsDate.getMonth() + 1 };
+            }
+
+            // Also check string format like "Al 30 de noviembre del 2025"
+            if (data[3] && data[3][0] && typeof data[3][0] === 'string') {
+                const dateStr = data[3][0].toLowerCase();
+                const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                for (let i = 0; i < monthNames.length; i++) {
+                    if (dateStr.includes(monthNames[i])) {
+                        month = i + 1;
+                        const yearMatch = dateStr.match(/\d{4}/);
+                        if (yearMatch) year = parseInt(yearMatch[0]);
+                        return { year, month };
+                    }
+                }
+            }
+        }
+    } catch {
+        // Ignore parsing errors
+    }
+
+    return null;
+}
+
+// Check if file is in accountant format
+export function isAccountantFormat(buffer: ArrayBuffer): boolean {
+    const sheets = getAccountantSheets(buffer);
+    return !!sheets.desglose;
+}
+

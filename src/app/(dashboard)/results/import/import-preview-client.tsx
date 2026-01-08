@@ -6,6 +6,7 @@ import { Upload, FileSpreadsheet, AlertTriangle, AlertCircle, X, ArrowLeft, Wren
 import {
     parseResultsSheet,
     getMonthSheets,
+    detectDateFromFile,
     type ParsedResults
 } from '@/lib/excel/results-parser';
 import { ConflictResolver } from './conflict-resolver';
@@ -37,6 +38,8 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
     const [saving, setSaving] = useState(false);
     const [showOverwriteWarning, setShowOverwriteWarning] = useState(false);
     const [existingCount, setExistingCount] = useState(0);
+    const [selectedYear, setSelectedYear] = useState(currentYear);
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
 
     const handleFile = useCallback(async (selectedFile: File) => {
         setFile(selectedFile);
@@ -47,6 +50,13 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
             const buffer = await selectedFile.arrayBuffer();
             const sheets = getMonthSheets(buffer);
             setAvailableSheets(sheets);
+
+            // Auto-detect date from file
+            const detectedDate = detectDateFromFile(buffer, selectedFile.name);
+            if (detectedDate) {
+                setSelectedYear(detectedDate.year);
+                setSelectedMonth(detectedDate.month);
+            }
 
             if (sheets.length > 0) {
                 setSelectedSheet(sheets[0]);
@@ -172,10 +182,10 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
 
     const hasConflicts = warningCount > 0 && resolvedConflicts.length === 0;
 
-    // Get month from sheet name
+    // Get month - now uses selectedMonth state (which may come from auto-detection or user selection)
     const getMonth = useCallback(() => {
-        return MONTH_MAP[selectedSheet.toLowerCase()] || 1;
-    }, [selectedSheet]);
+        return selectedMonth;
+    }, [selectedMonth]);
 
     // Handle confirm - check for existing data first
     const handleConfirm = async () => {
@@ -183,7 +193,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
         setSaving(true);
         try {
             const month = getMonth();
-            const { exists, count } = await checkExistingResults(companyId, currentYear, month);
+            const { exists, count } = await checkExistingResults(companyId, selectedYear, month);
 
             if (exists) {
                 setExistingCount(count);
@@ -229,7 +239,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
 
             await confirmResultsImport({
                 companyId,
-                year: currentYear,
+                year: selectedYear,
                 month,
                 entries: entries as Array<{ projectId: string | null; conceptId: string; amount: number }>,
             });
@@ -335,6 +345,37 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                                     </select>
                                 </div>
                             )}
+
+                            {/* Year/Month Selector */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">Periodo:</span>
+                                <select
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                    className="px-3 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                >
+                                    <option value={1}>Enero</option>
+                                    <option value={2}>Febrero</option>
+                                    <option value={3}>Marzo</option>
+                                    <option value={4}>Abril</option>
+                                    <option value={5}>Mayo</option>
+                                    <option value={6}>Junio</option>
+                                    <option value={7}>Julio</option>
+                                    <option value={8}>Agosto</option>
+                                    <option value={9}>Septiembre</option>
+                                    <option value={10}>Octubre</option>
+                                    <option value={11}>Noviembre</option>
+                                    <option value={12}>Diciembre</option>
+                                </select>
+                                <input
+                                    type="number"
+                                    value={selectedYear}
+                                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                    className="w-20 px-3 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    min={2020}
+                                    max={2030}
+                                />
+                            </div>
 
                             <div className="flex items-center gap-4 ml-auto">
                                 {warningCount > 0 && (
