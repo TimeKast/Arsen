@@ -636,14 +636,15 @@ Documentos a contrastar:
 
 ---
 
-#### [ARSEN-014] Selector de período (año/mes)
+#### [ARSEN-014] Selector de período (año/mes) ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** frontend, backend  
 **Priority:** 2 (High)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-013
+**Dependencies:** ARSEN-013  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -661,23 +662,24 @@ No incluye:
 - Cerrar/reabrir período (Admin)
 
 **Criterios de aceptación**  
-- [ ] Selector en header junto a empresa
-- [ ] Cambio de período recarga datos
-- [ ] Mostrar badge si período está cerrado
+- [x] Selector en header junto a empresa
+- [x] Cambio de período recarga datos
+- [x] Mostrar badge si período está cerrado
 
 **Pruebas**  
 - Cambiar período y verificar que datos cambian
 
 ---
 
-#### [ARSEN-015] Captura de presupuesto
+#### [ARSEN-015] Captura de presupuesto ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** frontend, backend, feature  
 **Priority:** 2 (High)  
 **Estimate:** 5  
-**Dependencies:** ARSEN-014
+**Dependencies:** ARSEN-014  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -697,11 +699,11 @@ No incluye:
 - Importación desde Excel (issue separado)
 
 **Criterios de aceptación**  
-- [ ] Seleccionar empresa, área, año
-- [ ] Grid con todos los conceptos del área
-- [ ] Editar valores por mes
-- [ ] Guardar guarda todos los valores
-- [ ] AREA_USER solo ve su área asignada
+- [x] Seleccionar empresa, área, año
+- [x] Grid con todos los conceptos del área
+- [x] Editar valores por mes
+- [x] Guardar guarda todos los valores
+- [x] AREA_USER solo ve su área asignada
 
 **Pruebas**  
 - Capturar presupuesto de Compras 2025
@@ -709,14 +711,15 @@ No incluye:
 
 ---
 
-#### [ARSEN-016] Consulta de presupuesto
+#### [ARSEN-016] Consulta de presupuesto ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** frontend, backend  
 **Priority:** 3 (Medium)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-015
+**Dependencies:** ARSEN-015  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -730,23 +733,24 @@ Incluye:
 - Totales calculados
 
 **Criterios de aceptación**  
-- [ ] Ver presupuesto por área/año
-- [ ] Ver totales mensuales y anuales
-- [ ] Navegación entre áreas
+- [x] Ver presupuesto por área/año
+- [x] Ver totales mensuales y anuales
+- [x] Navegación entre áreas
 
 **Pruebas**  
 - Verificar que totales coinciden
 
 ---
 
-#### [ARSEN-017] Auditoría — Post Presupuestos
+#### [ARSEN-017] Auditoría — Post Presupuestos ✅
 
 **Tipo:** Auditoría  
 **Milestone:** M1 MVP  
 **Labels:** audit, quality  
 **Priority:** 2 (High)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-016
+**Dependencies:** ARSEN-016  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -757,24 +761,29 @@ Verificar módulo de presupuestos antes de continuar.
 Issues revisados: ARSEN-014 a ARSEN-016
 
 **Checklist de auditoría**  
-- [ ] Captura funciona para todos los roles permitidos
-- [ ] Datos se guardan correctamente en BD
-- [ ] Restricción por área funciona
-- [ ] No hay errores de validación
+- [x] Captura funciona para todos los roles permitidos
+- [x] Datos se guardan correctamente en BD
+- [x] Restricción por área funciona
+- [x] No hay errores de validación
 
-**Resultado esperado**  
-- Decisión: continuar / ajustar
+**Hallazgos:**
+- Todas las validaciones pasadas
+- Build OK sin errores
+
+**Resultado:**  
+- Decisión: **CONTINUAR**
 
 ---
 
-#### [ARSEN-018] Parser de Excel del contador
+#### [ARSEN-018] Parser de Excel del contador ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** backend  
 **Priority:** 1 (Urgent)  
 **Estimate:** 5  
-**Dependencies:** ARSEN-017
+**Dependencies:** ARSEN-017  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -795,11 +804,11 @@ No incluye:
 - Guardado en BD
 
 **Criterios de aceptación**  
-- [ ] Detecta estructura del archivo
-- [ ] Extrae proyectos correctamente
-- [ ] Extrae conceptos separados por tipo
-- [ ] Marca proyectos/conceptos no reconocidos
-- [ ] Maneja errores de formato
+- [x] Detecta estructura del archivo
+- [x] Extrae proyectos correctamente
+- [x] Extrae conceptos separados por tipo
+- [x] Marca proyectos/conceptos no reconocidos
+- [x] Maneja errores de formato
 
 **Pruebas**  
 - Parsear archivo de muestra de Wepark
@@ -807,14 +816,15 @@ No incluye:
 
 ---
 
-#### [ARSEN-019] Vista previa de importación
+#### [ARSEN-019] Vista previa de importación ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** frontend, backend  
 **Priority:** 1 (Urgent)  
 **Estimate:** 5  
-**Dependencies:** ARSEN-018
+**Dependencies:** ARSEN-018  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -834,24 +844,25 @@ No incluye:
 - Guardado final
 
 **Criterios de aceptación**  
-- [ ] Subir archivo arrastrando o seleccionando
-- [ ] Ver preview con proyectos y conceptos
-- [ ] Indicadores visuales de warnings
-- [ ] Botón "Cancelar" descarta datos
+- [x] Subir archivo arrastrando o seleccionando
+- [x] Ver preview con proyectos y conceptos
+- [x] Indicadores visuales de warnings
+- [x] Botón "Cancelar" descarta datos
 
 **Pruebas**  
 - Subir archivo y ver preview completo
 
 ---
 
-#### [ARSEN-020] Resolución de conflictos en importación
+#### [ARSEN-020] Resolución de conflictos en importación ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** frontend, backend  
 **Priority:** 1 (Urgent)  
 **Estimate:** 5  
-**Dependencies:** ARSEN-019
+**Dependencies:** ARSEN-019  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -866,24 +877,25 @@ Incluye:
 - Validar que todos estén resueltos antes de confirmar
 
 **Criterios de aceptación**  
-- [ ] Listar todos los conflictos
-- [ ] Resolver cada uno con acción
-- [ ] No permitir confirmar con conflictos pendientes
-- [ ] Mapeos guardados para futuras importaciones
+- [x] Listar todos los conflictos
+- [x] Resolver cada uno con acción
+- [x] No permitir confirmar con conflictos pendientes
+- [x] Mapeos guardados para futuras importaciones
 
 **Pruebas**  
 - Importar archivo con concepto nuevo y mapearlo
 
 ---
 
-#### [ARSEN-021] Confirmar y guardar resultados
+#### [ARSEN-021] Confirmar y guardar resultados ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** backend, database  
 **Priority:** 1 (Urgent)  
 **Estimate:** 3  
-**Dependencies:** ARSEN-020
+**Dependencies:** ARSEN-020  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -899,10 +911,10 @@ Incluye:
 - Limpiar estado temporal
 
 **Criterios de aceptación**  
-- [ ] Guardar todos los resultados en BD
-- [ ] Crear entidades nuevas si aplica
-- [ ] Advertir y confirmar sobrescritura
-- [ ] Redirigir a consulta de resultados
+- [x] Guardar todos los resultados en BD
+- [x] Crear entidades nuevas si aplica
+- [x] Advertir y confirmar sobrescritura
+- [x] Redirigir a consulta de resultados
 
 **Pruebas**  
 - Importar mes completo
@@ -910,14 +922,15 @@ Incluye:
 
 ---
 
-#### [ARSEN-022] Consulta de resultados
+#### [ARSEN-022] Consulta de resultados ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** frontend, backend  
 **Priority:** 2 (High)  
 **Estimate:** 3  
-**Dependencies:** ARSEN-021
+**Dependencies:** ARSEN-021  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -932,24 +945,25 @@ Incluye:
 - Sección separada para Gastos Administración
 
 **Criterios de aceptación**  
-- [ ] Ver resultados del período seleccionado
-- [ ] Totales por proyecto
-- [ ] Drill-down a conceptos
-- [ ] Sección "Administración" separada
+- [x] Ver resultados del período seleccionado
+- [x] Totales por proyecto
+- [x] Drill-down a conceptos
+- [x] Sección "Administración" separada
 
 **Pruebas**  
 - Ver resultados importados
 
 ---
 
-#### [ARSEN-023] Auditoría — Post Importación
+#### [ARSEN-023] Auditoría — Post Importación ✅
 
 **Tipo:** Auditoría  
 **Milestone:** M1 MVP  
 **Labels:** audit, quality  
 **Priority:** 2 (High)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-022
+**Dependencies:** ARSEN-022  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -960,15 +974,22 @@ Verificar que importación funciona correctamente.
 Issues revisados: ARSEN-018 a ARSEN-022
 
 **Checklist de auditoría**  
-- [ ] Parser detecta estructura correctamente
-- [ ] Conflictos se resuelven bien
-- [ ] Datos en BD coinciden con archivo
-- [ ] Gastos Admin se muestran separados
-- [ ] No hay pérdida de datos
+- [x] Parser detecta estructura correctamente
+- [x] Conflictos se resuelven bien
+- [x] Datos en BD coinciden con archivo
+- [x] Gastos Admin se muestran separados
+- [x] No hay pérdida de datos
+
+**Hallazgos:**
+- Parser: Anchor cell "Concepto/Proyecto" detectada, normalización OK
+- Conflictos: MAP/CREATE/IGNORE funcionan, mapeos persisten
+- Save: Delete+Insert transaccional, auth/role checks OK
+- Admin: projectId=null separado correctamente en UI
+- Integridad: Unique constraints + overwrite warning
 
 **Resultado esperado**  
 - Validar con archivo real del cliente
-- Decisión: continuar / ajustar
+- Decisión: ✅ CONTINUAR
 
 ---
 

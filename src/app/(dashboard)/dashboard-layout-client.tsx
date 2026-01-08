@@ -9,12 +9,19 @@ interface Company {
     name: string;
 }
 
+interface Period {
+    year: number;
+    month: number;
+    isClosed: boolean;
+}
+
 interface DashboardLayoutClientProps {
     children: React.ReactNode;
     userCompanies: Company[];
+    availablePeriods: Period[];
 }
 
-export function DashboardLayoutClient({ children, userCompanies }: DashboardLayoutClientProps) {
+export function DashboardLayoutClient({ children, userCompanies, availablePeriods }: DashboardLayoutClientProps) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     return (
@@ -23,7 +30,11 @@ export function DashboardLayoutClient({ children, userCompanies }: DashboardLayo
                 collapsed={sidebarCollapsed}
                 onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
             />
-            <Header sidebarCollapsed={sidebarCollapsed} userCompanies={userCompanies} />
+            <Header
+                sidebarCollapsed={sidebarCollapsed}
+                userCompanies={userCompanies}
+                availablePeriods={availablePeriods}
+            />
 
             <main
                 className={`pt-16 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'
