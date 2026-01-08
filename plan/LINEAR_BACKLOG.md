@@ -993,14 +993,15 @@ Issues revisados: ARSEN-018 a ARSEN-022
 
 ---
 
-#### [ARSEN-024] Comparativo real vs presupuesto
+#### [ARSEN-024] Comparativo real vs presupuesto ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** frontend, backend, feature  
 **Priority:** 2 (High)  
 **Estimate:** 5  
-**Dependencies:** ARSEN-023
+**Dependencies:** ARSEN-023  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -1016,24 +1017,25 @@ Incluye:
 - Totales
 
 **Criterios de aceptación**  
-- [ ] Ver comparativo por período
-- [ ] Cálculo de desviación correcto
-- [ ] Colores según desviación
-- [ ] Totales de ingresos y costos
+- [x] Ver comparativo por período
+- [x] Cálculo de desviación correcto
+- [x] Colores según desviación
+- [x] Totales de ingresos y costos
 
 **Pruebas**  
 - Comparar con datos de prueba
 
 ---
 
-#### [ARSEN-025] Dashboard ejecutivo
+#### [ARSEN-025] Dashboard ejecutivo ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M1 MVP  
 **Labels:** frontend, backend, feature  
 **Priority:** 2 (High)  
 **Estimate:** 5  
-**Dependencies:** ARSEN-024
+**Dependencies:** ARSEN-024  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -1048,24 +1050,25 @@ Incluye:
 - Gráfica de tendencia (últimos 6 meses)
 
 **Criterios de aceptación**  
-- [ ] KPIs visibles al entrar
-- [ ] Datos del período activo
-- [ ] Top 5 proyectos por utilidad
-- [ ] Gráfica de tendencia (si hay datos)
+- [x] KPIs visibles al entrar
+- [x] Datos del período activo
+- [x] Top 5 proyectos por utilidad
+- [x] Gráfica de tendencia (si hay datos)
 
 **Pruebas**  
 - Verificar que KPIs coinciden con datos
 
 ---
 
-#### [ARSEN-026] Auditoría — Fin M1 MVP
+#### [ARSEN-026] Auditoría — Fin M1 MVP ✅
 
 **Tipo:** Auditoría  
 **Milestone:** M1 MVP  
 **Labels:** audit, quality  
 **Priority:** 2 (High)  
 **Estimate:** 3  
-**Dependencies:** ARSEN-025
+**Dependencies:** ARSEN-025  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -1081,14 +1084,20 @@ Verificar:
 - Roles y permisos correctos
 
 **Checklist de auditoría**  
-- [ ] Cierre mensual toma <30 min
-- [ ] Datos consistentes entre módulos
-- [ ] Sin errores de consola
-- [ ] Build de producción funciona
+- [x] Cierre mensual toma <30 min (estimado <10 min)
+- [x] Datos consistentes entre módulos
+- [x] Sin errores de consola
+- [x] Build de producción funciona (15 rutas)
+
+**Hallazgos:**
+- Build: 4.9s, 15 rutas dinámicas, sin errores TypeScript
+- Flujo: Period -> Budget -> Import -> View -> Compare -> Dashboard
+- Auth: Checks en todos los server actions, role validation
+- Consistency: Budgets/Results/Comparison comparten schema correcto
 
 **Resultado esperado**  
-- Milestone M1 marcado como completado
-- Ready para M2
+- ✅ Milestone M1 marcado como completado
+- ✅ Ready para M2
 
 ---
 

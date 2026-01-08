@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth/config';
 import { getUserCompanies } from '@/actions/company-context';
-import { DashboardClient } from './dashboard-client';
+import { ComparisonClient } from './comparison-client';
 
-export default async function DashboardPage() {
+export default async function ComparisonPage() {
     const session = await auth();
 
     if (!session?.user) {
@@ -14,10 +14,9 @@ export default async function DashboardPage() {
     const currentYear = new Date().getFullYear();
 
     return (
-        <DashboardClient
+        <ComparisonClient
             companies={companies}
             initialYear={currentYear}
-            userName={session.user.name || 'Usuario'}
         />
     );
 }
