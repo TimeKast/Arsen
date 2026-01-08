@@ -26,15 +26,13 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { href: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { href: '/comparison', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { href: '/results', label: 'Resultados', icon: <FileText size={20} /> },
     { href: '/budgets', label: 'Presupuestos', icon: <DollarSign size={20} /> },
     { href: '/profit-sharing', label: 'Reparto', icon: <PieChart size={20} /> },
     { href: '/reconciliations', label: 'Conciliaciones', icon: <FileCheck size={20} /> },
-    { href: '/reports', label: 'Reportes', icon: <BarChart3 size={20} /> },
-    { href: '/catalogs', label: 'Catalogos', icon: <FolderOpen size={20} /> },
+    { href: '/catalogs/companies', label: 'Catalogos', icon: <FolderOpen size={20} /> },
     { href: '/users', label: 'Usuarios', icon: <Users size={20} />, roles: ['ADMIN'] },
-    { href: '/settings', label: 'Configuracion', icon: <Settings size={20} />, roles: ['ADMIN'] },
 ];
 
 interface SidebarProps {
