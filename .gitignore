@@ -1,37 +1,42 @@
-# Dependencies
-node_modules/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# dependencies
+/node_modules
+/scripts/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Build output
-.next/
-out/
-build/
-dist/
+# testing
+/coverage
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# next.js
+/.next/
+/out/
 
-# OS
+# production
+/build
+
+# misc
 .DS_Store
-Thumbs.db
+*.pem
 
-# Logs
-*.log
+# debug
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# Sensitive files with API keys
-plan/LINEAR_GUIDE.md
-scripts/.env
+# env files (can opt-in for committing if needed)
+.env*
 
-# Drizzle
-drizzle/meta/
+# vercel
+.vercel
 
-# Vercel
-.vercel/
+# typescript
+*.tsbuildinfo
+next-env.d.ts

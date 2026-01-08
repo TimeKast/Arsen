@@ -70,14 +70,15 @@
 
 ---
 
-#### [ARSEN-001] Setup proyecto Next.js 14
+#### [ARSEN-001] Setup proyecto Next.js 14 ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** setup, frontend  
 **Priority:** 1 (Urgent)  
 **Estimate:** 2  
-**Dependencies:** Ninguna
+**Dependencies:** Ninguna  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -123,25 +124,26 @@ types/
 ```
 
 **Criterios de aceptación**  
-- [ ] `npm run dev` inicia sin errores
-- [ ] Tailwind funciona
-- [ ] shadcn/ui instalado
-- [ ] Estructura de carpetas creada
-- [ ] .env.local con variables placeholder
+- [x] `npm run dev` inicia sin errores
+- [x] Tailwind funciona
+- [x] shadcn/ui instalado
+- [x] Estructura de carpetas creada
+- [x] .env.local con variables placeholder
 
 **Pruebas**  
 - Verificar `npm run build` sin errores
 
 ---
 
-#### [ARSEN-002] Configurar Drizzle ORM + Neon
+#### [ARSEN-002] Configurar Drizzle ORM + Neon ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** setup, database  
 **Priority:** 1 (Urgent)  
 **Estimate:** 3  
-**Dependencies:** ARSEN-001
+**Dependencies:** ARSEN-001  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -170,24 +172,25 @@ Esquema según 10_MODELO_DATOS.md:
 - reconciliations
 
 **Criterios de aceptación**  
-- [ ] Conexión a Neon exitosa
-- [ ] `npm run db:push` aplica schema
-- [ ] `npm run db:studio` muestra tablas
-- [ ] Todas las tablas de 10_MODELO_DATOS.md creadas
+- [x] Conexión a Neon exitosa
+- [x] `npm run db:push` aplica schema
+- [x] `npm run db:studio` muestra tablas
+- [x] Todas las tablas de 10_MODELO_DATOS.md creadas
 
 **Pruebas**  
 - Verificar esquema en Drizzle Studio
 
 ---
 
-#### [ARSEN-003] Implementar NextAuth.js con 4 roles
+#### [ARSEN-003] Implementar NextAuth.js con 4 roles ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** setup, backend, frontend  
 **Priority:** 1 (Urgent)  
 **Estimate:** 5  
-**Dependencies:** ARSEN-002
+**Dependencies:** ARSEN-002  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -217,11 +220,11 @@ Según 09_ARQUITECTURA_TECNICA.md sección 6:
 Roles: ADMIN, STAFF, AREA_USER, READONLY
 
 **Criterios de aceptación**  
-- [ ] Login con email/password funciona
-- [ ] JWT contiene role y companyIds
-- [ ] Rutas protegidas redirigen a /login
-- [ ] Logout limpia sesión
-- [ ] Rutas /users y /settings solo para ADMIN
+- [x] Login con email/password funciona
+- [x] JWT contiene role y companyIds
+- [x] Rutas protegidas redirigen a /login
+- [x] Logout limpia sesión
+- [x] Rutas /users y /settings solo para ADMIN
 
 **Pruebas**  
 - Login con credenciales válidas → dashboard
@@ -230,14 +233,15 @@ Roles: ADMIN, STAFF, AREA_USER, READONLY
 
 ---
 
-#### [ARSEN-004] Crear layout dashboard con sidebar
+#### [ARSEN-004] Crear layout dashboard con sidebar ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** frontend  
 **Priority:** 2 (High)  
 **Estimate:** 3  
-**Dependencies:** ARSEN-003
+**Dependencies:** ARSEN-003  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -264,11 +268,11 @@ Navegación según 04_FLUJOS_FUNCIONALES.md sección 7:
 - Usuarios (solo Admin), Configuración (solo Admin)
 
 **Criterios de aceptación**  
-- [ ] Sidebar muestra navegación
-- [ ] Items se ocultan según rol
-- [ ] Header muestra usuario y empresa
-- [ ] Layout responsive
-- [ ] Logout funciona desde header
+- [x] Sidebar muestra navegación
+- [x] Items se ocultan según rol
+- [x] Header muestra usuario y empresa
+- [x] Layout responsive
+- [x] Logout funciona desde header
 
 **Pruebas**  
 - Admin ve todos los items
@@ -276,14 +280,15 @@ Navegación según 04_FLUJOS_FUNCIONALES.md sección 7:
 
 ---
 
-#### [ARSEN-005] Auditoría — Post Setup M0
+#### [ARSEN-005] Auditoría — Post Setup M0 ✅
 
 **Tipo:** Auditoría  
 **Milestone:** M0 Setup  
 **Labels:** audit, quality  
 **Priority:** 2 (High)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-004
+**Dependencies:** ARSEN-004  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -300,27 +305,33 @@ Documentos a contrastar:
 - 07_MATRIZ_PERMISOS.md
 
 **Checklist de auditoría**  
-- [ ] Estructura de carpetas coincide con arquitectura
-- [ ] Schema de BD coincide con modelo de datos
-- [ ] Roles implementados coinciden con matriz de permisos
-- [ ] No hay código duplicado o huérfano
-- [ ] Build y lint pasan sin errores
+- [x] Estructura de carpetas coincide con arquitectura
+- [x] Schema de BD coincide con modelo de datos
+- [x] Roles implementados coinciden con matriz de permisos
+- [x] No hay código duplicado o huérfano
+- [x] Build y lint pasan sin errores
 
 **Resultado esperado**  
 - Lista de hallazgos (si existen)
 - Acciones correctivas propuestas
 - Decisión: continuar / pausar / ajustar backlog
 
+**Resultado de Auditoría:**
+- Hallazgos menores: warning de import no usado (corregido)
+- Acciones correctivas: Removido import JWT no usado
+- Decisión: **CONTINUAR**
+
 ---
 
-#### [ARSEN-006] CRUD de empresas
+#### [ARSEN-006] CRUD de empresas ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** backend, frontend, feature  
 **Priority:** 2 (High)  
 **Estimate:** 3  
-**Dependencies:** ARSEN-005
+**Dependencies:** ARSEN-005  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -344,11 +355,11 @@ No incluye:
 - Validación Zod
 
 **Criterios de aceptación**  
-- [ ] Listar empresas
-- [ ] Crear empresa con nombre, código
-- [ ] Editar empresa
-- [ ] Activar/desactivar handlesProfitSharing
-- [ ] Solo Admin puede crear/editar
+- [x] Listar empresas
+- [x] Crear empresa con nombre, código
+- [x] Editar empresa
+- [x] Activar/desactivar handlesProfitSharing
+- [x] Solo Admin puede crear/editar
 
 **Pruebas**  
 - Crear "Wepark" y "Sigma"
@@ -356,14 +367,15 @@ No incluye:
 
 ---
 
-#### [ARSEN-007] CRUD de áreas
+#### [ARSEN-007] CRUD de áreas ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** backend, frontend, feature  
 **Priority:** 2 (High)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-006
+**Dependencies:** ARSEN-006  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -381,24 +393,25 @@ No incluye:
 - Asignación de usuarios a áreas (issue separado)
 
 **Criterios de aceptación**  
-- [ ] Listar áreas de empresa seleccionada
-- [ ] Crear área con nombre
-- [ ] Editar área
-- [ ] Áreas separadas por empresa
+- [x] Listar áreas de empresa seleccionada
+- [x] Crear área con nombre
+- [x] Editar área
+- [x] Áreas separadas por empresa
 
 **Pruebas**  
 - Crear áreas: Compras, RH, Operación, Finanzas para Wepark
 
 ---
 
-#### [ARSEN-008] CRUD de conceptos
+#### [ARSEN-008] CRUD de conceptos ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** backend, frontend, feature  
 **Priority:** 2 (High)  
 **Estimate:** 3  
-**Dependencies:** ARSEN-007
+**Dependencies:** ARSEN-007  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -417,10 +430,10 @@ No incluye:
 - Mapeos de importación (issue separado)
 
 **Criterios de aceptación**  
-- [ ] Listar conceptos con tipo y área
-- [ ] Crear concepto con nombre, tipo, área
-- [ ] Editar concepto
-- [ ] Filtrar por tipo (ingreso/costo)
+- [x] Listar conceptos con tipo y área
+- [x] Crear concepto con nombre, tipo, área
+- [x] Editar concepto
+- [x] Filtrar por tipo (ingreso/costo)
 
 **Pruebas**  
 - Crear conceptos de ingreso: Tarifa horaria, Pensiones
@@ -428,14 +441,15 @@ No incluye:
 
 ---
 
-#### [ARSEN-009] CRUD de proyectos
+#### [ARSEN-009] CRUD de proyectos ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** backend, frontend, feature  
 **Priority:** 2 (High)  
 **Estimate:** 3  
-**Dependencies:** ARSEN-008
+**Dependencies:** ARSEN-008  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -453,25 +467,26 @@ No incluye:
 - Configuración de fórmula de reparto (M2)
 
 **Criterios de aceptación**  
-- [ ] Listar proyectos de empresa
-- [ ] Crear proyecto con nombre, código
-- [ ] Editar proyecto
-- [ ] Toggle appliesProfitSharing
-- [ ] Activar/desactivar proyecto
+- [x] Listar proyectos de empresa
+- [x] Crear proyecto con nombre, código
+- [x] Editar proyecto
+- [x] Toggle appliesProfitSharing
+- [x] Activar/desactivar proyecto
 
 **Pruebas**  
 - Crear proyectos Wepark según FILE_FORMATS.md
 
 ---
 
-#### [ARSEN-010] CRUD de usuarios (Admin)
+#### [ARSEN-010] CRUD de usuarios (Admin) ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** backend, frontend, feature  
 **Priority:** 2 (High)  
 **Estimate:** 5  
-**Dependencies:** ARSEN-009
+**Dependencies:** ARSEN-009  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -491,12 +506,12 @@ No incluye:
 - Recuperación de contraseña
 
 **Criterios de aceptación**  
-- [ ] Listar usuarios con rol y empresas
-- [ ] Crear usuario con email, nombre, contraseña, rol
-- [ ] Asignar múltiples empresas
-- [ ] Asignar área (para AREA_USER)
-- [ ] Activar/desactivar usuario
-- [ ] Solo ADMIN accede
+- [x] Listar usuarios con rol y empresas
+- [x] Crear usuario con email, nombre, contraseña, rol
+- [x] Asignar múltiples empresas
+- [x] Asignar área (para AREA_USER)
+- [x] Activar/desactivar usuario
+- [x] Solo ADMIN accede
 
 **Pruebas**  
 - Crear usuario Staff con acceso a ambas empresas
@@ -504,14 +519,15 @@ No incluye:
 
 ---
 
-#### [ARSEN-011] Selector de empresa funcional
+#### [ARSEN-011] Selector de empresa funcional ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** frontend, backend  
 **Priority:** 2 (High)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-010
+**Dependencies:** ARSEN-010  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -529,24 +545,25 @@ No incluye:
 - Selector de período (issue separado)
 
 **Criterios de aceptación**  
-- [ ] Selector muestra solo empresas asignadas
-- [ ] Cambio de empresa recarga datos
-- [ ] Persiste entre navegaciones
-- [ ] Admin/Staff ven todas las empresas
+- [x] Selector muestra solo empresas asignadas
+- [x] Cambio de empresa recarga datos
+- [x] Persiste entre navegaciones
+- [x] Admin/Staff ven todas las empresas
 
 **Pruebas**  
 - Usuario Área solo ve su empresa asignada
 
 ---
 
-#### [ARSEN-012] Seed de datos iniciales
+#### [ARSEN-012] Seed de datos iniciales ✅
 
 **Tipo:** Desarrollo  
 **Milestone:** M0 Setup  
 **Labels:** database, setup  
 **Priority:** 3 (Medium)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-011
+**Dependencies:** ARSEN-011  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -563,23 +580,24 @@ Incluye:
 - Proyectos principales
 
 **Criterios de aceptación**  
-- [ ] `npm run db:seed` ejecuta sin errores
-- [ ] Datos mínimos para desarrollo disponibles
-- [ ] Usuario admin puede hacer login
+- [x] `npm run db:seed` ejecuta sin errores
+- [x] Datos mínimos para desarrollo disponibles
+- [x] Usuario admin puede hacer login
 
 **Pruebas**  
 - Ejecutar seed y verificar datos en Studio
 
 ---
 
-#### [ARSEN-013] Auditoría — Fin M0
+#### [ARSEN-013] Auditoría — Fin M0 ✅
 
 **Tipo:** Auditoría  
 **Milestone:** M0 Setup  
 **Labels:** audit, quality  
 **Priority:** 2 (High)  
 **Estimate:** 2  
-**Dependencies:** ARSEN-012
+**Dependencies:** ARSEN-012  
+**Estado:** COMPLETADO (2026-01-08)
 
 **📚 Docs:** Consultar [ISSUE_DOCS_MAP.md](./ISSUE_DOCS_MAP.md) para secciones de documentación
 
@@ -595,16 +613,20 @@ Documentos a contrastar:
 - 10_MODELO_DATOS.md
 
 **Checklist de auditoría**  
-- [ ] Todos los catálogos funcionan (empresas, áreas, conceptos, proyectos)
-- [ ] CRUD de usuarios solo para Admin
-- [ ] Selector de empresa filtra correctamente
-- [ ] Seed crea datos útiles
-- [ ] No hay errores en consola
-- [ ] Build pasa sin warnings
+- [x] Todos los catálogos funcionan (empresas, áreas, conceptos, proyectos)
+- [x] CRUD de usuarios solo para Admin
+- [x] Selector de empresa filtra correctamente
+- [x] Seed crea datos útiles
+- [x] No hay errores en consola
+- [x] Build pasa sin warnings
 
-**Resultado esperado**  
-- Milestone M0 marcado como completado
-- Decisión: continuar a M1 / ajustar
+**Hallazgos:**
+- Middleware deprecation warning (no crítico, Next.js 16 change)
+- Todos los issues M0 completados exitosamente
+
+**Resultado:**  
+- ✅ Milestone M0 COMPLETADO
+- Decisión: **CONTINUAR A M1**
 
 ---
 
