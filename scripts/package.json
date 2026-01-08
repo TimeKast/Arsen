@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@linear/sdk": "^69.0.0",
+    "dotenv": "^17.2.3"
+  }
+}
