@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { db, users, userCompanies } from '@/lib/db';
+import { invalidateAllUserSessions, createUserSession } from './session';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
@@ -34,6 +35,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 if (!isValid) {
                     return null;
                 }
+
+                // Invalidate all previous sessions for this user (H-005: single session enforcement)
+                await invalidateAllUserSessions(user.id);
+
+                // Create new session record
+                await createUserSession(user.id);
 
                 // Get user companies
                 const userCompaniesList = await db.query.userCompanies.findMany({

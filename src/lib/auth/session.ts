@@ -5,7 +5,13 @@
 
 import { eq, lt, and } from 'drizzle-orm';
 import { db, userSessions, users } from '@/lib/db';
-import { randomUUID } from 'crypto';
+
+// Use Web Crypto API for Edge Runtime compatibility
+function generateSessionToken(): string {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+}
 
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -28,7 +34,7 @@ export async function createUserSession(
     await db.delete(userSessions).where(eq(userSessions.userId, userId));
 
     // Create new session
-    const sessionToken = randomUUID();
+    const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
 
     await db.insert(userSessions).values({
