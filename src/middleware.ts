@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth/config';
 import { NextResponse } from 'next/server';
 
-const publicRoutes = ['/login', '/api/auth'];
+const publicRoutes = ['/', '/login', '/api/auth'];
 const adminRoutes = ['/users', '/settings'];
 
 export default auth((req) => {
