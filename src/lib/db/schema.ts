@@ -72,6 +72,18 @@ export const users = pgTable('users', {
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+// --- User Sessions (for single session enforcement) ---
+export const userSessions = pgTable('user_sessions', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    sessionToken: varchar('session_token', { length: 255 }).notNull().unique(),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    lastActiveAt: timestamp('last_active_at').notNull().defaultNow(),
+    userAgent: varchar('user_agent', { length: 500 }),
+    ipAddress: varchar('ip_address', { length: 45 }),
+});
+
 // --- User-Company (pivot) ---
 export const userCompanies = pgTable('user_companies', {
     userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -153,6 +165,7 @@ export const budgets = pgTable('budgets', {
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
+    deletedAt: timestamp('deleted_at'), // Soft delete
 }, (table) => ({
     uniqueBudget: unique().on(table.companyId, table.areaId, table.conceptId, table.year, table.month),
 }));
@@ -169,6 +182,7 @@ export const results = pgTable('results', {
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     importedBy: uuid('imported_by').references(() => users.id),
+    deletedAt: timestamp('deleted_at'), // Soft delete
 }, (table) => ({
     uniqueResult: unique().on(table.companyId, table.projectId, table.conceptId, table.year, table.month),
 }));
@@ -197,6 +211,11 @@ export const reconciliations = pgTable('reconciliations', {
 export const usersRelations = relations(users, ({ one, many }) => ({
     area: one(areas, { fields: [users.areaId], references: [areas.id] }),
     companies: many(userCompanies),
+    sessions: many(userSessions),
+}));
+
+export const userSessionsRelations = relations(userSessions, ({ one }) => ({
+    user: one(users, { fields: [userSessions.userId], references: [users.id] }),
 }));
 
 export const userCompaniesRelations = relations(userCompanies, ({ one }) => ({
