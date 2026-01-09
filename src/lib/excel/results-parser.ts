@@ -796,8 +796,14 @@ export function parseOtrosAllMonths(
 
             // Add values for ALL 12 months
             for (let month = 1; month <= 12; month++) {
-                const monthColIndex = 3 + month; // Column 4 = Jan (month 1), etc.
-                const amount = typeof row[monthColIndex] === 'number' ? row[monthColIndex] : 0;
+                const monthColIndex = 3 + month; // Column E=4 (Jan), Column P=15 (Dec)
+                // Check if column exists in this row
+                if (monthColIndex >= row.length) {
+                    // Row doesn't have this month's column
+                    continue;
+                }
+                const rawValue = row[monthColIndex];
+                const amount = typeof rawValue === 'number' ? rawValue : 0;
                 if (amount !== 0) {
                     valuesByMonth.get(month)!.push({
                         projectIndex,
@@ -807,6 +813,11 @@ export function parseOtrosAllMonths(
                 }
             }
         }
+
+        // Log summary of entries per month for debugging
+        console.log('[OTROS PARSE] Entries per month:',
+            Array.from(valuesByMonth.entries()).map(([m, v]) => `M${m}:${v.length}`).join(', ')
+        );
 
         // Generate warnings only for unrecognized projects and concepts
         projects.filter(p => !p.isRecognized).forEach(p => {
