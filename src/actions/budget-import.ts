@@ -77,15 +77,15 @@ export async function confirmBudgetImport(
         const allConcepts = await db.select().from(concepts);
         allConcepts.forEach(c => conceptCache.set(c.name.toLowerCase(), c.id));
 
-        // Prepare batch inserts
-        const budgetsToInsert: {
+        // Use Map to aggregate amounts for same area/concept/month (avoids duplicate key violations)
+        const budgetAggregator = new Map<string, {
             companyId: string;
             areaId: string;
             conceptId: string;
             year: number;
             month: number;
-            amount: string;
-        }[] = [];
+            amount: number;
+        }>();
 
         for (const entry of entries) {
             // Resolve area with flexible matching
@@ -110,21 +110,34 @@ export async function confirmBudgetImport(
                 conceptCache.set(entry.conceptCode.toLowerCase(), conceptId);
             }
 
-            // Add budget entries for each month
+            // Add budget entries for each month (aggregate duplicates)
             for (let month = 1; month <= 12; month++) {
                 const amount = entry.amounts[month - 1] || 0;
                 if (amount === 0) continue; // Skip zero amounts
 
-                budgetsToInsert.push({
-                    companyId,
-                    areaId,
-                    conceptId,
-                    year,
-                    month,
-                    amount: amount.toString(),
-                });
+                const key = `${areaId}|${conceptId}|${month}`;
+                const existing = budgetAggregator.get(key);
+
+                if (existing) {
+                    existing.amount += amount;
+                } else {
+                    budgetAggregator.set(key, {
+                        companyId,
+                        areaId,
+                        conceptId,
+                        year,
+                        month,
+                        amount,
+                    });
+                }
             }
         }
+
+        // Convert aggregator to insert array
+        const budgetsToInsert = Array.from(budgetAggregator.values()).map(b => ({
+            ...b,
+            amount: b.amount.toString(),
+        }));
 
         // Delete existing budgets for this company/year
         await db.delete(budgets).where(
