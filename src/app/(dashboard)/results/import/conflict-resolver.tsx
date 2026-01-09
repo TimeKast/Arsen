@@ -89,6 +89,46 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
         });
     }, []);
 
+    // Bulk action: set all projects to a specific action
+    const handleBulkProjectAction = useCallback((action: ResolutionAction) => {
+        setResolutions(prev => {
+            const updated = { ...prev };
+            conflicts.filter(c => c.type === 'PROJECT').forEach(conflict => {
+                const key = `PROJECT-${conflict.originalName}`;
+                const current = prev[key];
+                if (current) {
+                    updated[key] = {
+                        ...current,
+                        action,
+                        targetId: undefined,
+                        newName: action === 'CREATE' ? current.originalName : undefined,
+                    };
+                }
+            });
+            return updated;
+        });
+    }, [conflicts]);
+
+    // Bulk action: set all concepts to a specific action
+    const handleBulkConceptAction = useCallback((action: ResolutionAction) => {
+        setResolutions(prev => {
+            const updated = { ...prev };
+            conflicts.filter(c => c.type === 'CONCEPT').forEach(conflict => {
+                const key = `CONCEPT-${conflict.originalName}`;
+                const current = prev[key];
+                if (current) {
+                    updated[key] = {
+                        ...current,
+                        action,
+                        targetId: undefined,
+                        newName: action === 'CREATE' ? current.originalName : undefined,
+                    };
+                }
+            });
+            return updated;
+        });
+    }, [conflicts]);
+
     const handleTargetChange = useCallback((key: string, targetId: string) => {
         setResolutions(prev => ({
             ...prev,
@@ -152,10 +192,24 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
             {/* Project Conflicts */}
             {projectConflicts.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600 flex items-center justify-between">
                         <h3 className="font-medium dark:text-white">
                             Proyectos no reconocidos ({projectConflicts.length})
                         </h3>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleBulkProjectAction('CREATE')}
+                                className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-900/50"
+                            >
+                                Crear todos
+                            </button>
+                            <button
+                                onClick={() => handleBulkProjectAction('IGNORE')}
+                                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-500"
+                            >
+                                Ignorar todos
+                            </button>
+                        </div>
                     </div>
                     <div className="divide-y dark:divide-gray-700">
                         {projectConflicts.map((conflict) => {
@@ -229,10 +283,24 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
             {/* Concept Conflicts */}
             {conceptConflicts.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600 flex items-center justify-between">
                         <h3 className="font-medium dark:text-white">
                             Conceptos no reconocidos ({conceptConflicts.length})
                         </h3>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleBulkConceptAction('CREATE')}
+                                className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-900/50"
+                            >
+                                Crear todos
+                            </button>
+                            <button
+                                onClick={() => handleBulkConceptAction('IGNORE')}
+                                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-500"
+                            >
+                                Ignorar todos
+                            </button>
+                        </div>
                     </div>
                     <div className="divide-y dark:divide-gray-700">
                         {conceptConflicts.map((conflict) => {
