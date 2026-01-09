@@ -13,7 +13,7 @@ const confirmImportSchema = z.object({
     month: z.number().min(1).max(12),
     entries: z.array(z.object({
         projectId: z.string().nullable(), // Can be UUID or null
-        projectName: z.string().optional(), // Project name for lookup
+        projectName: z.string().nullable().optional(), // Project name for lookup (null for admin expenses)
         conceptId: z.string().optional(), // Can be UUID
         conceptName: z.string().optional(), // Concept name for lookup
         conceptType: z.enum(['INCOME', 'COST']).optional(), // For differentiation
