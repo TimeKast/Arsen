@@ -472,13 +472,23 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                     r => r.type === 'PROJECT' && r.originalName === project?.name
                 );
 
-                if (project && !projectResolution && !project.isAdministration) {
-                    console.log(`No resolution for project: "${project.name}"`);
+                // Also check saved project mappings if no resolution found
+                const savedProjectMapping = !projectResolution && project?.name
+                    ? savedProjectMappings.find(
+                        m => m.externalName.toLowerCase() === project.name.toLowerCase()
+                    )
+                    : null;
+
+                if (project && !projectResolution && !savedProjectMapping && !project.isAdministration && !project.isRecognized) {
+                    console.log(`No resolution or mapping for project: "${project.name}"`);
                 }
 
                 // Handle __ADMIN__ special value - convert to null for admin expenses
-                const resolvedProjectId = projectResolution?.targetId;
-                const finalProjectId = resolvedProjectId === '__ADMIN__' ? null : resolvedProjectId || null;
+                // Priority: resolved conflicts > saved mappings > null
+                const resolvedProjectId = projectResolution?.targetId
+                    || savedProjectMapping?.projectId
+                    || null;
+                const finalProjectId = resolvedProjectId === '__ADMIN__' ? null : resolvedProjectId;
 
                 return {
                     projectId: finalProjectId,
@@ -894,9 +904,14 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                                             <AlertOctagon size={32} />
                                             <h3 className="text-lg font-medium dark:text-white">Datos Existentes</h3>
                                         </div>
-                                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                                        <p className="text-gray-600 dark:text-gray-300 mb-2">
                                             Ya existen {existingCount} registros para este periodo.
-                                            Al continuar, se sobrescribiran los datos existentes.
+                                        </p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                            {isOtrosSheet
+                                                ? 'Solo se reemplazarán los datos importados desde Otros (O). Los datos del contador (M) no serán afectados.'
+                                                : 'Solo se reemplazarán los datos del contador (M). Los datos de Otros (O) no serán afectados.'
+                                            }
                                         </p>
                                         <div className="flex justify-end gap-4">
                                             <button

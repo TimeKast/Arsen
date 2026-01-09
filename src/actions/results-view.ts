@@ -18,6 +18,7 @@ export interface ConceptResult {
     conceptName: string;
     conceptType: 'INCOME' | 'COST';
     amount: number;
+    source: 'O' | 'M'; // O=Otros, M=Monthly
 }
 
 // Get results for a company/period
@@ -77,6 +78,7 @@ export async function getResultsForPeriod(
             conceptName: result.concept?.name || 'Desconocido',
             conceptType,
             amount,
+            source: (result.source as 'O' | 'M') || 'M',
         });
     }
 

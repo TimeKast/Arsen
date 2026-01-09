@@ -255,9 +255,21 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                                             {isExpanded && project.concepts.map((concept) => (
                                                 <tr key={`${project.projectId}-${concept.conceptId}`} className="bg-gray-50 dark:bg-gray-900">
                                                     <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
-                                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.conceptType === 'INCOME'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-red-100 text-red-800'
+                                                        {/* Source badge - O for Otros, M for Monthly */}
+                                                        <span className={`inline-flex px-1 py-0.5 rounded text-xs mr-1 ${concept.source === 'O'
+                                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                                            }`}>
+                                                            {concept.source || 'M'}
+                                                        </span>
+                                                        {/* Type badge - I for Income, C for Cost */}
+                                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.source === 'O'
+                                                                ? (concept.conceptType === 'INCOME'
+                                                                    ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                                                                    : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200')
+                                                                : (concept.conceptType === 'INCOME'
+                                                                    ? 'bg-green-100 text-green-800'
+                                                                    : 'bg-red-100 text-red-800')
                                                             }`}>
                                                             {concept.conceptType === 'INCOME' ? 'I' : 'C'}
                                                         </span>
