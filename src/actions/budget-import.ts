@@ -139,10 +139,21 @@ export async function confirmBudgetImport(
             amount: b.amount.toString(),
         }));
 
-        // Delete existing budgets for this company/year
-        await db.delete(budgets).where(
-            and(eq(budgets.companyId, companyId), eq(budgets.year, year))
-        );
+        // Get unique area IDs from the entries to import
+        const importedAreaIds = [...new Set(budgetsToInsert.map(b => b.areaId))];
+
+        // Delete existing budgets ONLY for the areas being imported (not all areas)
+        if (importedAreaIds.length > 0) {
+            for (const areaId of importedAreaIds) {
+                await db.delete(budgets).where(
+                    and(
+                        eq(budgets.companyId, companyId),
+                        eq(budgets.areaId, areaId),
+                        eq(budgets.year, year)
+                    )
+                );
+            }
+        }
 
         // Batch insert new budgets
         if (budgetsToInsert.length > 0) {
