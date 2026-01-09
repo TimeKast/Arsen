@@ -93,7 +93,14 @@ export async function updateProject(id: string, data: ProjectFormData) {
         .where(eq(projects.id, id))
         .returning();
 
+    // Revalidate ALL paths that use project data
     revalidatePath('/catalogs/projects');
+    revalidatePath('/results');
+    revalidatePath('/results/import');
+    revalidatePath('/budgets');
+    revalidatePath('/comparison');
+    revalidatePath('/reconciliations');
+    revalidatePath('/profit-sharing');
     return project;
 }
 
