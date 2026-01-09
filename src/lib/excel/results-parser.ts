@@ -706,12 +706,11 @@ export function parseOtrosAllMonths(
         }
 
         const sheet = workbook.Sheets[otrosSheetName];
-        // Use defval and raw options to ensure we read all cells, including those in sparse columns
-        const data = XLSX.utils.sheet_to_json(sheet, {
+        // Match budget-parser.ts options exactly
+        const data: (string | number | null)[][] = XLSX.utils.sheet_to_json(sheet, {
             header: 1,
-            defval: null, // Force empty cells to have null value instead of being omitted
-            raw: true     // Get raw values instead of formatted strings
-        }) as unknown[][];
+            defval: null
+        });
 
         // Get year from sheet names - first look for a sheet that is just a 4-digit year (e.g., "2025")
         // Then fall back to checking the Otros sheet name itself

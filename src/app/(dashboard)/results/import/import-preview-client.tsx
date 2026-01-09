@@ -714,13 +714,13 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                     </div>
 
                     {/* Warnings Panel */}
-                    {parsedData.warnings.length > 0 && (
+                    {effectiveWarnings.length > 0 && (
                         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
                             <h3 className="font-medium text-amber-800 dark:text-amber-200 mb-2">
                                 Advertencias y Errores
                             </h3>
                             <ul className="space-y-1 text-sm">
-                                {parsedData.warnings.map((warning, idx) => (
+                                {effectiveWarnings.map((warning, idx) => (
                                     <li
                                         key={idx}
                                         className={`flex items-start gap-2 ${warning.type === 'STRUCTURE_ERROR' || warning.type === 'INVALID_VALUE'
