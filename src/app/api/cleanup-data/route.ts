@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { budgets, results } from '@/lib/db/schema';
-import { sql } from 'drizzle-orm';
+import { count } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 
 export async function POST() {
@@ -12,8 +12,8 @@ export async function POST() {
         }
 
         // Count before deletion
-        const [budgetCountBefore] = await db.execute(sql`SELECT COUNT(*) as count FROM budgets`);
-        const [resultCountBefore] = await db.execute(sql`SELECT COUNT(*) as count FROM results`);
+        const [budgetCount] = await db.select({ count: count() }).from(budgets);
+        const [resultCount] = await db.select({ count: count() }).from(results);
 
         // Delete all budgets
         await db.delete(budgets);
@@ -25,8 +25,8 @@ export async function POST() {
             success: true,
             message: 'Datos eliminados exitosamente',
             deleted: {
-                budgets: Number((budgetCountBefore as { count: string }).count),
-                results: Number((resultCountBefore as { count: string }).count),
+                budgets: budgetCount?.count || 0,
+                results: resultCount?.count || 0,
             },
             preserved: [
                 'concepts',
