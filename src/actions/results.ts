@@ -24,11 +24,12 @@ const confirmImportSchema = z.object({
 
 export type ConfirmImportData = z.infer<typeof confirmImportSchema>;
 
-// Check if data exists for the period
+// Check if data exists for the period (filtered by source)
 export async function checkExistingResults(
     companyId: string,
     year: number,
-    month: number
+    month: number,
+    source: 'O' | 'M' = 'M'
 ): Promise<{ exists: boolean; count: number }> {
     const session = await auth();
     if (!session?.user) {
@@ -39,7 +40,8 @@ export async function checkExistingResults(
         where: and(
             eq(results.companyId, companyId),
             eq(results.year, year),
-            eq(results.month, month)
+            eq(results.month, month),
+            eq(results.source, source)
         ),
     });
 

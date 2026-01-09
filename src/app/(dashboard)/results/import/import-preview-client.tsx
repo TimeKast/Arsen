@@ -320,7 +320,8 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         setSaving(true);
         try {
             const month = getMonth();
-            const { exists, count } = await checkExistingResults(companyId, selectedYear, month);
+            const source = isOtrosSheet ? 'O' : 'M';
+            const { exists, count } = await checkExistingResults(companyId, selectedYear, month, source);
 
             if (exists) {
                 setExistingCount(count);

@@ -85,11 +85,17 @@ export async function getResultsForPeriod(
     // Calculate net result for each project
     for (const project of projectMap.values()) {
         project.netResult = project.totalIncome - project.totalCost;
-        // Sort concepts by type then name
+        // Sort concepts: source M first, then O; within each source: INCOME first, then COST; then by name
         project.concepts.sort((a, b) => {
+            // First by source: M (Monthly) before O (Otros)
+            if (a.source !== b.source) {
+                return a.source === 'M' ? -1 : 1;
+            }
+            // Then by type: INCOME before COST
             if (a.conceptType !== b.conceptType) {
                 return a.conceptType === 'INCOME' ? -1 : 1;
             }
+            // Then by name
             return a.conceptName.localeCompare(b.conceptName);
         });
     }
