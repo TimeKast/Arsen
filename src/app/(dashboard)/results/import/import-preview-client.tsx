@@ -15,6 +15,7 @@ import type { ConflictResolution } from '@/actions/import-resolution';
 import { checkExistingResults, confirmResultsImport } from '@/actions/results';
 import { getActiveImportRules, type ImportRule } from '@/actions/import-rules';
 import { applyImportRules } from '@/lib/import-rules-utils';
+import { useCompanyStore } from '@/stores/company-store';
 
 const MONTH_MAP: Record<string, number> = {
     'ener': 1, 'febr': 2, 'marr': 3, 'abrr': 4,
@@ -28,8 +29,14 @@ interface ImportPreviewClientProps {
     currentYear: number;
 }
 
-export function ImportPreviewClient({ companyId, companyName, currentYear }: ImportPreviewClientProps) {
+export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: defaultCompanyName, currentYear }: ImportPreviewClientProps) {
     const router = useRouter();
+
+    // Use selected company from store (falls back to props if not set)
+    const { selectedCompanyId, getSelectedCompany } = useCompanyStore();
+    const selectedCompany = getSelectedCompany();
+    const companyId = selectedCompanyId || defaultCompanyId;
+    const companyName = selectedCompany?.name || defaultCompanyName;
     const [file, setFile] = useState<File | null>(null);
     const [availableSheets, setAvailableSheets] = useState<string[]>([]);
     const [selectedSheet, setSelectedSheet] = useState<string>('');
