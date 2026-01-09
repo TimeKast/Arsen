@@ -13,7 +13,8 @@ import {
 import { ConflictResolver } from './conflict-resolver';
 import type { ConflictResolution } from '@/actions/import-resolution';
 import { checkExistingResults, confirmResultsImport } from '@/actions/results';
-import { getActiveImportRules, applyImportRules, type ImportRule } from '@/actions/import-rules';
+import { getActiveImportRules, type ImportRule } from '@/actions/import-rules';
+import { applyImportRules } from '@/lib/import-rules-utils';
 
 const MONTH_MAP: Record<string, number> = {
     'ener': 1, 'febr': 2, 'marr': 3, 'abrr': 4,
@@ -314,8 +315,8 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                     <Link
                         href="/catalogs/import-rules"
                         className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs ${importRules.length > 0
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                                : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                            : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
                             }`}
                         title="Configurar reglas de importación"
                     >
