@@ -10,7 +10,10 @@ import { z } from 'zod';
 const userSchema = z.object({
     email: z.string().email('Email invalido'),
     name: z.string().min(1, 'El nombre es requerido').max(255),
-    password: z.string().min(6, 'La contrasena debe tener al menos 6 caracteres').optional(),
+    password: z.string().transform(val => val === '' ? undefined : val).optional().refine(
+        (val) => val === undefined || val.length >= 6,
+        { message: 'La contrasena debe tener al menos 6 caracteres' }
+    ),
     role: z.enum(['ADMIN', 'STAFF', 'AREA_USER', 'READONLY']),
     areaId: z.string().uuid().optional().nullable(),
     companyIds: z.array(z.string().uuid()).min(1, 'Debe asignar al menos una empresa'),
