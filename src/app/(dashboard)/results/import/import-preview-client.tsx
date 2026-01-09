@@ -12,6 +12,8 @@ import {
     getOtrosYear,
     parseOtrosAsResults,
     parseOtrosAllMonths,
+    findMonthlySheets,
+    getMonthFromSheetName,
     type ParsedResults,
     type OtrosMonthlyData
 } from '@/lib/excel/results-parser';
@@ -66,6 +68,9 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
     const [otrosMonthlyData, setOtrosMonthlyData] = useState<OtrosMonthlyData | null>(null);
     const [isOtrosSheet, setIsOtrosSheet] = useState(false);
     const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null);
+    // Multi-month import mode (when file has multiple monthly sheets like ene, feb, mar...)
+    const [isMultiMonthMode, setIsMultiMonthMode] = useState(false);
+    const [detectedMonthlySheets, setDetectedMonthlySheets] = useState<Array<{ sheetName: string; month: number }>>([]);
 
     // Load import rules and saved mappings on mount
     useEffect(() => {
@@ -84,9 +89,12 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         setFile(selectedFile);
         setLoading(true);
         setParsedData(null);
+        setIsMultiMonthMode(false);
+        setDetectedMonthlySheets([]);
 
         try {
             const buffer = await selectedFile.arrayBuffer();
+            setFileBuffer(buffer);
             let sheets = getMonthSheets(buffer, validSheetNames);
 
             // Check for Otros sheet (budget format for results)
@@ -107,12 +115,26 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                 setSelectedMonth(detectedDate.month);
             }
 
-            if (sheets.length > 0) {
+            // Detect multiple monthly sheets for batch import
+            const monthlySheets = findMonthlySheets(buffer, validSheetNames);
+
+            if (monthlySheets.length >= 2) {
+                // Multi-month mode: file has 2+ monthly sheets (ene, feb, mar, etc.)
+                console.log('[MULTI-MONTH] Detected sheets:', monthlySheets);
+                setIsMultiMonthMode(true);
+                setDetectedMonthlySheets(monthlySheets);
+                setIsOtrosSheet(false);
+                setOtrosMonthlyData(null);
+                // Parse first sheet for preview
+                const firstSheet = monthlySheets[0];
+                setSelectedSheet(firstSheet.sheetName);
+                const result = parseResultsSheet(buffer, firstSheet.sheetName, knownProjects, validSheetNames);
+                setParsedData(result);
+            } else if (sheets.length > 0) {
                 setSelectedSheet(sheets[0]);
                 // Handle Otros sheet differently - parse ALL months at once
                 if (sheets[0].includes('Otros')) {
                     setIsOtrosSheet(true);
-                    setFileBuffer(buffer);
                     // Parse all 12 months
                     const otrosData = parseOtrosAllMonths(buffer, knownProjects, knownConcepts);
                     setOtrosMonthlyData(otrosData);
@@ -425,6 +447,88 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                 return;
             }
 
+            // Multi-month batch import - import all detected monthly sheets
+            if (isMultiMonthMode && detectedMonthlySheets.length > 0 && fileBuffer) {
+                console.log('[MULTI-MONTH] Starting batch import for', detectedMonthlySheets.length, 'sheets');
+
+                for (const sheet of detectedMonthlySheets) {
+                    console.log(`[MULTI-MONTH] Processing sheet "${sheet.sheetName}" for month ${sheet.month}...`);
+
+                    // Parse this sheet
+                    const sheetData = parseResultsSheet(fileBuffer, sheet.sheetName, knownProjects, validSheetNames);
+                    if (!sheetData.success) {
+                        console.warn(`[MULTI-MONTH] Failed to parse sheet ${sheet.sheetName}`);
+                        continue;
+                    }
+
+                    // Build entries for this sheet
+                    const getConceptIdForSheet = (conceptName: string | undefined, conceptType: 'INCOME' | 'COST' | undefined): string | undefined => {
+                        if (!conceptName) return undefined;
+                        const resolution = resolvedConflicts.find(
+                            r => r.type === 'CONCEPT' && r.originalName === conceptName && r.conceptType === conceptType
+                        );
+                        if (resolution?.targetId) return resolution.targetId;
+                        const savedMapping = savedMappings.find(
+                            m => m.externalName.toLowerCase() === conceptName.toLowerCase()
+                        );
+                        if (savedMapping?.conceptId) return savedMapping.conceptId;
+                        return undefined;
+                    };
+
+                    const entries = sheetData.values.map(v => {
+                        const project = sheetData.projects[v.projectIndex];
+                        const concept = sheetData.concepts[v.conceptIndex];
+
+                        // Admin expenses have no project
+                        if (project?.isAdministration) {
+                            return {
+                                projectId: null,
+                                projectName: null,
+                                conceptId: getConceptIdForSheet(concept?.name, concept?.type),
+                                conceptName: concept?.name || undefined,
+                                conceptType: concept?.type as 'INCOME' | 'COST' | undefined,
+                                amount: v.value,
+                            };
+                        }
+
+                        const projectResolution = resolvedConflicts.find(
+                            r => r.type === 'PROJECT' && r.originalName === project?.name
+                        );
+                        const savedProjectMapping = !projectResolution && project?.name
+                            ? savedProjectMappings.find(m => m.externalName.toLowerCase() === project.name.toLowerCase())
+                            : null;
+
+                        const resolvedProjectId = projectResolution?.targetId || savedProjectMapping?.projectId || null;
+                        const finalProjectId = resolvedProjectId === '__ADMIN__' ? null : resolvedProjectId;
+
+                        return {
+                            projectId: finalProjectId,
+                            projectName: project?.name || null,
+                            conceptId: getConceptIdForSheet(concept?.name, concept?.type),
+                            conceptName: concept?.name || undefined,
+                            conceptType: concept?.type as 'INCOME' | 'COST' | undefined,
+                            amount: v.value,
+                        };
+                    }).filter(e => (e.conceptId || e.conceptName) && e.amount !== 0);
+
+                    if (entries.length > 0) {
+                        const result = await confirmResultsImport({
+                            companyId,
+                            year: selectedYear,
+                            month: sheet.month, // Use the detected month for this sheet
+                            source: 'M',
+                            entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; conceptType?: 'INCOME' | 'COST'; amount: number }>,
+                        });
+                        totalInserted += result.insertedCount || 0;
+                        console.log(`[MULTI-MONTH] Sheet ${sheet.sheetName} (month ${sheet.month}): inserted ${result.insertedCount} entries`);
+                    }
+                }
+
+                console.log(`[MULTI-MONTH] Total inserted across all sheets: ${totalInserted}`);
+                router.push('/results');
+                return;
+            }
+
             // Regular single-month import
             const month = getMonth();
 
@@ -675,36 +779,78 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                                 </div>
                             )}
 
-                            {/* Year/Month Selector */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">Periodo:</span>
-                                <select
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                    className="px-3 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                >
-                                    <option value={1}>Enero</option>
-                                    <option value={2}>Febrero</option>
-                                    <option value={3}>Marzo</option>
-                                    <option value={4}>Abril</option>
-                                    <option value={5}>Mayo</option>
-                                    <option value={6}>Junio</option>
-                                    <option value={7}>Julio</option>
-                                    <option value={8}>Agosto</option>
-                                    <option value={9}>Septiembre</option>
-                                    <option value={10}>Octubre</option>
-                                    <option value={11}>Noviembre</option>
-                                    <option value={12}>Diciembre</option>
-                                </select>
-                                <input
-                                    type="number"
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                    className="w-20 px-3 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                    min={2020}
-                                    max={2030}
-                                />
-                            </div>
+                            {/* Multi-Month Mode Panel */}
+                            {isMultiMonthMode && detectedMonthlySheets.length > 0 && (
+                                <div className="flex flex-col gap-2 bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                                    <div className="flex items-center gap-2">
+                                        <FileSpreadsheet size={16} className="text-blue-600" />
+                                        <span className="font-medium text-blue-800 dark:text-blue-200">
+                                            Importación Multi-Mes Detectada
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                                        Se encontraron {detectedMonthlySheets.length} pestañas mensuales en el archivo:
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {detectedMonthlySheets.map((sheet) => (
+                                            <span
+                                                key={sheet.sheetName}
+                                                className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-800 rounded text-sm border border-blue-300 dark:border-blue-600"
+                                            >
+                                                <span className="font-medium">{sheet.sheetName}</span>
+                                                <span className="text-gray-500">→</span>
+                                                <span className="text-blue-600 dark:text-blue-400">
+                                                    {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][sheet.month - 1]}
+                                                </span>
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-sm text-gray-500">Año:</span>
+                                        <input
+                                            type="number"
+                                            value={selectedYear}
+                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                            className="w-20 px-3 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                            min={2020}
+                                            max={2030}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Year/Month Selector (only show when NOT in multi-month mode) */}
+                            {!isMultiMonthMode && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-500">Periodo:</span>
+                                    <select
+                                        value={selectedMonth}
+                                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                        className="px-3 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    >
+                                        <option value={1}>Enero</option>
+                                        <option value={2}>Febrero</option>
+                                        <option value={3}>Marzo</option>
+                                        <option value={4}>Abril</option>
+                                        <option value={5}>Mayo</option>
+                                        <option value={6}>Junio</option>
+                                        <option value={7}>Julio</option>
+                                        <option value={8}>Agosto</option>
+                                        <option value={9}>Septiembre</option>
+                                        <option value={10}>Octubre</option>
+                                        <option value={11}>Noviembre</option>
+                                        <option value={12}>Diciembre</option>
+                                    </select>
+                                    <input
+                                        type="number"
+                                        value={selectedYear}
+                                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                        className="w-20 px-3 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        min={2020}
+                                        max={2030}
+                                    />
+                                </div>
+                            )}
 
                             <div className="flex items-center gap-4 ml-auto">
                                 {warningCount > 0 && (
