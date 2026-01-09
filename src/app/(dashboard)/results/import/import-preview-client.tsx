@@ -33,8 +33,8 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
     const router = useRouter();
 
     // Use selected company from store (falls back to props if not set)
-    const { selectedCompanyId, getSelectedCompany } = useCompanyStore();
-    const selectedCompany = getSelectedCompany();
+    const { selectedCompanyId, companies } = useCompanyStore();
+    const selectedCompany = companies.find(c => c.id === selectedCompanyId);
     const companyId = selectedCompanyId || defaultCompanyId;
     const companyName = selectedCompany?.name || defaultCompanyName;
     const [file, setFile] = useState<File | null>(null);
