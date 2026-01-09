@@ -64,9 +64,20 @@ const KNOWN_COST_CONCEPTS = [
 // Default valid sheet names - used as FALLBACK when no DB entries exist
 // These can be managed via /catalogs/sheet-names UI
 const DEFAULT_VALID_SHEET_NAMES = [
-    // Monthly pattern sheets
+    // Monthly pattern sheets (original format with R suffix)
     'EneR', 'FebR', 'MarR', 'AbrR', 'MayR', 'JunR',
     'JulR', 'AgoR', 'SepR', 'OctR', 'NovR', 'DicR',
+    // Lowercase spanish month names (common format)
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+    // Capitalized spanish month names
+    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+    // Full month names in spanish
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
     // Alternative names - MUST BE EXACT
     'Desglose de Ingresos y costm',
     'Desglose de Ingresos y costos m',
@@ -76,6 +87,42 @@ const DEFAULT_VALID_SHEET_NAMES = [
 // When DB is queried, the actual concepts from DB should be passed
 const KNOWN_INCOME_CONCEPTS_DEFAULT: string[] = [];
 const KNOWN_COST_CONCEPTS_DEFAULT: string[] = [];
+
+// Month mapping for sheet names (case insensitive)
+const MONTH_NAME_MAP: Record<string, number> = {
+    // Short names (3 chars)
+    'ene': 1, 'feb': 2, 'mar': 3, 'abr': 4, 'may': 5, 'jun': 6,
+    'jul': 7, 'ago': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dic': 12,
+    // With R suffix
+    'ener': 1, 'febr': 2, 'marr': 3, 'abrr': 4, 'mayr': 5, 'junr': 6,
+    'julr': 7, 'agor': 8, 'sepr': 9, 'octr': 10, 'novr': 11, 'dicr': 12,
+    // Full month names
+    'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
+    'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12,
+};
+
+/**
+ * Get month number (1-12) from a sheet name
+ * Supports: EneR, ene, Ene, enero, Enero, etc.
+ * Returns null if sheet name doesn't match any month pattern
+ */
+export function getMonthFromSheetName(sheetName: string): number | null {
+    const normalized = sheetName.toLowerCase().trim();
+
+    // First try exact match
+    if (MONTH_NAME_MAP[normalized]) {
+        return MONTH_NAME_MAP[normalized];
+    }
+
+    // Try prefix match (for cases like "EneR" -> "ener")
+    for (const [prefix, month] of Object.entries(MONTH_NAME_MAP)) {
+        if (normalized.startsWith(prefix)) {
+            return month;
+        }
+    }
+
+    return null;
+}
 
 function normalizeString(str: string): string {
     return str
@@ -860,3 +907,64 @@ export function parseOtrosAllMonths(
         };
     }
 }
+
+/**
+ * Find all monthly sheets in a workbook and return their names with month numbers
+ */
+export function findMonthlySheets(buffer: ArrayBuffer, validSheetNames?: string[]): Array<{ sheetName: string; month: number }> {
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheetNamesToUse = validSheetNames && validSheetNames.length > 0 ? validSheetNames : DEFAULT_VALID_SHEET_NAMES;
+
+    const monthlySheets: Array<{ sheetName: string; month: number }> = [];
+
+    for (const sheetName of workbook.SheetNames) {
+        // Check if sheet name is in valid list
+        const isValid = sheetNamesToUse.some(valid =>
+            sheetName.toLowerCase() === valid.toLowerCase() ||
+            sheetName.toLowerCase().startsWith(valid.toLowerCase().slice(0, 3))
+        );
+
+        if (isValid) {
+            const month = getMonthFromSheetName(sheetName);
+            if (month !== null) {
+                monthlySheets.push({ sheetName, month });
+            }
+        }
+    }
+
+    // Sort by month
+    monthlySheets.sort((a, b) => a.month - b.month);
+
+    return monthlySheets;
+}
+
+export interface MonthlyParsedResults {
+    sheetName: string;
+    month: number;
+    data: ParsedResults;
+}
+
+/**
+ * Parse all monthly sheets from a workbook
+ * Returns an array of parsed results, one for each monthly sheet found
+ */
+export function parseAllMonthlySheets(
+    buffer: ArrayBuffer,
+    knownProjects?: string[],
+    validSheetNames?: string[]
+): MonthlyParsedResults[] {
+    const monthlySheets = findMonthlySheets(buffer, validSheetNames);
+    const results: MonthlyParsedResults[] = [];
+
+    for (const { sheetName, month } of monthlySheets) {
+        const data = parseResultsSheet(buffer, sheetName, knownProjects, validSheetNames);
+        results.push({
+            sheetName,
+            month,
+            data,
+        });
+    }
+
+    return results;
+}
+
