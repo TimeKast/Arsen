@@ -278,6 +278,18 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         return conflicts;
     }, [parsedData, savedMappings, savedProjectMappings]);
 
+    // Helper to check if project is effectively recognized (in DB or has saved mapping)
+    const isProjectEffectivelyRecognized = useCallback((project: { name: string; isRecognized: boolean }) => {
+        if (project.isRecognized) return true;
+        return savedProjectMappings.some(m => m.externalName.toLowerCase() === project.name.toLowerCase());
+    }, [savedProjectMappings]);
+
+    // Helper to check if concept is effectively recognized (in DB or has saved mapping)
+    const isConceptEffectivelyRecognized = useCallback((concept: { name: string; isRecognized: boolean }) => {
+        if (concept.isRecognized) return true;
+        return savedMappings.some(m => m.externalName.toLowerCase() === concept.name.toLowerCase());
+    }, [savedMappings]);
+
     const handleResolved = useCallback((resolutions: ConflictResolution[]) => {
         console.log('Resolutions received from conflict resolver:', resolutions);
         console.log('Project resolutions:', resolutions.filter(r => r.type === 'PROJECT'));
@@ -743,12 +755,12 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                                         {parsedData.projects.map((project) => (
                                             <span
                                                 key={project.columnIndex}
-                                                className={`px-3 py-1 rounded-full text-sm ${project.isRecognized
+                                                className={`px-3 py-1 rounded-full text-sm ${isProjectEffectivelyRecognized(project)
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                                     : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
                                                     }`}
                                             >
-                                                {!project.isRecognized && <AlertTriangle size={12} className="inline mr-1" />}
+                                                {!isProjectEffectivelyRecognized(project) && <AlertTriangle size={12} className="inline mr-1" />}
                                                 {project.name}
                                             </span>
                                         ))}
@@ -770,10 +782,10 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                                             {parsedData.concepts.filter(c => c.type === 'INCOME').map((concept) => (
                                                 <li
                                                     key={concept.rowIndex}
-                                                    className={`flex items-center gap-2 ${!concept.isRecognized ? 'text-amber-600' : 'dark:text-white'
+                                                    className={`flex items-center gap-2 ${!isConceptEffectivelyRecognized(concept) ? 'text-amber-600' : 'dark:text-white'
                                                         }`}
                                                 >
-                                                    {!concept.isRecognized && <AlertTriangle size={12} />}
+                                                    {!isConceptEffectivelyRecognized(concept) && <AlertTriangle size={12} />}
                                                     {concept.name}
                                                 </li>
                                             ))}
@@ -793,10 +805,10 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                                             {parsedData.concepts.filter(c => c.type === 'COST').map((concept) => (
                                                 <li
                                                     key={concept.rowIndex}
-                                                    className={`flex items-center gap-2 ${!concept.isRecognized ? 'text-amber-600' : 'dark:text-white'
+                                                    className={`flex items-center gap-2 ${!isConceptEffectivelyRecognized(concept) ? 'text-amber-600' : 'dark:text-white'
                                                         }`}
                                                 >
-                                                    {!concept.isRecognized && <AlertTriangle size={12} />}
+                                                    {!isConceptEffectivelyRecognized(concept) && <AlertTriangle size={12} />}
                                                     {concept.name}
                                                 </li>
                                             ))}
