@@ -60,6 +60,11 @@ const KNOWN_COST_CONCEPTS = [
     'compensaciones', 'varios', 'no deducibles', 'nomina operativa', 'nomina gerencial'
 ];
 
+// Note: These lists are used as fallback when no DB concepts are provided
+// When DB is queried, the actual concepts from DB should be passed
+const KNOWN_INCOME_CONCEPTS_DEFAULT: string[] = [];
+const KNOWN_COST_CONCEPTS_DEFAULT: string[] = [];
+
 function normalizeString(str: string): string {
     return str
         .toLowerCase()
@@ -251,8 +256,8 @@ export function parseResultsSheet(
 
             // Add concept
             const isRecognized = currentType === 'INCOME'
-                ? isConceptRecognized(conceptName, KNOWN_INCOME_CONCEPTS)
-                : isConceptRecognized(conceptName, KNOWN_COST_CONCEPTS);
+                ? isConceptRecognized(conceptName, KNOWN_INCOME_CONCEPTS_DEFAULT)
+                : isConceptRecognized(conceptName, KNOWN_COST_CONCEPTS_DEFAULT);
 
             const conceptIndex = concepts.length;
             concepts.push({
