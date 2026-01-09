@@ -212,13 +212,40 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         setResolvedConflicts([]);
     }, []);
 
-    const warningCount = parsedData?.warnings.filter(w =>
-        w.type === 'PROJECT_NOT_FOUND' || w.type === 'CONCEPT_NOT_FOUND'
-    ).length || 0;
+    // Filter warnings to exclude already-mapped projects and concepts
+    const effectiveWarnings = parsedData?.warnings.filter(w => {
+        if (w.type === 'PROJECT_NOT_FOUND') {
+            // Extract project name from warning message
+            const match = w.message.match(/Proyecto no reconocido: "(.+)"/);
+            if (match) {
+                const projectName = match[1].toLowerCase();
+                // Skip if already mapped
+                if (savedProjectMappings.some(m => m.externalName.toLowerCase() === projectName)) {
+                    return false;
+                }
+            }
+        }
+        if (w.type === 'CONCEPT_NOT_FOUND') {
+            // Extract concept name from warning message
+            const match = w.message.match(/Concepto no reconocido: "(.+)" \(/);
+            if (match) {
+                const conceptName = match[1].toLowerCase();
+                // Skip if already mapped
+                if (savedMappings.some(m => m.externalName.toLowerCase() === conceptName)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }) || [];
 
-    const errorCount = parsedData?.warnings.filter(w =>
+    const warningCount = effectiveWarnings.filter(w =>
+        w.type === 'PROJECT_NOT_FOUND' || w.type === 'CONCEPT_NOT_FOUND'
+    ).length;
+
+    const errorCount = effectiveWarnings.filter(w =>
         w.type === 'STRUCTURE_ERROR' || w.type === 'INVALID_VALUE'
-    ).length || 0;
+    ).length;
 
     // Get conflicts for resolver
     const getConflicts = useCallback(() => {
