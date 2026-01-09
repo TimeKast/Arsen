@@ -90,21 +90,27 @@ export function parseResultsSheet(
         // Read workbook
         const workbook = XLSX.read(buffer, { type: 'array' });
 
-        // Find sheet (use specified or find by patterns)
+        // Find sheet (use specified or find by exact name match)
         let targetSheet = sheetName;
         if (!targetSheet) {
-            // Try monthly sheets first (EneR, FebR, etc.)
-            const monthSheets = workbook.SheetNames.filter(name => /^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)R$/i.test(name));
-            if (monthSheets.length > 0) {
-                targetSheet = monthSheets[0];
-            } else {
-                // Try "Desglose de Ingresos" pattern
-                const desgloseSheet = workbook.SheetNames.find(name =>
-                    normalizeString(name).includes('desglose') &&
-                    (normalizeString(name).includes('ingreso') || normalizeString(name).includes('costo'))
-                );
-                targetSheet = desgloseSheet || workbook.SheetNames[0];
-            }
+            // Valid sheet names (exact match, case-insensitive)
+            const VALID_SHEET_NAMES = [
+                // Monthly pattern sheets
+                'EneR', 'FebR', 'MarR', 'AbrR', 'MayR', 'JunR',
+                'JulR', 'AgoR', 'SepR', 'OctR', 'NovR', 'DicR',
+                // Alternative names (add more here as needed)
+                'Desglose de Ingresos y costm',
+                'Desglose de Ingresos y costos',
+                'Desglose de Ingresos',
+                'Desglose',
+            ];
+
+            // Find first matching sheet (case-insensitive exact match)
+            targetSheet = workbook.SheetNames.find(name =>
+                VALID_SHEET_NAMES.some(valid =>
+                    name.toLowerCase().trim() === valid.toLowerCase().trim()
+                )
+            ) || workbook.SheetNames[0];
         }
 
         const sheet = workbook.Sheets[targetSheet];
