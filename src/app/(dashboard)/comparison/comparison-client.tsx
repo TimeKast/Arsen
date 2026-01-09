@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { getComparisonData, type ComparisonData, type ComparisonRow } from '@/actions/comparison';
 import { usePeriodStore } from '@/stores/period-store';
+import { useCompanyStore } from '@/stores/company-store';
 
 interface Company {
     id: string;
@@ -25,7 +26,8 @@ interface ComparisonClientProps {
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 export function ComparisonClient({ companies, projects, initialYear }: ComparisonClientProps) {
-    const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
+    const { selectedCompanyId: globalCompanyId } = useCompanyStore();
+    const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
     const [selectedProjectId, setSelectedProjectId] = useState('');
     const { selectedYear, selectedMonth } = usePeriodStore();
     const [data, setData] = useState<ComparisonData | null>(null);
@@ -99,25 +101,9 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
         <div>
             <h1 className="text-2xl font-bold dark:text-white mb-6">Comparativo Real vs Presupuesto</h1>
 
-            {/* Filters */}
+            {/* Filters - Project only (Company and Period are in global header) */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-wrap gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Empresa
-                        </label>
-                        <select
-                            value={selectedCompanyId}
-                            onChange={(e) => setSelectedCompanyId(e.target.value)}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {companies.map((company) => (
-                                <option key={company.id} value={company.id}>
-                                    {company.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyecto

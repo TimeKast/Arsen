@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DollarSign, ChevronDown, ChevronUp, Calculator, X } from 'lucide-react';
 import { getProfitSharingResults, type CalculatedProfitSharing } from '@/actions/profit-sharing-calc';
 import { usePeriodStore } from '@/stores/period-store';
+import { useCompanyStore } from '@/stores/company-store';
 
 interface Company {
     id: string;
@@ -18,7 +19,8 @@ interface ProfitSharingViewClientProps {
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 export function ProfitSharingViewClient({ companies, initialYear }: ProfitSharingViewClientProps) {
-    const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
+    const { selectedCompanyId: globalCompanyId } = useCompanyStore();
+    const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
     const { selectedYear, selectedMonth } = usePeriodStore();
     const [data, setData] = useState<CalculatedProfitSharing[]>([]);
     const [loading, setLoading] = useState(false);
@@ -60,27 +62,7 @@ export function ProfitSharingViewClient({ companies, initialYear }: ProfitSharin
                 <h1 className="text-2xl font-bold dark:text-white">Reparto de Utilidades</h1>
             </div>
 
-            {/* Filters - Company only (Period is in global header) */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <div className="flex flex-wrap gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Empresa
-                        </label>
-                        <select
-                            value={selectedCompanyId}
-                            onChange={(e) => setSelectedCompanyId(e.target.value)}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {companies.map((company) => (
-                                <option key={company.id} value={company.id}>
-                                    {company.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
+            {/* No local filters needed - Company and Period are controlled by global header */}
 
             {loading ? (
                 <div className="text-center py-8 text-gray-500">Cargando...</div>

@@ -30,10 +30,7 @@ export const usePeriodStore = create<PeriodStore>()(
 
             setSelectedPeriod: (year: number, month: number) => {
                 set({ selectedYear: year, selectedMonth: month });
-                // Reload to refresh data with new period context
-                if (typeof window !== 'undefined') {
-                    window.location.reload();
-                }
+                // No reload needed - pages react to store changes via useEffect
             },
 
             setAvailablePeriods: (periods: Period[]) => {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Upload, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
 import { getBudgetsByProject, type ProjectBudget } from '@/actions/budgets';
 import { useCompanyStore } from '@/stores/company-store';
+import { usePeriodStore } from '@/stores/period-store';
 
 interface Company {
     id: string;
@@ -43,9 +44,9 @@ const months = [
 
 export function BudgetsClient({ companies, areas, initialYear, userRole }: BudgetsClientProps) {
     const { selectedCompanyId: globalCompanyId } = useCompanyStore();
+    const { selectedYear } = usePeriodStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
 
-    const [selectedYear, setSelectedYear] = useState(initialYear);
     const [selectedMonth, setSelectedMonth] = useState<number>(0); // 0 = all months
     const [selectedAreaId, setSelectedAreaId] = useState<string>('');
     const [projectBudgets, setProjectBudgets] = useState<ProjectBudget[]>([]);
@@ -117,23 +118,9 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
                 )}
             </div>
 
-            {/* Filters */}
+            {/* Filters - Area and Month only (Year is controlled by global header) */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-wrap gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Año
-                        </label>
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {years.map((y) => (
-                                <option key={y} value={y}>{y}</option>
-                            ))}
-                        </select>
-                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Área

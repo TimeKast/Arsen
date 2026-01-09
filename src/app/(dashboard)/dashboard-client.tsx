@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Target, BarChart3 } from 'lucide-react';
 import { getDashboardKPIs, getTopProjects, getTrendData, type DashboardKPIs, type TopProject, type TrendDataPoint } from '@/actions/dashboard';
 import { usePeriodStore } from '@/stores/period-store';
+import { useCompanyStore } from '@/stores/company-store';
 
 interface Company {
     id: string;
@@ -26,8 +27,8 @@ interface DashboardClientProps {
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 export function DashboardClient({ companies, projects, initialYear, userName }: DashboardClientProps) {
-    const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
-    const [selectedCompany, setSelectedCompany] = useState(companies[0]?.name || '');
+    const { selectedCompanyId: globalCompanyId, companies: storeCompanies } = useCompanyStore();
+    const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
     const { selectedYear, selectedMonth } = usePeriodStore();
     const [selectedProjectId, setSelectedProjectId] = useState<string>(''); // empty = all projects
     const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
@@ -37,12 +38,7 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
 
     // Filter projects by company
     const companyProjects = projects.filter(p => p.companyId === selectedCompanyId);
-
-    // Update selected company name when ID changes
-    useEffect(() => {
-        const company = companies.find(c => c.id === selectedCompanyId);
-        if (company) setSelectedCompany(company.name);
-    }, [selectedCompanyId, companies]);
+    const selectedCompany = storeCompanies.find(c => c.id === selectedCompanyId)?.name || companies.find(c => c.id === selectedCompanyId)?.name || '';
 
     // Load dashboard data
     const loadData = useCallback(async () => {
@@ -90,25 +86,9 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
                 </p>
             </div>
 
-            {/* Filters - Company and Project only (Period is in global header) */}
+            {/* Filters - Project only (Company and Period are in global header) */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-wrap gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Empresa
-                        </label>
-                        <select
-                            value={selectedCompanyId}
-                            onChange={(e) => setSelectedCompanyId(e.target.value)}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {companies.map((company) => (
-                                <option key={company.id} value={company.id}>
-                                    {company.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyecto
