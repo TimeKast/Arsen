@@ -64,7 +64,11 @@ const resolutionSchema = z.object({
         originalName: z.string(),
         type: z.enum(['PROJECT', 'CONCEPT']),
         action: z.enum(['MAP', 'CREATE', 'IGNORE']),
-        targetId: z.string().uuid().optional(),
+        // Allow UUID or __ADMIN__ special value for admin expenses
+        targetId: z.string().optional().refine(
+            (val) => !val || val === '__ADMIN__' || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val),
+            { message: 'Invalid UUID or __ADMIN__ value' }
+        ),
         newName: z.string().optional(),
         conceptType: z.enum(['INCOME', 'COST']).optional(),
     })),
