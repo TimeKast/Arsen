@@ -21,7 +21,7 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
     const [saving, setSaving] = useState(false);
     const [preview, setPreview] = useState<ParsedReconciliation[]>([]);
     const [errors, setErrors] = useState<string[]>([]);
-    const [result, setResult] = useState<{ success: boolean; count: number } | null>(null);
+    const [result, setResult] = useState<{ success: boolean; count: number; otrosCount?: number; otrosYear?: number } | null>(null);
     const [hasOtros, setHasOtros] = useState(false);
     const [importOtros, setImportOtros] = useState(false);
 
@@ -105,9 +105,35 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                 entries,
             });
 
-            setResult({ success: true, count: response.insertedCount });
+            let otrosResult = null;
+
+            // Import Otros sheet as results if option is checked
+            if (importOtros && file) {
+                try {
+                    const otrosFormData = new FormData();
+                    otrosFormData.append('file', file);
+                    otrosFormData.append('companyId', selectedCompanyId);
+
+                    const otrosResponse = await fetch('/api/reconciliations/import-otros', {
+                        method: 'POST',
+                        body: otrosFormData,
+                    });
+
+                    otrosResult = await otrosResponse.json();
+                } catch (err) {
+                    console.error('Error importing Otros:', err);
+                }
+            }
+
+            const successMessage = otrosResult?.success
+                ? `${response.insertedCount} conciliaciones + ${otrosResult.insertedCount} resultados de Otros (año ${otrosResult.year})`
+                : `${response.insertedCount}`;
+
+            setResult({ success: true, count: response.insertedCount, otrosCount: otrosResult?.insertedCount, otrosYear: otrosResult?.year });
             setPreview([]);
             setFile(null);
+            setHasOtros(false);
+            setImportOtros(false);
         } catch (error) {
             setErrors(['Error al guardar conciliaciones']);
         } finally {
@@ -244,6 +270,7 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                         <Check size={20} />
                         <span className="font-medium">
                             {result.count} conciliaciones importadas correctamente
+                            {result.otrosCount && ` + ${result.otrosCount} resultados de Otros (${result.otrosYear})`}
                         </span>
                     </div>
                 </div>

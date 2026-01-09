@@ -177,6 +177,78 @@ export function hasOtrosSheet(buffer: Buffer): boolean {
     }
 }
 
+// Parsed result entry from Otros sheet
+export interface ParsedOtrosEntry {
+    areaName: string;
+    projectName: string | null;
+    conceptCode: string;
+    amounts: number[]; // 12 months
+}
+
+// Parse Otros sheet for results import (budget format)
+export function parseOtrosSheet(buffer: Buffer): { year: number; entries: ParsedOtrosEntry[] } | null {
+    try {
+        const workbook = XLSX.read(buffer, { type: 'buffer', cellNF: true });
+
+        // Find year from sheet name (e.g., "2025")
+        const yearSheet = workbook.SheetNames.find(name => /^\d{4}$/.test(name));
+        const year = yearSheet ? parseInt(yearSheet) : new Date().getFullYear();
+
+        // Find Otros sheet
+        const otrosSheetName = workbook.SheetNames.find(name => name.toLowerCase() === 'otros');
+        if (!otrosSheetName) return null;
+
+        const sheet = workbook.Sheets[otrosSheetName];
+        if (!sheet) return null;
+
+        const data: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+        const entries: ParsedOtrosEntry[] = [];
+
+        // Find header row (contains "Area" or "Cuenta")
+        let headerRow = -1;
+        for (let r = 0; r < Math.min(data.length, 10); r++) {
+            const row = data[r];
+            if (row && row.some((cell: any) => String(cell || '').toLowerCase().includes('cuenta'))) {
+                headerRow = r;
+                break;
+            }
+        }
+
+        if (headerRow === -1) return { year, entries: [] };
+
+        // Parse data rows
+        for (let r = headerRow + 1; r < data.length; r++) {
+            const row = data[r];
+            if (!row || row.length < 5) continue;
+
+            const areaName = String(row[0] || '').trim();
+            const projectName = row[1] ? String(row[1]).trim() : null;
+            const conceptCode = String(row[2] || '').trim();
+
+            // Skip empty rows or header
+            if (!areaName || !conceptCode) continue;
+            if (areaName.toLowerCase() === 'area') continue;
+
+            // Extract 12 month amounts (columns 4-15)
+            const amounts: number[] = [];
+            for (let m = 0; m < 12; m++) {
+                const val = row[4 + m];
+                amounts.push(typeof val === 'number' ? val : 0);
+            }
+
+            // Only add if at least one month has a value
+            if (amounts.some(a => a !== 0)) {
+                entries.push({ areaName, projectName, conceptCode, amounts });
+            }
+        }
+
+        return { year, entries };
+    } catch (error) {
+        console.error('Error parsing Otros sheet:', error);
+        return null;
+    }
+}
+
 function detectColumnMapping(headers: string[]): ColumnMapping {
     const mapping: ColumnMapping = {
         date: -1,
