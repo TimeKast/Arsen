@@ -246,7 +246,6 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                     return {
                         projectId: null,
                         projectName: null, // No project for admin expenses
-                        isAdministration: true,
                         conceptId: conceptResolution?.targetId || undefined,
                         conceptName: concept?.name || undefined,
                         conceptType: concept?.type as 'INCOME' | 'COST' | undefined,
