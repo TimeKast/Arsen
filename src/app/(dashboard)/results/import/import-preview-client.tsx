@@ -301,8 +301,12 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                     console.log(`No resolution for project: "${project.name}"`);
                 }
 
+                // Handle __ADMIN__ special value - convert to null for admin expenses
+                const resolvedProjectId = projectResolution?.targetId;
+                const finalProjectId = resolvedProjectId === '__ADMIN__' ? null : resolvedProjectId || null;
+
                 return {
-                    projectId: projectResolution?.targetId || null,
+                    projectId: finalProjectId,
                     projectName: project?.name || null,
                     conceptId: conceptResolution?.targetId || undefined,
                     conceptName: concept?.name || undefined,

@@ -283,9 +283,14 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                                             className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         >
                                             <option value="">Seleccionar proyecto existente...</option>
-                                            {existingProjects.map((p) => (
-                                                <option key={p.id} value={p.id}>{p.name}</option>
-                                            ))}
+                                            <option value="__ADMIN__" className="font-medium bg-amber-50 dark:bg-amber-900/30">
+                                                🏢 Gastos de Administración (sin proyecto)
+                                            </option>
+                                            <optgroup label="Proyectos">
+                                                {existingProjects.map((p) => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                            </optgroup>
                                         </select>
                                     )}
                                     {resolution.action === 'CREATE' && (
