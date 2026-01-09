@@ -17,7 +17,7 @@ export default async function ResultsPage() {
     const currentYear = new Date().getFullYear();
 
     // Get all projects and concepts for the form
-    const allProjects = await db.select({ id: projects.id, name: projects.name }).from(projects).where(eq(projects.isActive, true));
+    const allProjects = await db.select({ id: projects.id, name: projects.name, companyId: projects.companyId }).from(projects).where(eq(projects.isActive, true));
     const allConcepts = await db.select({ id: concepts.id, name: concepts.name, type: concepts.type }).from(concepts).where(eq(concepts.isActive, true));
 
     return (

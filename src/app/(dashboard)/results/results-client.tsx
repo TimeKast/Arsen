@@ -7,6 +7,7 @@ import { getResultsForPeriod, type ProjectResult } from '@/actions/results-view'
 import { createResult, updateResult, deleteResult } from '@/actions/results';
 import { useCompanyStore } from '@/stores/company-store';
 import { usePeriodStore } from '@/stores/period-store';
+import { MultiProjectSelector } from '@/components/ui/multi-project-selector';
 import { ResultForm } from '@/components/forms/result-form';
 
 interface Company {
@@ -17,6 +18,7 @@ interface Company {
 interface Project {
     id: string;
     name: string;
+    companyId: string;
 }
 
 interface Concept {
@@ -130,20 +132,11 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyectos
                         </label>
-                        <select
-                            multiple
-                            value={selectedProjectIds}
-                            onChange={(e) => {
-                                const values = Array.from(e.target.selectedOptions, o => o.value);
-                                setSelectedProjectIds(values);
-                            }}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px] h-20"
-                        >
-                            {companyProjects.map((p) => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">Ctrl+click para seleccionar varios. Vacío = todos.</p>
+                        <MultiProjectSelector
+                            projects={companyProjects}
+                            selectedIds={selectedProjectIds}
+                            onChange={setSelectedProjectIds}
+                        />
                     </div>
                     <div className="text-sm text-gray-500">
                         Mostrando resultados para {monthDisplay} {selectedYear}

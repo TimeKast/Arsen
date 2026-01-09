@@ -5,6 +5,7 @@ import { DollarSign, TrendingUp, TrendingDown, Target, BarChart3 } from 'lucide-
 import { getDashboardKPIs, getTopProjects, getTrendData, type DashboardKPIs, type TopProject, type TrendDataPoint } from '@/actions/dashboard';
 import { usePeriodStore } from '@/stores/period-store';
 import { useCompanyStore } from '@/stores/company-store';
+import { MultiProjectSelector } from '@/components/ui/multi-project-selector';
 
 interface Company {
     id: string;
@@ -50,8 +51,8 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
             const projectFilter = selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined;
             const [kpiData, topData, trend] = await Promise.all([
                 getDashboardKPIs(selectedCompanyId, selectedYear, selectedMonth, projectFilter),
-                getTopProjects(selectedCompanyId, selectedYear, selectedMonth),
-                getTrendData(selectedCompanyId, selectedYear)
+                getTopProjects(selectedCompanyId, selectedYear, selectedMonth, projectFilter),
+                getTrendData(selectedCompanyId, selectedYear, selectedMonth, projectFilter)
             ]);
             setKpis(kpiData);
             setTopProjects(topData);
@@ -95,20 +96,11 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyectos
                         </label>
-                        <select
-                            multiple
-                            value={selectedProjectIds}
-                            onChange={(e) => {
-                                const values = Array.from(e.target.selectedOptions, o => o.value);
-                                setSelectedProjectIds(values);
-                            }}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px] h-20"
-                        >
-                            {companyProjects.map((p) => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">Ctrl+click para seleccionar varios. Vacío = todos.</p>
+                        <MultiProjectSelector
+                            projects={companyProjects}
+                            selectedIds={selectedProjectIds}
+                            onChange={setSelectedProjectIds}
+                        />
                     </div>
                 </div>
             </div>
