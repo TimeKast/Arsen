@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { FileSpreadsheet, Plus, Search, Trash2, Filter } from 'lucide-react';
 import { getReconciliations, deleteReconciliation } from '@/actions/reconciliations';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ interface Company {
 interface Project {
     id: string;
     name: string;
+    companyId: string;
 }
 
 interface Reconciliation {
@@ -68,6 +69,17 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    // Filter projects by selected company
+    const companyProjects = useMemo(() =>
+        projects.filter(p => p.companyId === selectedCompanyId),
+        [projects, selectedCompanyId]
+    );
+
+    // Reset project filter when company changes
+    useEffect(() => {
+        setFilterProjectId('');
+    }, [selectedCompanyId]);
 
     // Apply filters
     useEffect(() => {
@@ -173,7 +185,7 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
                             className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 dark:border-gray-600"
                         >
                             <option value="">Todos</option>
-                            {projects.map((p) => (
+                            {companyProjects.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>

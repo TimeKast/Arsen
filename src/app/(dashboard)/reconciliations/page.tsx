@@ -16,7 +16,7 @@ export default async function ReconciliationsPage() {
 
     const allProjects = await db.query.projects.findMany({
         where: eq(projects.isActive, true),
-        columns: { id: true, name: true },
+        columns: { id: true, name: true, companyId: true },
     });
 
     return (
