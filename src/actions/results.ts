@@ -60,13 +60,29 @@ async function findConceptByName(name: string, type?: 'INCOME' | 'COST'): Promis
 
 
 // Helper to find project by name in company (case insensitive)
+// Also tries stripping (XX) prefix codes for Otros sheet compatibility
 async function findProjectByName(name: string, companyId: string): Promise<string | null> {
-    const project = await db.query.projects.findFirst({
+    // First try exact match
+    let project = await db.query.projects.findFirst({
         where: and(
             ilike(projects.name, name),
             eq(projects.companyId, companyId)
         ),
     });
+
+    // If not found, try stripping (XX) prefix for Otros compatibility
+    if (!project) {
+        const strippedName = name.replace(/^\(\d+\)\s*/, '').trim();
+        if (strippedName !== name) {
+            project = await db.query.projects.findFirst({
+                where: and(
+                    ilike(projects.name, strippedName),
+                    eq(projects.companyId, companyId)
+                ),
+            });
+        }
+    }
+
     return project?.id || null;
 }
 

@@ -504,6 +504,11 @@ export function parseOtrosAsResults(
 ): ParsedResults {
     const warnings: ParseWarning[] = [];
 
+    // Helper to strip project prefix codes like "(01) " from names for comparison
+    const stripProjectPrefix = (name: string): string => {
+        return name.replace(/^\(\d+\)\s*/, '').trim();
+    };
+
     try {
         const workbook = XLSX.read(buffer, { type: 'array' });
 
@@ -581,14 +586,19 @@ export function parseOtrosAsResults(
             if (projectIndex === undefined) {
                 projectIndex = projects.length;
                 projectsMap.set(projectKey, projectIndex);
-                // Check if project is known (case-insensitive)
+                // Check if project is known (case-insensitive, ignoring prefix codes)
+                // Strip (XX) prefix for comparison so "(01) C. Polanco" matches "C. Polanco"
+                const strippedProjectKey = stripProjectPrefix(projectKey);
                 const isRecognized = knownProjects?.some(
-                    p => normalizeString(p) === normalizeString(projectKey)
+                    p => normalizeString(stripProjectPrefix(p)) === normalizeString(strippedProjectKey)
                 ) ?? false;
+                // Check for administration pattern
+                const isAdministration = /administraci[oó]n|admin/i.test(projectKey);
                 projects.push({
                     columnIndex: projectIndex,
                     name: projectKey,
-                    isRecognized,
+                    isRecognized: isRecognized || isAdministration,
+                    isAdministration,
                 });
             }
 
