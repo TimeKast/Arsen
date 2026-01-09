@@ -62,7 +62,10 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
     useEffect(() => {
         const initial: Record<string, ConflictResolution> = {};
         for (const conflict of conflicts) {
-            const key = `${conflict.type}-${conflict.originalName}`;
+            // Include conceptType in key to differentiate "Etiquetas" INCOME vs COST
+            const key = conflict.conceptType
+                ? `${conflict.type}-${conflict.originalName}-${conflict.conceptType}`
+                : `${conflict.type}-${conflict.originalName}`;
             initial[key] = {
                 originalName: conflict.originalName,
                 type: conflict.type,
@@ -114,7 +117,10 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
         setResolutions(prev => {
             const updated = { ...prev };
             conflicts.filter(c => c.type === 'CONCEPT').forEach(conflict => {
-                const key = `CONCEPT-${conflict.originalName}`;
+                // Use same key format as initialization
+                const key = conflict.conceptType
+                    ? `CONCEPT-${conflict.originalName}-${conflict.conceptType}`
+                    : `CONCEPT-${conflict.originalName}`;
                 const current = prev[key];
                 if (current) {
                     updated[key] = {
