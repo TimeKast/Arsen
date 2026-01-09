@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
-import { db, concepts, areas } from '@/lib/db';
+import { db, concepts, areas, results, budgets, conceptMappings } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
 import { z } from 'zod';
 
@@ -108,3 +108,31 @@ export async function toggleConceptActive(id: string) {
     revalidatePath('/catalogs/concepts');
     return updated;
 }
+
+// Check if concept can be deleted (no results, budgets, or mappings references)
+export async function canDeleteConcept(id: string): Promise<boolean> {
+    const [resultRef, budgetRef, mappingRef] = await Promise.all([
+        db.query.results.findFirst({ where: eq(results.conceptId, id) }),
+        db.query.budgets.findFirst({ where: eq(budgets.conceptId, id) }),
+        db.query.conceptMappings.findFirst({ where: eq(conceptMappings.conceptId, id) }),
+    ]);
+    return !resultRef && !budgetRef && !mappingRef;
+}
+
+// Delete concept (only if no historical data)
+export async function deleteConcept(id: string): Promise<{ success: boolean; error?: string }> {
+    const session = await auth();
+    if (!session?.user || !['ADMIN', 'STAFF'].includes(session.user.role)) {
+        return { success: false, error: 'No autorizado' };
+    }
+
+    const canDelete = await canDeleteConcept(id);
+    if (!canDelete) {
+        return { success: false, error: 'No se puede eliminar: tiene datos históricos asociados. Desactívalo en su lugar.' };
+    }
+
+    await db.delete(concepts).where(eq(concepts.id, id));
+    revalidatePath('/catalogs/concepts');
+    return { success: true };
+}
+

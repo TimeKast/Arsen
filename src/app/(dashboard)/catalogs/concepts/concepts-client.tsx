@@ -2,12 +2,13 @@
 
 import { useState, useTransition } from 'react';
 import { useSession } from 'next-auth/react';
-import { Plus, Pencil, Power, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Pencil, Power, TrendingUp, TrendingDown, Trash2 } from 'lucide-react';
 import { ConceptForm } from '@/components/forms/concept-form';
 import {
     createConcept,
     updateConcept,
     toggleConceptActive,
+    deleteConcept,
     type ConceptFormData,
 } from '@/actions/concepts';
 
@@ -63,6 +64,18 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
             setConcepts((prev) =>
                 prev.map((c) => (c.id === id ? { ...c, isActive: updated.isActive } : c))
             );
+        });
+    };
+
+    const handleDelete = (id: string, name: string) => {
+        if (!confirm(`¿Eliminar el concepto "${name}"? Esta acción no se puede deshacer.`)) return;
+        startTransition(async () => {
+            const result = await deleteConcept(id);
+            if (result.success) {
+                setConcepts((prev) => prev.filter((c) => c.id !== id));
+            } else {
+                alert(result.error);
+            }
         });
     };
 
@@ -138,8 +151,8 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                                 <td className="px-6 py-4 text-center">
                                     <span
                                         className={`inline-flex px-2 py-1 rounded-full text-xs ${concept.isActive
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
                                             }`}
                                     >
                                         {concept.isActive ? 'Activo' : 'Inactivo'}
@@ -165,6 +178,14 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                                                 title="Activar/Desactivar"
                                             >
                                                 <Power size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(concept.id, concept.name)}
+                                                disabled={isPending}
+                                                className="p-2 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </td>

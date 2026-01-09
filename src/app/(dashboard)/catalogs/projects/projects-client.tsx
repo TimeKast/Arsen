@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { Plus, Pencil, Power, DollarSign } from 'lucide-react';
+import { Plus, Pencil, Power, DollarSign, Trash2 } from 'lucide-react';
 import { ProjectForm } from '@/components/forms/project-form';
 import {
     getProjectsByCompany,
@@ -10,6 +10,7 @@ import {
     updateProject,
     toggleProjectActive,
     toggleProjectProfitSharing,
+    deleteProject,
     type ProjectFormData,
 } from '@/actions/projects';
 
@@ -77,6 +78,18 @@ export function ProjectsClient({ companies }: ProjectsClientProps) {
         startTransition(async () => {
             const updated = await toggleProjectProfitSharing(id);
             setProjects((prev) => prev.map((p) => (p.id === id ? (updated as Project) : p)));
+        });
+    };
+
+    const handleDelete = (id: string, name: string) => {
+        if (!confirm(`¿Eliminar el proyecto "${name}"? Esta acción no se puede deshacer.`)) return;
+        startTransition(async () => {
+            const result = await deleteProject(id);
+            if (result.success) {
+                setProjects((prev) => prev.filter((p) => p.id !== id));
+            } else {
+                alert(result.error);
+            }
         });
     };
 
@@ -195,6 +208,14 @@ export function ProjectsClient({ companies }: ProjectsClientProps) {
                                                     title="Activar/Desactivar"
                                                 >
                                                     <Power size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(project.id, project.name)}
+                                                    disabled={isPending}
+                                                    className="p-2 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         </td>

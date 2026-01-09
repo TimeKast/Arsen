@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { Plus, Pencil, Power } from 'lucide-react';
+import { Plus, Pencil, Power, Trash2 } from 'lucide-react';
 import { AreaForm } from '@/components/forms/area-form';
 import {
     getAreasByCompany,
     createArea,
     updateArea,
     toggleAreaActive,
+    deleteArea,
     type AreaFormData,
 } from '@/actions/areas';
 
@@ -70,10 +71,22 @@ export function AreasClient({ companies }: AreasClientProps) {
         });
     };
 
+    const handleDelete = (id: string, name: string) => {
+        if (!confirm(`¿Eliminar el área "${name}"? Esta acción no se puede deshacer.`)) return;
+        startTransition(async () => {
+            const result = await deleteArea(id);
+            if (result.success) {
+                setAreas((prev) => prev.filter((a) => a.id !== id));
+            } else {
+                alert(result.error);
+            }
+        });
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold dark:text-white">Areas</h1>
+                <h1 className="text-2xl font-bold dark:text-white">Áreas</h1>
                 <div className="flex items-center gap-4">
                     <select
                         value={selectedCompanyId}
@@ -92,7 +105,7 @@ export function AreasClient({ companies }: AreasClientProps) {
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
                             <Plus size={20} />
-                            Nueva Area
+                            Nueva Área
                         </button>
                     )}
                 </div>
@@ -100,7 +113,7 @@ export function AreasClient({ companies }: AreasClientProps) {
 
             {!selectedCompanyId ? (
                 <div className="text-center py-8 text-gray-500">
-                    Selecciona una empresa para ver sus areas
+                    Selecciona una empresa para ver sus áreas
                 </div>
             ) : loading ? (
                 <div className="text-center py-8 text-gray-500">Cargando...</div>
@@ -157,6 +170,14 @@ export function AreasClient({ companies }: AreasClientProps) {
                                                 >
                                                     <Power size={16} />
                                                 </button>
+                                                <button
+                                                    onClick={() => handleDelete(area.id, area.name)}
+                                                    disabled={isPending}
+                                                    className="p-2 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </td>
                                     )}
@@ -165,7 +186,7 @@ export function AreasClient({ companies }: AreasClientProps) {
                             {areas.length === 0 && (
                                 <tr>
                                     <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
-                                        No hay areas registradas
+                                        No hay áreas registradas
                                     </td>
                                 </tr>
                             )}
@@ -188,3 +209,4 @@ export function AreasClient({ companies }: AreasClientProps) {
         </div>
     );
 }
+

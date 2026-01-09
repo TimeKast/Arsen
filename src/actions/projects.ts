@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
-import { db, projects, companies } from '@/lib/db';
+import { db, projects, companies, results } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
 import { z } from 'zod';
 
@@ -137,3 +137,29 @@ export async function toggleProjectProfitSharing(id: string) {
     revalidatePath('/catalogs/projects');
     return updated;
 }
+
+// Check if project can be deleted (no results reference)
+export async function canDeleteProject(id: string): Promise<boolean> {
+    const resultRef = await db.query.results.findFirst({
+        where: eq(results.projectId, id),
+    });
+    return !resultRef;
+}
+
+// Delete project (only if no historical data)
+export async function deleteProject(id: string): Promise<{ success: boolean; error?: string }> {
+    const session = await auth();
+    if (!session?.user || !['ADMIN', 'STAFF'].includes(session.user.role)) {
+        return { success: false, error: 'No autorizado' };
+    }
+
+    const canDelete = await canDeleteProject(id);
+    if (!canDelete) {
+        return { success: false, error: 'No se puede eliminar: tiene resultados históricos asociados. Desactívalo en su lugar.' };
+    }
+
+    await db.delete(projects).where(eq(projects.id, id));
+    revalidatePath('/catalogs/projects');
+    return { success: true };
+}
+

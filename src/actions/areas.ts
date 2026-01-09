@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
-import { db, areas, companies } from '@/lib/db';
+import { db, areas, companies, budgets } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
 import { z } from 'zod';
 
@@ -102,3 +102,29 @@ export async function toggleAreaActive(id: string) {
     revalidatePath('/catalogs/areas');
     return updated;
 }
+
+// Check if area can be deleted (no budgets reference)
+export async function canDeleteArea(id: string): Promise<boolean> {
+    const budgetRefs = await db.query.budgets.findFirst({
+        where: eq(budgets.areaId, id),
+    });
+    return !budgetRefs;
+}
+
+// Delete area (only if no historical data)
+export async function deleteArea(id: string): Promise<{ success: boolean; error?: string }> {
+    const session = await auth();
+    if (!session?.user || !['ADMIN', 'STAFF'].includes(session.user.role)) {
+        return { success: false, error: 'No autorizado' };
+    }
+
+    const canDelete = await canDeleteArea(id);
+    if (!canDelete) {
+        return { success: false, error: 'No se puede eliminar: tiene datos de presupuesto asociados. Desactívala en su lugar.' };
+    }
+
+    await db.delete(areas).where(eq(areas.id, id));
+    revalidatePath('/catalogs/areas');
+    return { success: true };
+}
+
