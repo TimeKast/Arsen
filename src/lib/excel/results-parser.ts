@@ -61,17 +61,15 @@ const KNOWN_COST_CONCEPTS = [
     'compensaciones', 'varios', 'no deducibles', 'nomina operativa', 'nomina gerencial'
 ];
 
-// Valid sheet names for import (exact match, case-insensitive)
+// Valid sheet names for import (EXACT match, case-insensitive)
 // To add new valid sheet names, add them to this list
 const VALID_SHEET_NAMES = [
     // Monthly pattern sheets
     'EneR', 'FebR', 'MarR', 'AbrR', 'MayR', 'JunR',
     'JulR', 'AgoR', 'SepR', 'OctR', 'NovR', 'DicR',
-    // Alternative names (add more here as needed)
-    'Desglose de Ingresos y costm',
-    'Desglose de Ingresos y costos',
-    'Desglose de Ingresos',
-    'Desglose',
+    // Alternative names - MUST BE EXACT (add more here as needed)
+    'Desglose de Ingresos y costm',      // wepark format
+    'Desglose de Ingresos y costos m',   // sigma format with space before 'm'
 ];
 
 // Note: These lists are used as fallback when no DB concepts are provided
