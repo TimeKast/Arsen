@@ -337,3 +337,23 @@ export const reconciliationsRelations = relations(reconciliations, ({ one }) => 
     concept: one(concepts, { fields: [reconciliations.conceptId], references: [concepts.id] }),
     createdByUser: one(users, { fields: [reconciliations.createdBy], references: [users.id] }),
 }));
+
+// --- Concept Type Overrides (for budget imports) ---
+// Allows marking specific concept names as INCOME instead of default COST
+export const conceptTypeOverrides = pgTable('concept_type_overrides', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    companyId: uuid('company_id').notNull().references(() => companies.id),
+    conceptName: varchar('concept_name', { length: 255 }).notNull(),
+    conceptType: conceptTypeEnum('concept_type').notNull().default('INCOME'),
+    description: text('description'),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdBy: uuid('created_by').references(() => users.id),
+}, (table) => ({
+    uniqueOverride: unique().on(table.companyId, table.conceptName),
+}));
+
+export const conceptTypeOverridesRelations = relations(conceptTypeOverrides, ({ one }) => ({
+    company: one(companies, { fields: [conceptTypeOverrides.companyId], references: [companies.id] }),
+    createdByUser: one(users, { fields: [conceptTypeOverrides.createdBy], references: [users.id] }),
+}));

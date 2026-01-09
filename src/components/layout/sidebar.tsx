@@ -51,6 +51,7 @@ const navItems: NavItem[] = [
             { href: '/catalogs/concepts', label: 'Conceptos', icon: <Tag size={16} /> },
             { href: '/catalogs/import-rules', label: 'Reglas de Import', icon: <Shuffle size={16} /> },
             { href: '/catalogs/sheet-names', label: 'Nombres de Pestañas', icon: <FileSpreadsheet size={16} /> },
+            { href: '/catalogs/concept-types', label: 'Tipos de Concepto', icon: <Tag size={16} /> },
         ]
     },
     { href: '/users', label: 'Usuarios', icon: <Users size={20} />, roles: ['ADMIN'] },
