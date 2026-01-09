@@ -255,7 +255,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                     projectName: project?.name || null,
                     conceptId: conceptResolution?.targetId || undefined,
                     conceptName: concept?.name || undefined,
-                    conceptType: concept?.type, // Pass type for backend lookup
+                    conceptType: concept?.type as 'INCOME' | 'COST' | undefined, // Pass type for backend lookup
                     amount: v.value,
                 };
             }).filter(e => (e.conceptId || e.conceptName) && e.amount !== 0);
@@ -279,11 +279,11 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                     ) || entries.find(e => e.conceptName === te.conceptName);
 
                     return {
-                        projectId: null, // Will be resolved by name
+                        projectId: null as string | null, // Will be resolved by name
                         projectName: te.projectName,
                         conceptId: original?.conceptId,
                         conceptName: te.conceptName,
-                        conceptType: original?.conceptType, // Preserve the type
+                        conceptType: original?.conceptType as 'INCOME' | 'COST' | undefined, // Preserve the type
                         amount: te.amount,
                     };
                 });
@@ -307,7 +307,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                 companyId,
                 year: selectedYear,
                 month,
-                entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; amount: number }>,
+                entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; conceptType?: 'INCOME' | 'COST'; amount: number }>,
             });
 
             router.push('/results');
