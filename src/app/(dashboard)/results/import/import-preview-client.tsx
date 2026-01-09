@@ -282,6 +282,15 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                 }
             }
 
+            // Debug: log entries before sending
+            console.log('Entries to import:', entries.slice(0, 5).map(e => ({
+                project: e.projectName,
+                concept: e.conceptName,
+                amount: e.amount
+            })));
+            console.log('Total entries:', entries.length);
+            console.log('Import rules active:', importRules.length);
+
             await confirmResultsImport({
                 companyId,
                 year: selectedYear,
