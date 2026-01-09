@@ -8,6 +8,9 @@ import {
     parseResultsSheet,
     getMonthSheets,
     detectDateFromFile,
+    hasOtrosSheet,
+    getOtrosYear,
+    parseOtrosAsResults,
     type ParsedResults
 } from '@/lib/excel/results-parser';
 import { ConflictResolver } from './conflict-resolver';
@@ -66,7 +69,17 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
 
         try {
             const buffer = await selectedFile.arrayBuffer();
-            const sheets = getMonthSheets(buffer, validSheetNames);
+            let sheets = getMonthSheets(buffer, validSheetNames);
+
+            // Check for Otros sheet (budget format for results)
+            const fileHasOtros = hasOtrosSheet(buffer);
+            if (fileHasOtros) {
+                sheets = [...sheets, 'Otros (Resultados)'];
+                // Auto-detect year from Otros file
+                const otrosYear = getOtrosYear(buffer);
+                setSelectedYear(otrosYear);
+            }
+
             setAvailableSheets(sheets);
 
             // Auto-detect date from file
@@ -78,8 +91,14 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
 
             if (sheets.length > 0) {
                 setSelectedSheet(sheets[0]);
-                const result = parseResultsSheet(buffer, sheets[0], undefined, validSheetNames);
-                setParsedData(result);
+                // Handle Otros sheet differently
+                if (sheets[0].includes('Otros')) {
+                    const result = parseOtrosAsResults(buffer, selectedMonth);
+                    setParsedData(result);
+                } else {
+                    const result = parseResultsSheet(buffer, sheets[0], undefined, validSheetNames);
+                    setParsedData(result);
+                }
             } else {
                 setParsedData({
                     success: false,
@@ -88,7 +107,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                     projects: [],
                     concepts: [],
                     values: [],
-                    warnings: [{ type: 'STRUCTURE_ERROR', message: 'No se encontraron hojas mensuales (EneR, FebR, etc.)' }],
+                    warnings: [{ type: 'STRUCTURE_ERROR', message: 'No se encontraron hojas de resultados (EneR, FebR, etc.) ni hoja Otros' }],
                     totals: {},
                 });
             }
@@ -114,12 +133,18 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         setLoading(true);
         try {
             const buffer = await file.arrayBuffer();
-            const result = parseResultsSheet(buffer, sheetName, undefined, validSheetNames);
-            setParsedData(result);
+            // Handle Otros sheet differently
+            if (sheetName.includes('Otros')) {
+                const result = parseOtrosAsResults(buffer, selectedMonth);
+                setParsedData(result);
+            } else {
+                const result = parseResultsSheet(buffer, sheetName, undefined, validSheetNames);
+                setParsedData(result);
+            }
         } finally {
             setLoading(false);
         }
-    }, [file, validSheetNames]);
+    }, [file, validSheetNames, selectedMonth]);
 
     const handleDrag = useCallback((e: React.DragEvent) => {
         e.preventDefault();

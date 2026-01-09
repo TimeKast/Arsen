@@ -473,3 +473,160 @@ export function isAccountantFormat(buffer: ArrayBuffer): boolean {
     return !!sheets.desglose;
 }
 
+// Check if file has "Otros" sheet (budget format for results)
+export function hasOtrosSheet(buffer: ArrayBuffer): boolean {
+    try {
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        return workbook.SheetNames.some(name => name.toLowerCase() === 'otros');
+    } catch {
+        return false;
+    }
+}
+
+// Get year from sheet names (looks for year-named sheet like "2025")
+export function getOtrosYear(buffer: ArrayBuffer): number {
+    try {
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const yearSheet = workbook.SheetNames.find(name => /^\d{4}$/.test(name));
+        return yearSheet ? parseInt(yearSheet) : new Date().getFullYear();
+    } catch {
+        return new Date().getFullYear();
+    }
+}
+
+// Parse "Otros" sheet (budget format) as ParsedResults for Results import
+// This adapts the budget-format Otros sheet to the ParsedResults structure
+export function parseOtrosAsResults(buffer: ArrayBuffer, month: number): ParsedResults {
+    const warnings: ParseWarning[] = [];
+
+    try {
+        const workbook = XLSX.read(buffer, { type: 'array' });
+
+        // Find Otros sheet
+        const otrosSheetName = workbook.SheetNames.find(name => name.toLowerCase() === 'otros');
+        if (!otrosSheetName) {
+            return {
+                success: false,
+                sheetName: 'Otros',
+                anchorCell: '',
+                projects: [],
+                concepts: [],
+                values: [],
+                warnings: [{ type: 'STRUCTURE_ERROR', message: 'No se encontró la hoja "Otros"' }],
+                totals: {},
+            };
+        }
+
+        const sheet = workbook.Sheets[otrosSheetName];
+        const data: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+        // Find header row (contains "Cuenta")
+        let headerRow = -1;
+        for (let r = 0; r < Math.min(data.length, 10); r++) {
+            const row = data[r];
+            if (row && row.some((cell: any) => String(cell || '').toLowerCase().includes('cuenta'))) {
+                headerRow = r;
+                break;
+            }
+        }
+
+        if (headerRow === -1) {
+            return {
+                success: false,
+                sheetName: otrosSheetName,
+                anchorCell: '',
+                projects: [],
+                concepts: [],
+                values: [],
+                warnings: [{ type: 'STRUCTURE_ERROR', message: 'No se encontró el encabezado con "Cuenta"' }],
+                totals: {},
+            };
+        }
+
+        // Build projects and concepts from data
+        const projectsMap = new Map<string, number>(); // name -> index
+        const conceptsMap = new Map<string, number>(); // name -> index
+        const projects: ParsedProject[] = [];
+        const concepts: ParsedConcept[] = [];
+        const values: ParsedValue[] = [];
+
+        // Month column index (0-based, months start at column 4)
+        const monthColIndex = 3 + month; // Column 4 = Jan (month 1), etc.
+
+        // Parse data rows
+        for (let r = headerRow + 1; r < data.length; r++) {
+            const row = data[r];
+            if (!row || row.length < 5) continue;
+
+            const areaName = String(row[0] || '').trim();
+            const projectName = row[1] ? String(row[1]).trim() : null;
+            const conceptCode = String(row[2] || '').trim();
+
+            // Skip empty rows or header repeats
+            if (!areaName || !conceptCode) continue;
+            if (areaName.toLowerCase() === 'area') continue;
+
+            // Get value for the selected month
+            const amount = typeof row[monthColIndex] === 'number' ? row[monthColIndex] : 0;
+            if (amount === 0) continue;
+
+            // Get or create project index
+            const projectKey = projectName || 'Sin Proyecto';
+            let projectIndex = projectsMap.get(projectKey);
+            if (projectIndex === undefined) {
+                projectIndex = projects.length;
+                projectsMap.set(projectKey, projectIndex);
+                projects.push({
+                    columnIndex: projectIndex,
+                    name: projectKey,
+                    isRecognized: false, // Will be resolved by conflict resolver
+                });
+            }
+
+            // Get or create concept index
+            // Extract concept name from code (e.g., "A01 Seguridad" -> "Seguridad")
+            const conceptName = conceptCode.split(/\s+/).slice(1).join(' ') || conceptCode;
+            let conceptIndex = conceptsMap.get(conceptName);
+            if (conceptIndex === undefined) {
+                conceptIndex = concepts.length;
+                conceptsMap.set(conceptName, conceptIndex);
+                concepts.push({
+                    rowIndex: r,
+                    name: conceptName,
+                    type: 'COST', // Otros sheet typically contains costs
+                    isRecognized: false,
+                });
+            }
+
+            // Add value
+            values.push({
+                projectIndex,
+                conceptIndex,
+                value: amount,
+            });
+        }
+
+        return {
+            success: true,
+            sheetName: otrosSheetName,
+            anchorCell: `A${headerRow + 1}`,
+            projects,
+            concepts,
+            values,
+            warnings,
+            totals: {},
+        };
+
+    } catch (error) {
+        return {
+            success: false,
+            sheetName: 'Otros',
+            anchorCell: '',
+            projects: [],
+            concepts: [],
+            values: [],
+            warnings: [{ type: 'STRUCTURE_ERROR', message: error instanceof Error ? error.message : 'Error parsing Otros sheet' }],
+            totals: {},
+        };
+    }
+}
