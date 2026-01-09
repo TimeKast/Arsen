@@ -74,10 +74,19 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
     }, [conflicts]);
 
     const handleActionChange = useCallback((key: string, action: ResolutionAction) => {
-        setResolutions(prev => ({
-            ...prev,
-            [key]: { ...prev[key], action, targetId: undefined, newName: undefined },
-        }));
+        setResolutions(prev => {
+            const current = prev[key];
+            return {
+                ...prev,
+                [key]: {
+                    ...current,
+                    action,
+                    targetId: undefined,
+                    // When creating, use original name as default
+                    newName: action === 'CREATE' ? current.originalName : undefined,
+                },
+            };
+        });
     }, []);
 
     const handleTargetChange = useCallback((key: string, targetId: string) => {
@@ -164,8 +173,8 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                                         <button
                                             onClick={() => handleActionChange(key, 'MAP')}
                                             className={`flex items-center gap-1 px-3 py-1 rounded text-sm ${resolution.action === 'MAP'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}
                                         >
                                             <Link size={14} /> Mapear
@@ -173,8 +182,8 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                                         <button
                                             onClick={() => handleActionChange(key, 'CREATE')}
                                             className={`flex items-center gap-1 px-3 py-1 rounded text-sm ${resolution.action === 'CREATE'
-                                                    ? 'bg-green-600 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                ? 'bg-green-600 text-white'
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}
                                         >
                                             <Plus size={14} /> Crear nuevo
@@ -182,8 +191,8 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                                         <button
                                             onClick={() => handleActionChange(key, 'IGNORE')}
                                             className={`flex items-center gap-1 px-3 py-1 rounded text-sm ${resolution.action === 'IGNORE'
-                                                    ? 'bg-gray-600 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                ? 'bg-gray-600 text-white'
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}
                                         >
                                             <X size={14} /> Ignorar
@@ -241,8 +250,8 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                                         <AlertTriangle size={16} className="text-amber-500" />
                                         <span className="font-medium dark:text-white">{conflict.originalName}</span>
                                         <span className={`text-xs px-2 py-0.5 rounded ${conflict.conceptType === 'INCOME'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
                                             }`}>
                                             {conflict.conceptType === 'INCOME' ? 'Ingreso' : 'Costo'}
                                         </span>
@@ -251,8 +260,8 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                                         <button
                                             onClick={() => handleActionChange(key, 'MAP')}
                                             className={`flex items-center gap-1 px-3 py-1 rounded text-sm ${resolution.action === 'MAP'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}
                                         >
                                             <Link size={14} /> Mapear
@@ -260,8 +269,8 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                                         <button
                                             onClick={() => handleActionChange(key, 'CREATE')}
                                             className={`flex items-center gap-1 px-3 py-1 rounded text-sm ${resolution.action === 'CREATE'
-                                                    ? 'bg-green-600 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                ? 'bg-green-600 text-white'
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}
                                         >
                                             <Plus size={14} /> Crear nuevo
@@ -269,8 +278,8 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                                         <button
                                             onClick={() => handleActionChange(key, 'IGNORE')}
                                             className={`flex items-center gap-1 px-3 py-1 rounded text-sm ${resolution.action === 'IGNORE'
-                                                    ? 'bg-gray-600 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                ? 'bg-gray-600 text-white'
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}
                                         >
                                             <X size={14} /> Ignorar
