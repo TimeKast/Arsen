@@ -163,6 +163,7 @@ export const budgets = pgTable('budgets', {
     id: uuid('id').primaryKey().defaultRandom(),
     companyId: uuid('company_id').notNull().references(() => companies.id),
     areaId: uuid('area_id').notNull().references(() => areas.id),
+    projectId: uuid('project_id').references(() => projects.id), // nullable for admin expenses
     conceptId: uuid('concept_id').notNull().references(() => concepts.id),
     year: integer('year').notNull(),
     month: integer('month').notNull(), // 1-12
@@ -172,7 +173,7 @@ export const budgets = pgTable('budgets', {
     createdBy: uuid('created_by').references(() => users.id),
     deletedAt: timestamp('deleted_at'), // Soft delete
 }, (table) => ({
-    uniqueBudget: unique().on(table.companyId, table.areaId, table.conceptId, table.year, table.month),
+    uniqueBudget: unique().on(table.companyId, table.areaId, table.projectId, table.conceptId, table.year, table.month),
 }));
 
 // --- Results ---

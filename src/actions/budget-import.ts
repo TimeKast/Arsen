@@ -77,10 +77,11 @@ export async function confirmBudgetImport(
         const allConcepts = await db.select().from(concepts);
         allConcepts.forEach(c => conceptCache.set(c.name.toLowerCase(), c.id));
 
-        // Use Map to aggregate amounts for same area/concept/month (avoids duplicate key violations)
+        // Use Map to aggregate amounts for same area/project/concept/month (avoids duplicate key violations)
         const budgetAggregator = new Map<string, {
             companyId: string;
             areaId: string;
+            projectId: string | null;
             conceptId: string;
             year: number;
             month: number;
@@ -98,6 +99,13 @@ export async function confirmBudgetImport(
                 continue;
             }
 
+            // Resolve project with flexible matching (nullable for admin expenses)
+            let projectId: string | null = null;
+            if (entry.projectName) {
+                const normalizedProject = normalizeAreaName(entry.projectName);
+                projectId = projectCache.get(entry.projectName.toLowerCase()) || projectCache.get(normalizedProject) || null;
+            }
+
             // Resolve or create concept
             let conceptId = conceptCache.get(entry.conceptCode.toLowerCase());
             if (!conceptId) {
@@ -110,12 +118,12 @@ export async function confirmBudgetImport(
                 conceptCache.set(entry.conceptCode.toLowerCase(), conceptId);
             }
 
-            // Add budget entries for each month (aggregate duplicates)
+            // Add budget entries for each month (aggregate duplicates by area/project/concept/month)
             for (let month = 1; month <= 12; month++) {
                 const amount = entry.amounts[month - 1] || 0;
                 if (amount === 0) continue; // Skip zero amounts
 
-                const key = `${areaId}|${conceptId}|${month}`;
+                const key = `${areaId}|${projectId}|${conceptId}|${month}`;
                 const existing = budgetAggregator.get(key);
 
                 if (existing) {
@@ -124,6 +132,7 @@ export async function confirmBudgetImport(
                     budgetAggregator.set(key, {
                         companyId,
                         areaId,
+                        projectId,
                         conceptId,
                         year,
                         month,
