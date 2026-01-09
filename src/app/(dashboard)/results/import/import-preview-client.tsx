@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, FileSpreadsheet, AlertTriangle, AlertCircle, X, ArrowLeft, Wrench, Save, AlertOctagon } from 'lucide-react';
+import { Upload, FileSpreadsheet, AlertTriangle, AlertCircle, X, ArrowLeft, Wrench, Save, AlertOctagon, Settings } from 'lucide-react';
+import Link from 'next/link';
 import {
     parseResultsSheet,
     getMonthSheets,
@@ -12,6 +13,7 @@ import {
 import { ConflictResolver } from './conflict-resolver';
 import type { ConflictResolution } from '@/actions/import-resolution';
 import { checkExistingResults, confirmResultsImport } from '@/actions/results';
+import { getActiveImportRules, applyImportRules, type ImportRule } from '@/actions/import-rules';
 
 const MONTH_MAP: Record<string, number> = {
     'ener': 1, 'febr': 2, 'marr': 3, 'abrr': 4,
@@ -40,6 +42,13 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
     const [existingCount, setExistingCount] = useState(0);
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [importRules, setImportRules] = useState<ImportRule[]>([]);
+    const [appliedRulesInfo, setAppliedRulesInfo] = useState<{ excluded: number; redirected: number }>({ excluded: 0, redirected: 0 });
+
+    // Load import rules on mount
+    useEffect(() => {
+        getActiveImportRules(companyId).then(setImportRules).catch(console.error);
+    }, [companyId]);
 
     const handleFile = useCallback(async (selectedFile: File) => {
         setFile(selectedFile);
@@ -218,7 +227,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
             const month = getMonth();
 
             // Build entries from parsed data
-            const entries = parsedData.values.map(v => {
+            let entries = parsedData.values.map(v => {
                 const project = parsedData.projects[v.projectIndex];
                 const concept = parsedData.concepts[v.conceptIndex];
 
@@ -232,12 +241,45 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
 
                 return {
                     projectId: projectResolution?.targetId || null,
-                    projectName: project?.name || undefined,
+                    projectName: project?.name || null,
                     conceptId: conceptResolution?.targetId || undefined,
                     conceptName: concept?.name || undefined,
                     amount: v.value,
                 };
             }).filter(e => (e.conceptId || e.conceptName) && e.amount !== 0);
+
+            // Apply import rules (REDIRECT and EXCLUDE)
+            if (importRules.length > 0) {
+                const originalCount = entries.length;
+                const transformedEntries = applyImportRules(
+                    entries.map(e => ({
+                        projectName: e.projectName,
+                        conceptName: e.conceptName || '',
+                        amount: e.amount,
+                    })),
+                    importRules
+                );
+
+                // Rebuild entries with applied rules
+                entries = transformedEntries.map(te => {
+                    const original = entries.find(
+                        e => e.conceptName === te.conceptName && e.projectName !== te.projectName
+                    ) || entries.find(e => e.conceptName === te.conceptName);
+
+                    return {
+                        projectId: null, // Will be resolved by name
+                        projectName: te.projectName,
+                        conceptId: original?.conceptId,
+                        conceptName: te.conceptName,
+                        amount: te.amount,
+                    };
+                });
+
+                const excluded = originalCount - entries.length;
+                if (excluded > 0) {
+                    console.log(`Rules applied: ${excluded} entries excluded`);
+                }
+            }
 
             await confirmResultsImport({
                 companyId,
@@ -268,6 +310,18 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                         <h1 className="text-2xl font-bold dark:text-white">Importar Resultados</h1>
                         <p className="text-sm text-gray-500">{companyName}</p>
                     </div>
+                    {/* Import Rules Indicator */}
+                    <Link
+                        href="/catalogs/import-rules"
+                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs ${importRules.length > 0
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                            }`}
+                        title="Configurar reglas de importación"
+                    >
+                        <Settings size={12} />
+                        {importRules.length} reglas
+                    </Link>
                 </div>
                 {parsedData && (
                     <button

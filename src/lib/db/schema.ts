@@ -37,7 +37,12 @@ export const formulaTypeEnum = pgEnum('formula_type', [
     'DYNAMIC'
 ]);
 
-// ==================== TABLES ====================
+export const importRuleTypeEnum = pgEnum('import_rule_type', [
+    'REDIRECT',  // Move values to different project
+    'EXCLUDE'    // Don't import these values
+]);
+
+// ==================== TABLES ======================================
 
 // --- Companies (defined first for references) ---
 export const companies = pgTable('companies', {
@@ -202,6 +207,20 @@ export const reconciliations = pgTable('reconciliations', {
     subtotal: decimal('subtotal', { precision: 15, scale: 2 }),
     tax: decimal('tax', { precision: 15, scale: 2 }),
     total: decimal('total', { precision: 15, scale: 2 }).notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdBy: uuid('created_by').references(() => users.id),
+});
+
+// --- Import Rules ---
+export const importRules = pgTable('import_rules', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    companyId: uuid('company_id').notNull().references(() => companies.id),
+    ruleType: importRuleTypeEnum('rule_type').notNull(),
+    sourceProjectName: varchar('source_project_name', { length: 255 }), // NULL = any project
+    sourceConceptName: varchar('source_concept_name', { length: 255 }).notNull(),
+    targetProjectName: varchar('target_project_name', { length: 255 }), // For REDIRECT rules
+    isActive: boolean('is_active').notNull().default(true),
+    description: text('description'), // Optional note explaining the rule
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
 });
