@@ -189,4 +189,75 @@ export async function confirmResultsImport(data: ConfirmImportData) {
     };
 }
 
+// Schema for single result entry
+const singleResultSchema = z.object({
+    companyId: z.string().uuid(),
+    projectId: z.string().uuid().nullable(),
+    conceptId: z.string().uuid(),
+    year: z.number().min(2020).max(2100),
+    month: z.number().min(1).max(12),
+    amount: z.number(),
+});
 
+// Create a single result entry
+export async function createResult(data: z.infer<typeof singleResultSchema>) {
+    const session = await auth();
+    if (!session?.user || !['ADMIN', 'STAFF'].includes(session.user.role)) {
+        throw new Error('No autorizado');
+    }
+
+    const validated = singleResultSchema.parse(data);
+
+    const [result] = await db.insert(results).values({
+        companyId: validated.companyId,
+        projectId: validated.projectId,
+        conceptId: validated.conceptId,
+        year: validated.year,
+        month: validated.month,
+        amount: validated.amount.toFixed(2),
+        importedBy: session.user.id,
+    }).returning();
+
+    revalidatePath('/results');
+    revalidatePath('/profit-sharing');
+    return result;
+}
+
+// Update an existing result entry
+export async function updateResult(
+    id: string,
+    data: { projectId?: string | null; conceptId?: string; amount?: number }
+) {
+    const session = await auth();
+    if (!session?.user || !['ADMIN', 'STAFF'].includes(session.user.role)) {
+        throw new Error('No autorizado');
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (data.projectId !== undefined) updateData.projectId = data.projectId;
+    if (data.conceptId) updateData.conceptId = data.conceptId;
+    if (data.amount !== undefined) updateData.amount = data.amount.toFixed(2);
+
+    const [updated] = await db.update(results)
+        .set(updateData)
+        .where(eq(results.id, id))
+        .returning();
+
+    revalidatePath('/results');
+    revalidatePath('/profit-sharing');
+    return updated;
+}
+
+// Delete a single result entry
+export async function deleteResult(id: string) {
+    const session = await auth();
+    if (!session?.user || !['ADMIN', 'STAFF'].includes(session.user.role)) {
+        throw new Error('No autorizado');
+    }
+
+    await db.delete(results).where(eq(results.id, id));
+
+    revalidatePath('/results');
+    revalidatePath('/profit-sharing');
+    return { success: true };
+}

@@ -2,24 +2,39 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Upload, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
+import { Upload, ChevronDown, ChevronRight, Plus, Pencil, Trash2, Building2 } from 'lucide-react';
 import { getResultsForPeriod, getAvailableResultPeriods, type ProjectResult } from '@/actions/results-view';
+import { createResult, updateResult, deleteResult } from '@/actions/results';
 import { useCompanyStore } from '@/stores/company-store';
+import { ResultForm } from '@/components/forms/result-form';
 
 interface Company {
     id: string;
     name: string;
 }
 
+interface Project {
+    id: string;
+    name: string;
+}
+
+interface Concept {
+    id: string;
+    name: string;
+    type: 'INCOME' | 'COST';
+}
+
 interface ResultsClientProps {
     companies: Company[];
+    projects: Project[];
+    concepts: Concept[];
     initialYear: number;
     userRole: string;
 }
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-export function ResultsClient({ companies, initialYear, userRole }: ResultsClientProps) {
+export function ResultsClient({ companies, projects, concepts, initialYear, userRole }: ResultsClientProps) {
     // Use global company store from header instead of local state
     const { selectedCompanyId: globalCompanyId, companies: storeCompanies } = useCompanyStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
@@ -31,7 +46,11 @@ export function ResultsClient({ companies, initialYear, userRole }: ResultsClien
     const [loading, setLoading] = useState(false);
     const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
-    const canImport = userRole === 'ADMIN' || userRole === 'STAFF';
+    // Form state
+    const [showForm, setShowForm] = useState(false);
+    const [editingResult, setEditingResult] = useState<{ id: string; projectId: string | null; conceptId: string; amount: number } | null>(null);
+
+    const canEdit = userRole === 'ADMIN' || userRole === 'STAFF';
 
     // Load available periods
     useEffect(() => {
@@ -99,14 +118,23 @@ export function ResultsClient({ companies, initialYear, userRole }: ResultsClien
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold dark:text-white">Resultados</h1>
-                {canImport && (
-                    <Link
-                        href="/results/import"
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                        <Upload size={20} />
-                        Importar
-                    </Link>
+                {canEdit && (
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => { setEditingResult(null); setShowForm(true); }}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                            <Plus size={20} />
+                            Agregar
+                        </button>
+                        <Link
+                            href="/results/import"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            <Upload size={20} />
+                            Importar
+                        </Link>
+                    </div>
                 )}
             </div>
 
@@ -145,7 +173,7 @@ export function ResultsClient({ companies, initialYear, userRole }: ResultsClien
             ) : projectResults.length === 0 && !adminResults ? (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center text-gray-500">
                     <p>No hay resultados para este periodo.</p>
-                    {canImport && (
+                    {canEdit && (
                         <p className="text-sm mt-2">
                             Usa el boton "Importar" para cargar datos.
                         </p>
@@ -300,6 +328,29 @@ export function ResultsClient({ companies, initialYear, userRole }: ResultsClien
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* Result Form Modal */}
+            {showForm && (
+                <ResultForm
+                    projects={projects}
+                    concepts={concepts}
+                    initialData={editingResult || undefined}
+                    onClose={() => { setShowForm(false); setEditingResult(null); }}
+                    onSubmit={async (data) => {
+                        if (editingResult?.id) {
+                            await updateResult(editingResult.id, data);
+                        } else {
+                            await createResult({
+                                companyId: selectedCompanyId,
+                                year: selectedYear,
+                                month: selectedMonth,
+                                ...data,
+                            });
+                        }
+                        loadResults();
+                    }}
+                />
             )}
         </div>
     );
