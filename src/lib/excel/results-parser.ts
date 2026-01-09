@@ -358,14 +358,9 @@ export function parseResultsSheet(
                     const parsed = parseFloat(valueCell.replace(/[,$]/g, ''));
                     if (!isNaN(parsed)) {
                         numericValue = parsed;
-                    } else if (valueCell.trim() !== '' && valueCell.trim() !== '-') {
-                        warnings.push({
-                            type: 'INVALID_VALUE',
-                            message: `Valor no válido: "${valueCell}"`,
-                            row: r,
-                            column: project.columnIndex,
-                        });
                     }
+                    // Silently ignore text values (like "Total", "Subtotal", etc.)
+                    // and treat them as 0 - no warning needed
                 }
 
                 values.push({
