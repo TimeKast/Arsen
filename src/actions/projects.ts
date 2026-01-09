@@ -28,6 +28,19 @@ export async function getProjectsByCompany(companyId: string) {
     });
 }
 
+// Get all active projects across all companies (for filters)
+export async function getAllActiveProjects() {
+    const session = await auth();
+    if (!session?.user) {
+        throw new Error('No autenticado');
+    }
+
+    return await db.query.projects.findMany({
+        where: eq(projects.isActive, true),
+        orderBy: (projects, { asc }) => [asc(projects.name)],
+    });
+}
+
 // Get companies for select
 export async function getCompaniesForProjectSelect() {
     const session = await auth();

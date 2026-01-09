@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { getComparisonData, type ComparisonData, type ComparisonRow } from '@/actions/comparison';
 import { getAvailableResultPeriods } from '@/actions/results-view';
@@ -10,20 +10,39 @@ interface Company {
     name: string;
 }
 
+interface Project {
+    id: string;
+    name: string;
+    companyId: string;
+}
+
 interface ComparisonClientProps {
     companies: Company[];
+    projects: Project[];
     initialYear: number;
 }
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-export function ComparisonClient({ companies, initialYear }: ComparisonClientProps) {
+export function ComparisonClient({ companies, projects, initialYear }: ComparisonClientProps) {
     const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
+    const [selectedProjectId, setSelectedProjectId] = useState('');
     const [selectedYear, setSelectedYear] = useState(initialYear);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [availablePeriods, setAvailablePeriods] = useState<{ year: number; month: number }[]>([]);
     const [data, setData] = useState<ComparisonData | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Filter projects by selected company
+    const companyProjects = useMemo(() =>
+        projects.filter(p => p.companyId === selectedCompanyId),
+        [projects, selectedCompanyId]
+    );
+
+    // Reset project selection when company changes
+    useEffect(() => {
+        setSelectedProjectId('');
+    }, [selectedCompanyId]);
 
     // Load available periods
     useEffect(() => {
@@ -51,14 +70,14 @@ export function ComparisonClient({ companies, initialYear }: ComparisonClientPro
         if (!selectedCompanyId) return;
         setLoading(true);
         try {
-            const compData = await getComparisonData(selectedCompanyId, selectedYear, selectedMonth);
+            const compData = await getComparisonData(selectedCompanyId, selectedYear, selectedMonth, selectedProjectId || undefined);
             setData(compData);
         } catch (error) {
             console.error('Error loading comparison:', error);
         } finally {
             setLoading(false);
         }
-    }, [selectedCompanyId, selectedYear, selectedMonth]);
+    }, [selectedCompanyId, selectedYear, selectedMonth, selectedProjectId]);
 
     useEffect(() => {
         loadData();
@@ -133,6 +152,21 @@ export function ComparisonClient({ companies, initialYear }: ComparisonClientPro
                                     </option>
                                 ))
                             )}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Proyecto
+                        </label>
+                        <select
+                            value={selectedProjectId}
+                            onChange={(e) => setSelectedProjectId(e.target.value)}
+                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        >
+                            <option value="">Todos los proyectos</option>
+                            {companyProjects.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
                         </select>
                     </div>
                 </div>

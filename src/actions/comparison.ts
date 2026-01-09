@@ -32,33 +32,46 @@ export interface ComparisonData {
 export async function getComparisonData(
     companyId: string,
     year: number,
-    month: number
+    month: number,
+    projectId?: string
 ): Promise<ComparisonData> {
     const session = await auth();
     if (!session?.user) {
         throw new Error('No autenticado');
     }
 
+    // Build budget conditions
+    const budgetConditions = [
+        eq(budgets.companyId, companyId),
+        eq(budgets.year, year),
+        eq(budgets.month, month)
+    ];
+    if (projectId) {
+        budgetConditions.push(eq(budgets.projectId, projectId));
+    }
+
     // Get all budgets for the period
     const periodBudgets = await db.query.budgets.findMany({
-        where: and(
-            eq(budgets.companyId, companyId),
-            eq(budgets.year, year),
-            eq(budgets.month, month)
-        ),
+        where: and(...budgetConditions),
         with: {
             concept: true,
             area: true,
         },
     });
 
+    // Build result conditions
+    const resultConditions = [
+        eq(results.companyId, companyId),
+        eq(results.year, year),
+        eq(results.month, month)
+    ];
+    if (projectId) {
+        resultConditions.push(eq(results.projectId, projectId));
+    }
+
     // Get all results for the period (sum by concept)
     const periodResults = await db.query.results.findMany({
-        where: and(
-            eq(results.companyId, companyId),
-            eq(results.year, year),
-            eq(results.month, month)
-        ),
+        where: and(...resultConditions),
         with: {
             concept: true,
         },
