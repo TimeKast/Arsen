@@ -79,9 +79,16 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                         policy: item.policy,
                         checkNumber: item.checkNumber,
                         supplier: item.supplier,
+                        businessUnit: item.businessUnit,
+                        account: item.account,
+                        cancelled: item.cancelled,
+                        inTransit: item.inTransit,
+                        entries: item.entries,
                         subtotal: item.subtotal,
                         tax: item.tax,
-                        total: item.total,
+                        withdrawals: item.withdrawals,
+                        balance: item.balance,
+                        observations: item.observations,
                         projectId,
                         conceptId,
                     };
@@ -221,10 +228,11 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Fecha</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Referencia</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Proveedor</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Factura</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Subtotal</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">IVA</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Total</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">U. Negocio</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cuenta</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Entradas</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Salidas</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Saldo</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
@@ -233,10 +241,11 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                                         <td className="px-3 py-2">{formatDate(row.date)}</td>
                                         <td className="px-3 py-2">{row.reference}</td>
                                         <td className="px-3 py-2">{row.supplier}</td>
-                                        <td className="px-3 py-2">{row.invoice}</td>
-                                        <td className="px-3 py-2 text-right">{formatCurrency(row.subtotal)}</td>
-                                        <td className="px-3 py-2 text-right">{formatCurrency(row.tax)}</td>
-                                        <td className="px-3 py-2 text-right font-medium">{formatCurrency(row.total)}</td>
+                                        <td className="px-3 py-2">{row.businessUnit}</td>
+                                        <td className="px-3 py-2">{row.account}</td>
+                                        <td className="px-3 py-2 text-right text-green-600">{row.entries ? formatCurrency(row.entries) : ''}</td>
+                                        <td className="px-3 py-2 text-right text-red-600">{row.withdrawals ? formatCurrency(row.withdrawals) : ''}</td>
+                                        <td className="px-3 py-2 text-right font-medium">{row.balance ? formatCurrency(row.balance) : ''}</td>
                                     </tr>
                                 ))}
                             </tbody>

@@ -74,7 +74,7 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
                 supplier: supplier || undefined,
                 subtotal: subtotal || undefined,
                 tax: tax || undefined,
-                total,
+                balance: total || undefined, // Use total as balance
                 projectId: projectId || null,
                 conceptId: conceptId || null,
             };

@@ -21,9 +21,11 @@ interface Reconciliation {
     reference: string | null;
     invoice: string | null;
     supplier: string | null;
-    subtotal: string | null;
-    tax: string | null;
-    total: string;
+    businessUnit: string | null;
+    account: string | null;
+    entries: string | null;
+    withdrawals: string | null;
+    balance: string | null;
     project: { name: string } | null;
     concept: { name: string } | null;
 }
@@ -119,7 +121,7 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
     };
 
     // Totals
-    const totalSum = filteredData.reduce((sum, r) => sum + (parseFloat(r.total) || 0), 0);
+    const totalBalance = filteredData.reduce((sum, r) => sum + (parseFloat(r.balance || '0') || 0), 0);
 
     return (
         <div>
@@ -218,8 +220,8 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
                         <p className="text-xl font-bold dark:text-white">{filteredData.length}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Total</p>
-                        <p className="text-xl font-bold text-blue-600">{formatCurrency(totalSum.toFixed(2))}</p>
+                        <p className="text-sm text-gray-500">Saldo Total</p>
+                        <p className="text-xl font-bold text-blue-600">{formatCurrency(totalBalance.toFixed(2))}</p>
                     </div>
                 </div>
             </div>
@@ -240,9 +242,11 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Fecha</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Referencia</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Proveedor</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Proyecto</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Factura</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Total</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">U. Negocio</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cuenta</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Entradas</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Salidas</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Saldo</th>
                                     <th className="px-3 py-2"></th>
                                 </tr>
                             </thead>
@@ -252,9 +256,11 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
                                         <td className="px-3 py-2">{formatDate(row.date)}</td>
                                         <td className="px-3 py-2">{row.reference || '-'}</td>
                                         <td className="px-3 py-2">{row.supplier || '-'}</td>
-                                        <td className="px-3 py-2">{row.project?.name || '-'}</td>
-                                        <td className="px-3 py-2">{row.invoice || '-'}</td>
-                                        <td className="px-3 py-2 text-right font-medium">{formatCurrency(row.total)}</td>
+                                        <td className="px-3 py-2">{row.businessUnit || '-'}</td>
+                                        <td className="px-3 py-2">{row.account || '-'}</td>
+                                        <td className="px-3 py-2 text-right text-green-600">{formatCurrency(row.entries)}</td>
+                                        <td className="px-3 py-2 text-right text-red-600">{formatCurrency(row.withdrawals)}</td>
+                                        <td className="px-3 py-2 text-right font-medium">{formatCurrency(row.balance)}</td>
                                         <td className="px-3 py-2">
                                             <button
                                                 onClick={() => handleDelete(row.id)}

@@ -14,9 +14,16 @@ const reconciliationEntrySchema = z.object({
     policy: z.string().optional(),
     checkNumber: z.string().optional(),
     supplier: z.string().optional(),
+    businessUnit: z.string().optional(),
+    account: z.string().optional(),
+    cancelled: z.number().optional(),
+    inTransit: z.number().optional(),
+    entries: z.number().optional(),
     subtotal: z.number().optional(),
     tax: z.number().optional(),
-    total: z.number(),
+    withdrawals: z.number().optional(),
+    balance: z.number().optional(),
+    observations: z.string().optional(),
     projectId: z.string().uuid().nullable().optional(),
     conceptId: z.string().uuid().nullable().optional(),
 });
@@ -59,9 +66,12 @@ export async function confirmReconciliationImport(data: ConfirmReconciliationImp
 
     const validated = confirmImportSchema.parse(data);
 
-    // Filter out empty entries and prepare batch insert data
+    // Filter out entries without any meaningful data and prepare batch insert
     const entriesToInsert = validated.entries
-        .filter(entry => entry.total !== 0)
+        .filter(entry => {
+            // Keep if has any amount or supplier
+            return entry.subtotal || entry.withdrawals || entry.entries || entry.balance || entry.supplier;
+        })
         .map(entry => ({
             companyId: validated.companyId,
             projectId: entry.projectId || null,
@@ -72,9 +82,16 @@ export async function confirmReconciliationImport(data: ConfirmReconciliationImp
             policy: entry.policy || null,
             checkNumber: entry.checkNumber || null,
             supplier: entry.supplier || null,
+            businessUnit: entry.businessUnit || null,
+            account: entry.account || null,
+            cancelled: entry.cancelled?.toFixed(2) || null,
+            inTransit: entry.inTransit?.toFixed(2) || null,
+            entries: entry.entries?.toFixed(2) || null,
             subtotal: entry.subtotal?.toFixed(2) || null,
             tax: entry.tax?.toFixed(2) || null,
-            total: entry.total.toFixed(2),
+            withdrawals: entry.withdrawals?.toFixed(2) || null,
+            balance: entry.balance?.toFixed(2) || null,
+            observations: entry.observations || null,
             createdBy: session.user.id,
         }));
 
