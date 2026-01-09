@@ -18,6 +18,7 @@ interface Project {
 
 interface Reconciliation {
     id: string;
+    projectId: string | null;
     date: Date;
     reference: string | null;
     invoice: string | null;
@@ -86,7 +87,7 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
         let filtered = [...data];
 
         if (filterProjectId) {
-            filtered = filtered.filter(r => r.project?.name === projects.find(p => p.id === filterProjectId)?.name);
+            filtered = filtered.filter(r => r.projectId === filterProjectId);
         }
 
         if (filterSupplier) {

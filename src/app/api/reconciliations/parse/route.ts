@@ -21,6 +21,9 @@ export async function POST(request: NextRequest) {
         const result = parseReconciliationsFile(buffer);
         const hasOtros = hasOtrosSheet(buffer);
 
+        console.log('Sheet name from parser:', result.sheetName);
+        console.log('Has Otros sheet:', hasOtros);
+
         return NextResponse.json({ ...result, hasOtros });
     } catch (error) {
         console.error('Parse error:', error);

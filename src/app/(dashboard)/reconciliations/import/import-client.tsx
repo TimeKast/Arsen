@@ -51,6 +51,7 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
             if (data.success) {
                 setPreview(data.data);
                 setErrors(data.errors || []);
+                console.log('API response - hasOtros:', data.hasOtros, 'sheetName:', data.sheetName);
                 setHasOtros(data.hasOtros || false);
             } else {
                 setErrors(data.errors || ['Error al parsear archivo']);
@@ -70,8 +71,9 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
             // Resolve project/concept names to IDs
             const entries: ReconciliationEntry[] = await Promise.all(
                 preview.map(async (item) => {
-                    const projectId = item.projectName
-                        ? await resolveProjectByName(selectedCompanyId, item.projectName)
+                    // Resolve project from businessUnit (U. Negocio column)
+                    const projectId = item.businessUnit
+                        ? await resolveProjectByName(selectedCompanyId, item.businessUnit)
                         : null;
                     const conceptId = item.conceptName
                         ? await resolveConceptByName(item.conceptName)
@@ -120,6 +122,7 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                     });
 
                     otrosResult = await otrosResponse.json();
+                    console.log('Otros import result:', otrosResult);
                 } catch (err) {
                     console.error('Error importing Otros:', err);
                 }
