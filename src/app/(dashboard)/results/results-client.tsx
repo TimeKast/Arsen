@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Upload, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
 import { getResultsForPeriod, getAvailableResultPeriods, type ProjectResult } from '@/actions/results-view';
+import { useCompanyStore } from '@/stores/company-store';
 
 interface Company {
     id: string;
@@ -19,7 +20,9 @@ interface ResultsClientProps {
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 export function ResultsClient({ companies, initialYear, userRole }: ResultsClientProps) {
-    const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
+    // Use global company store from header instead of local state
+    const { selectedCompanyId: globalCompanyId, companies: storeCompanies } = useCompanyStore();
+    const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
     const [selectedYear, setSelectedYear] = useState(initialYear);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [availablePeriods, setAvailablePeriods] = useState<{ year: number; month: number }[]>([]);
@@ -110,22 +113,6 @@ export function ResultsClient({ companies, initialYear, userRole }: ResultsClien
             {/* Filters */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-wrap gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Empresa
-                        </label>
-                        <select
-                            value={selectedCompanyId}
-                            onChange={(e) => setSelectedCompanyId(e.target.value)}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {companies.map((company) => (
-                                <option key={company.id} value={company.id}>
-                                    {company.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Periodo
@@ -242,8 +229,8 @@ export function ResultsClient({ companies, initialYear, userRole }: ResultsClien
                                                 <tr key={`${project.projectId}-${concept.conceptId}`} className="bg-gray-50 dark:bg-gray-900">
                                                     <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
                                                         <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.conceptType === 'INCOME'
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : 'bg-red-100 text-red-800'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
                                                             }`}>
                                                             {concept.conceptType === 'INCOME' ? 'I' : 'C'}
                                                         </span>
@@ -288,8 +275,8 @@ export function ResultsClient({ companies, initialYear, userRole }: ResultsClien
                                         <tr key={concept.conceptId}>
                                             <td className="px-4 py-2 dark:text-white">
                                                 <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.conceptType === 'INCOME'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
                                                     }`}>
                                                     {concept.conceptType === 'INCOME' ? 'I' : 'C'}
                                                 </span>
