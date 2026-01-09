@@ -71,9 +71,11 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
     useEffect(() => {
         getActiveImportRules(companyId).then(setImportRules).catch(console.error);
         getSavedMappings(companyId).then(mappings => {
+            console.log('[MAPPINGS] Loaded concept mappings:', mappings.length);
             setSavedMappings(mappings.map(m => ({ externalName: m.externalName, conceptId: m.conceptId })));
         }).catch(console.error);
         getSavedProjectMappings(companyId).then(mappings => {
+            console.log('[MAPPINGS] Loaded project mappings:', mappings.length, mappings.map(m => m.externalName));
             setSavedProjectMappings(mappings.map(m => ({ externalName: m.externalName, projectId: m.projectId })));
         }).catch(console.error);
     }, [companyId]);
