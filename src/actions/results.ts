@@ -11,6 +11,7 @@ const confirmImportSchema = z.object({
     companyId: z.string().uuid(),
     year: z.number().min(2020).max(2100),
     month: z.number().min(1).max(12),
+    source: z.enum(['O', 'M']).default('M'), // O=Otros, M=Monthly
     entries: z.array(z.object({
         projectId: z.string().nullable(), // Can be UUID or null
         projectName: z.string().nullable().optional(), // Project name for lookup (null for admin expenses)
@@ -104,12 +105,14 @@ export async function confirmResultsImport(data: ConfirmImportData) {
     const conceptCache = new Map<string, string>();
     const projectCache = new Map<string, string>();
 
-    // Delete existing data for this period
+    // Delete existing data for this period and SOURCE ONLY
+    // This prevents Otros import from deleting Monthly data and vice versa
     await db.delete(results).where(
         and(
             eq(results.companyId, validated.companyId),
             eq(results.year, validated.year),
-            eq(results.month, validated.month)
+            eq(results.month, validated.month),
+            eq(results.source, validated.source)
         )
     );
 
@@ -120,6 +123,7 @@ export async function confirmResultsImport(data: ConfirmImportData) {
         conceptId: string;
         year: number;
         month: number;
+        source: 'O' | 'M';
         amount: string;
         importedBy: string;
     }> = [];
@@ -174,6 +178,7 @@ export async function confirmResultsImport(data: ConfirmImportData) {
             conceptId,
             year: validated.year,
             month: validated.month,
+            source: validated.source,
             amount: entry.amount.toFixed(2),
             importedBy: session.user.id,
         });

@@ -42,6 +42,12 @@ export const importRuleTypeEnum = pgEnum('import_rule_type', [
     'EXCLUDE'    // Don't import these values
 ]);
 
+// Source of result data: O=Otros sheet, M=Monthly sheet (contador)
+export const resultSourceEnum = pgEnum('result_source', [
+    'O',  // Otros (secondary expenses)
+    'M'   // Monthly (from contador's monthly sheets)
+]);
+
 // ==================== TABLES ======================================
 
 // --- Companies (defined first for references) ---
@@ -193,13 +199,14 @@ export const results = pgTable('results', {
     conceptId: uuid('concept_id').notNull().references(() => concepts.id),
     year: integer('year').notNull(),
     month: integer('month').notNull(), // 1-12
+    source: resultSourceEnum('source').notNull().default('M'), // O=Otros, M=Monthly
     amount: decimal('amount', { precision: 15, scale: 2 }).notNull().default('0'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     importedBy: uuid('imported_by').references(() => users.id),
     deletedAt: timestamp('deleted_at'), // Soft delete
 }, (table) => ({
-    uniqueResult: unique().on(table.companyId, table.projectId, table.conceptId, table.year, table.month),
+    uniqueResult: unique().on(table.companyId, table.projectId, table.conceptId, table.year, table.month, table.source),
 }));
 
 // --- Reconciliations ---

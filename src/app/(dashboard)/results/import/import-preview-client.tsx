@@ -411,6 +411,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                             companyId,
                             year: selectedYear,
                             month,
+                            source: 'O', // Otros sheet
                             entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; conceptType?: 'INCOME' | 'COST'; amount: number }>,
                         });
                         totalInserted += result.insertedCount || 0;
@@ -543,6 +544,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                 companyId,
                 year: selectedYear,
                 month,
+                source: 'M', // Monthly sheet (contador)
                 entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; conceptType?: 'INCOME' | 'COST'; amount: number }>,
             });
 
