@@ -222,7 +222,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                 const project = parsedData.projects[v.projectIndex];
                 const concept = parsedData.concepts[v.conceptIndex];
 
-                // Find resolved project/concept IDs if they were created
+                // Find resolved project/concept IDs if they were mapped
                 const projectResolution = resolvedConflicts.find(
                     r => r.type === 'PROJECT' && r.originalName === project?.name
                 );
@@ -232,16 +232,18 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
 
                 return {
                     projectId: projectResolution?.targetId || null,
-                    conceptId: conceptResolution?.targetId || concept?.name || '',
+                    projectName: project?.name || undefined,
+                    conceptId: conceptResolution?.targetId || undefined,
+                    conceptName: concept?.name || undefined,
                     amount: v.value,
                 };
-            }).filter(e => e.conceptId && e.amount !== 0);
+            }).filter(e => (e.conceptId || e.conceptName) && e.amount !== 0);
 
             await confirmResultsImport({
                 companyId,
                 year: selectedYear,
                 month,
-                entries: entries as Array<{ projectId: string | null; conceptId: string; amount: number }>,
+                entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; amount: number }>,
             });
 
             router.push('/results');

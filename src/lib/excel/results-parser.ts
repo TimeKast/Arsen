@@ -170,8 +170,12 @@ export function parseResultsSheet(
             const cell = projectRow[c];
             if (cell && typeof cell === 'string' && cell.trim().length > 0) {
                 const name = cell.trim();
-                // Skip "Total" or summary columns
-                if (normalizeString(name).includes('total')) continue;
+                const normalized = normalizeString(name);
+                // Skip summary/calculation columns
+                if (normalized.includes('total') ||
+                    normalized === '%' ||
+                    normalized.includes('gastos admon') ||
+                    normalized.includes('porcentaje')) continue;
 
                 projects.push({
                     columnIndex: c,
