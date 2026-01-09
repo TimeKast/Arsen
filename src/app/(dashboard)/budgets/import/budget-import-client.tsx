@@ -175,99 +175,128 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
 
             {/* Preview */}
             {parsedData && parsedData.length > 0 && !result && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                        <h3 className="font-medium dark:text-white">Vista Previa</h3>
-                    </div>
-                    <div className="p-4">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <p className="text-2xl font-bold text-blue-600">{areas.length}</p>
-                                <p className="text-sm text-gray-500">Áreas</p>
-                            </div>
-                            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <p className="text-2xl font-bold text-green-600">{totalEntries}</p>
-                                <p className="text-sm text-gray-500">Conceptos</p>
-                            </div>
-                            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                <p className="text-2xl font-bold text-purple-600">{selectedYear}</p>
-                                <p className="text-sm text-gray-500">Año</p>
-                            </div>
-                            <div className="text-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                                <p className="text-2xl font-bold text-amber-600">12</p>
-                                <p className="text-sm text-gray-500">Meses</p>
-                            </div>
+                <>
+                    {/* Check if file has no valid data */}
+                    {totalEntries === 0 || parsedData.every(p => !p.success) ? (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-red-500">
+                            <h3 className="text-lg font-bold text-red-600 mb-2">Archivo Sin Datos</h3>
+                            <p className="text-gray-600 dark:text-gray-400 mb-4">
+                                El archivo no contiene datos de presupuesto válidos. Verifica que:
+                            </p>
+                            <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                <li>El archivo tenga una hoja llamada "Presupuesto" u "Otros"</li>
+                                <li>La hoja tenga columnas: Área, Proyecto, Cuenta, Descripción, y 12 meses</li>
+                                <li>Existan filas con datos de presupuesto (no solo encabezados)</li>
+                            </ul>
+                            {parsedData[0]?.warnings?.length > 0 && (
+                                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded">
+                                    <p className="font-medium text-amber-800 mb-1">Detalles:</p>
+                                    <p className="text-sm text-amber-700">{parsedData[0].warnings.join(', ')}</p>
+                                </div>
+                            )}
+                            <button
+                                onClick={() => { setFile(null); setParsedData(null); }}
+                                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                Seleccionar Otro Archivo
+                            </button>
                         </div>
-
-                        {/* Areas List */}
-                        <div className="mb-4">
-                            <h4 className="font-medium mb-2 dark:text-white">Áreas encontradas:</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {areas.map(area => (
-                                    <span key={area} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
-                                        {area}
-                                    </span>
-                                ))}
+                    ) : (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
+                            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                                <h3 className="font-medium dark:text-white">Vista Previa</h3>
                             </div>
-                        </div>
+                            <div className="p-4">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                        <p className="text-2xl font-bold text-blue-600">{areas.length}</p>
+                                        <p className="text-sm text-gray-500">Áreas</p>
+                                    </div>
+                                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                        <p className="text-2xl font-bold text-green-600">{totalEntries}</p>
+                                        <p className="text-sm text-gray-500">Conceptos</p>
+                                    </div>
+                                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                        <p className="text-2xl font-bold text-purple-600">{selectedYear}</p>
+                                        <p className="text-sm text-gray-500">Año</p>
+                                    </div>
+                                    <div className="text-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                                        <p className="text-2xl font-bold text-amber-600">12</p>
+                                        <p className="text-sm text-gray-500">Meses</p>
+                                    </div>
+                                </div>
 
-                        {/* Sample Data */}
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-gray-50 dark:bg-gray-700">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left">Área</th>
-                                        <th className="px-3 py-2 text-left">Concepto</th>
-                                        {MONTH_NAMES.slice(0, 6).map(m => (
-                                            <th key={m} className="px-3 py-2 text-right">{m}</th>
+                                {/* Areas List */}
+                                <div className="mb-4">
+                                    <h4 className="font-medium mb-2 dark:text-white">Áreas encontradas:</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {areas.map(area => (
+                                            <span key={area} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
+                                                {area}
+                                            </span>
                                         ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                                    {parsedData.slice(0, 2).flatMap(p =>
-                                        p.entries.slice(0, 3).map((entry, i) => (
-                                            <tr key={`${p.areaName}-${i}`}>
-                                                <td className="px-3 py-2 dark:text-white">{entry.areaName}</td>
-                                                <td className="px-3 py-2 dark:text-white">{entry.conceptCode}</td>
-                                                {entry.amounts.slice(0, 6).map((amt, j) => (
-                                                    <td key={j} className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">
-                                                        ${amt.toLocaleString()}
-                                                    </td>
+                                    </div>
+                                </div>
+
+                                {/* Sample Data */}
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 dark:bg-gray-700">
+                                            <tr>
+                                                <th className="px-3 py-2 text-left">Área</th>
+                                                <th className="px-3 py-2 text-left">Concepto</th>
+                                                {MONTH_NAMES.slice(0, 6).map(m => (
+                                                    <th key={m} className="px-3 py-2 text-right">{m}</th>
                                                 ))}
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                                            {parsedData.slice(0, 2).flatMap(p =>
+                                                p.entries.slice(0, 3).map((entry, i) => (
+                                                    <tr key={`${p.areaName}-${i}`}>
+                                                        <td className="px-3 py-2 dark:text-white">{entry.areaName}</td>
+                                                        <td className="px-3 py-2 dark:text-white">{entry.conceptCode}</td>
+                                                        {entry.amounts.slice(0, 6).map((amt, j) => (
+                                                            <td key={j} className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">
+                                                                ${amt.toLocaleString()}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                        <p className="text-sm text-gray-500 mt-2 text-center">
-                            Mostrando muestra de datos...
-                        </p>
-                    </div>
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t dark:border-gray-600 flex justify-end gap-3">
-                        <button
-                            onClick={() => { setFile(null); setParsedData(null); }}
-                            className="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-600"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleConfirmImport}
-                            disabled={saving}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                        >
-                            {saving ? (
-                                <>Guardando...</>
-                            ) : (
-                                <>
-                                    <Check size={18} />
-                                    Confirmar Importación
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
+                                <p className="text-sm text-gray-500 mt-2 text-center">
+                                    Mostrando muestra de datos...
+                                </p>
+                            </div>
+                            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t dark:border-gray-600 flex justify-end gap-3">
+                                <button
+                                    onClick={() => { setFile(null); setParsedData(null); }}
+                                    className="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-600"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleConfirmImport}
+                                    disabled={saving}
+                                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                                >
+                                    {saving ? (
+                                        <>Guardando...</>
+                                    ) : (
+                                        <>
+                                            <Check size={18} />
+                                            Confirmar Importación
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Result */}
