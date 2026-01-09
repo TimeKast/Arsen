@@ -377,18 +377,27 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
             // Debug: log entries before sending
             console.log('Entries to import:', entries.slice(0, 5).map(e => ({
                 project: e.projectName,
+                projectId: e.projectId,
                 concept: e.conceptName,
+                conceptId: e.conceptId,
                 amount: e.amount
             })));
             console.log('Total entries:', entries.length);
             console.log('Import rules active:', importRules.length);
 
-            await confirmResultsImport({
+            // Visible debug - count entries with conceptId
+            const withConceptId = entries.filter(e => e.conceptId).length;
+            const withoutConceptId = entries.filter(e => !e.conceptId && e.conceptName).length;
+            console.log(`[DEBUG] Entries with conceptId: ${withConceptId}, without: ${withoutConceptId}`);
+
+            const result = await confirmResultsImport({
                 companyId,
                 year: selectedYear,
                 month,
                 entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; conceptType?: 'INCOME' | 'COST'; amount: number }>,
             });
+
+            console.log('[DEBUG] Import result:', result);
 
             router.push('/results');
         } catch (error) {
