@@ -9,6 +9,7 @@ interface Company {
 }
 
 interface CompanyStore {
+    // Company state
     selectedCompanyId: string | null;
     companies: Company[];
     setSelectedCompanyId: (id: string) => void;
@@ -19,6 +20,7 @@ interface CompanyStore {
 export const useCompanyStore = create<CompanyStore>()(
     persist(
         (set, get) => ({
+            // Company state
             selectedCompanyId: null,
             companies: [],
 
@@ -53,7 +55,9 @@ export const useCompanyStore = create<CompanyStore>()(
         {
             name: 'arsen-company-storage',
             storage: createJSONStorage(() => sessionStorage),
-            partialize: (state) => ({ selectedCompanyId: state.selectedCompanyId }),
+            partialize: (state) => ({
+                selectedCompanyId: state.selectedCompanyId,
+            }),
         }
     )
 );

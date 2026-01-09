@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DollarSign, ChevronDown, ChevronUp, Calculator, X } from 'lucide-react';
 import { getProfitSharingResults, type CalculatedProfitSharing } from '@/actions/profit-sharing-calc';
-import { getAvailableResultPeriods } from '@/actions/results-view';
+import { usePeriodStore } from '@/stores/period-store';
 
 interface Company {
     id: string;
@@ -19,33 +19,12 @@ const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Se
 
 export function ProfitSharingViewClient({ companies, initialYear }: ProfitSharingViewClientProps) {
     const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
-    const [selectedYear, setSelectedYear] = useState(initialYear);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-    const [availablePeriods, setAvailablePeriods] = useState<{ year: number; month: number }[]>([]);
+    const { selectedYear, selectedMonth } = usePeriodStore();
     const [data, setData] = useState<CalculatedProfitSharing[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedProject, setSelectedProject] = useState<CalculatedProfitSharing | null>(null);
 
-    // Load available periods
-    useEffect(() => {
-        async function loadPeriods() {
-            if (!selectedCompanyId) return;
-            try {
-                const periods = await getAvailableResultPeriods(selectedCompanyId);
-                setAvailablePeriods(periods);
-                if (periods.length > 0) {
-                    const current = periods.find(p => p.year === selectedYear && p.month === selectedMonth);
-                    if (!current) {
-                        setSelectedYear(periods[0].year);
-                        setSelectedMonth(periods[0].month);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading periods:', error);
-            }
-        }
-        loadPeriods();
-    }, [selectedCompanyId]);
+    const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     // Load profit sharing data
     const loadData = useCallback(async () => {
@@ -81,7 +60,7 @@ export function ProfitSharingViewClient({ companies, initialYear }: ProfitSharin
                 <h1 className="text-2xl font-bold dark:text-white">Reparto de Utilidades</h1>
             </div>
 
-            {/* Filters */}
+            {/* Filters - Company only (Period is in global header) */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-wrap gap-4">
                     <div>
@@ -98,30 +77,6 @@ export function ProfitSharingViewClient({ companies, initialYear }: ProfitSharin
                                     {company.name}
                                 </option>
                             ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Periodo
-                        </label>
-                        <select
-                            value={`${selectedYear}-${selectedMonth}`}
-                            onChange={(e) => {
-                                const [y, m] = e.target.value.split('-').map(Number);
-                                setSelectedYear(y);
-                                setSelectedMonth(m);
-                            }}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {availablePeriods.length === 0 ? (
-                                <option value="">Sin datos</option>
-                            ) : (
-                                availablePeriods.map((p) => (
-                                    <option key={`${p.year}-${p.month}`} value={`${p.year}-${p.month}`}>
-                                        {MONTH_NAMES[p.month - 1]} {p.year}
-                                    </option>
-                                ))
-                            )}
                         </select>
                     </div>
                 </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { getComparisonData, type ComparisonData, type ComparisonRow } from '@/actions/comparison';
-import { getAvailableResultPeriods } from '@/actions/results-view';
+import { usePeriodStore } from '@/stores/period-store';
 
 interface Company {
     id: string;
@@ -27,9 +27,7 @@ const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Se
 export function ComparisonClient({ companies, projects, initialYear }: ComparisonClientProps) {
     const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
     const [selectedProjectId, setSelectedProjectId] = useState('');
-    const [selectedYear, setSelectedYear] = useState(initialYear);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-    const [availablePeriods, setAvailablePeriods] = useState<{ year: number; month: number }[]>([]);
+    const { selectedYear, selectedMonth } = usePeriodStore();
     const [data, setData] = useState<ComparisonData | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -42,27 +40,6 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
     // Reset project selection when company changes
     useEffect(() => {
         setSelectedProjectId('');
-    }, [selectedCompanyId]);
-
-    // Load available periods
-    useEffect(() => {
-        async function loadPeriods() {
-            if (!selectedCompanyId) return;
-            try {
-                const periods = await getAvailableResultPeriods(selectedCompanyId);
-                setAvailablePeriods(periods);
-                if (periods.length > 0) {
-                    const current = periods.find(p => p.year === selectedYear && p.month === selectedMonth);
-                    if (!current) {
-                        setSelectedYear(periods[0].year);
-                        setSelectedMonth(periods[0].month);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading periods:', error);
-            }
-        }
-        loadPeriods();
     }, [selectedCompanyId]);
 
     // Load comparison data
@@ -139,30 +116,6 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                     {company.name}
                                 </option>
                             ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Periodo
-                        </label>
-                        <select
-                            value={`${selectedYear}-${selectedMonth}`}
-                            onChange={(e) => {
-                                const [y, m] = e.target.value.split('-').map(Number);
-                                setSelectedYear(y);
-                                setSelectedMonth(m);
-                            }}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {availablePeriods.length === 0 ? (
-                                <option value="">Sin datos</option>
-                            ) : (
-                                availablePeriods.map((p) => (
-                                    <option key={`${p.year}-${p.month}`} value={`${p.year}-${p.month}`}>
-                                        {MONTH_NAMES[p.month - 1]} {p.year}
-                                    </option>
-                                ))
-                            )}
                         </select>
                     </div>
                     <div>

@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Upload, ChevronDown, ChevronRight, Plus, Pencil, Trash2, Building2 } from 'lucide-react';
-import { getResultsForPeriod, getAvailableResultPeriods, type ProjectResult } from '@/actions/results-view';
+import { getResultsForPeriod, type ProjectResult } from '@/actions/results-view';
 import { createResult, updateResult, deleteResult } from '@/actions/results';
 import { useCompanyStore } from '@/stores/company-store';
+import { usePeriodStore } from '@/stores/period-store';
 import { ResultForm } from '@/components/forms/result-form';
 
 interface Company {
@@ -37,10 +38,8 @@ const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Se
 export function ResultsClient({ companies, projects, concepts, initialYear, userRole }: ResultsClientProps) {
     // Use global company store from header instead of local state
     const { selectedCompanyId: globalCompanyId, companies: storeCompanies } = useCompanyStore();
+    const { selectedYear, selectedMonth } = usePeriodStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
-    const [selectedYear, setSelectedYear] = useState(initialYear);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-    const [availablePeriods, setAvailablePeriods] = useState<{ year: number; month: number }[]>([]);
     const [projectResults, setProjectResults] = useState<ProjectResult[]>([]);
     const [adminResults, setAdminResults] = useState<ProjectResult | null>(null);
     const [loading, setLoading] = useState(false);
@@ -51,28 +50,6 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
     const [editingResult, setEditingResult] = useState<{ id: string; projectId: string | null; conceptId: string; amount: number } | null>(null);
 
     const canEdit = userRole === 'ADMIN' || userRole === 'STAFF';
-
-    // Load available periods
-    useEffect(() => {
-        async function loadPeriods() {
-            if (!selectedCompanyId) return;
-            try {
-                const periods = await getAvailableResultPeriods(selectedCompanyId);
-                setAvailablePeriods(periods);
-                // Select first available period if current is not available
-                if (periods.length > 0) {
-                    const current = periods.find(p => p.year === selectedYear && p.month === selectedMonth);
-                    if (!current) {
-                        setSelectedYear(periods[0].year);
-                        setSelectedMonth(periods[0].month);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading periods:', error);
-            }
-        }
-        loadPeriods();
-    }, [selectedCompanyId]);
 
     // Load results for selected period
     const loadResults = useCallback(async () => {
@@ -138,34 +115,12 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                 )}
             </div>
 
-            {/* Filters */}
+            {/* Period info - displays current selection from global header */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <div className="flex flex-wrap gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Periodo
-                        </label>
-                        <select
-                            value={`${selectedYear}-${selectedMonth}`}
-                            onChange={(e) => {
-                                const [y, m] = e.target.value.split('-').map(Number);
-                                setSelectedYear(y);
-                                setSelectedMonth(m);
-                            }}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {availablePeriods.length === 0 ? (
-                                <option value="">Sin datos</option>
-                            ) : (
-                                availablePeriods.map((p) => (
-                                    <option key={`${p.year}-${p.month}`} value={`${p.year}-${p.month}`}>
-                                        {MONTH_NAMES[p.month - 1]} {p.year}
-                                    </option>
-                                ))
-                            )}
-                        </select>
-                    </div>
-                </div>
+                <p className="text-sm text-gray-500">
+                    Mostrando resultados para {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+                    <span className="ml-2 text-xs">(Cambia el periodo en el selector del encabezado)</span>
+                </p>
             </div>
 
             {loading ? (
@@ -257,19 +212,19 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                                                     <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
                                                         {/* Source badge - O for Otros, M for Monthly */}
                                                         <span className={`inline-flex px-1 py-0.5 rounded text-xs mr-1 ${concept.source === 'O'
-                                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                                                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                                                             }`}>
                                                             {concept.source || 'M'}
                                                         </span>
                                                         {/* Type badge - I for Income, C for Cost */}
                                                         <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.source === 'O'
-                                                                ? (concept.conceptType === 'INCOME'
-                                                                    ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
-                                                                    : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200')
-                                                                : (concept.conceptType === 'INCOME'
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : 'bg-red-100 text-red-800')
+                                                            ? (concept.conceptType === 'INCOME'
+                                                                ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                                                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200')
+                                                            : (concept.conceptType === 'INCOME'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-red-100 text-red-800')
                                                             }`}>
                                                             {concept.conceptType === 'INCOME' ? 'I' : 'C'}
                                                         </span>
