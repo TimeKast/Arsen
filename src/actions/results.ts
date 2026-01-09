@@ -289,3 +289,25 @@ export async function deleteResult(id: string) {
     revalidatePath('/profit-sharing');
     return { success: true };
 }
+
+// Delete all results for a specific year (for cleanup of incorrect imports)
+export async function deleteResultsForYear(companyId: string, year: number) {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+        throw new Error('No autorizado - solo ADMIN puede eliminar por año');
+    }
+
+    const deleted = await db.delete(results).where(
+        and(
+            eq(results.companyId, companyId),
+            eq(results.year, year)
+        )
+    );
+
+    revalidatePath('/results');
+    revalidatePath('/profit-sharing');
+    revalidatePath('/comparison');
+
+    console.log(`[CLEANUP] Deleted results for year ${year} in company ${companyId}`);
+    return { success: true };
+}

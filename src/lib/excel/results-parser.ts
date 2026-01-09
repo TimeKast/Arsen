@@ -708,9 +708,16 @@ export function parseOtrosAllMonths(
         const sheet = workbook.Sheets[otrosSheetName];
         const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][];
 
-        // Get year from sheet name or filename pattern
-        const yearMatch = otrosSheetName.match(/(\d{4})/);
-        const year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
+        // Get year from sheet names - first look for a sheet that is just a 4-digit year (e.g., "2025")
+        // Then fall back to checking the Otros sheet name itself
+        const yearSheetName = workbook.SheetNames.find(name => /^20\d{2}$/.test(name.trim()));
+        let year: number;
+        if (yearSheetName) {
+            year = parseInt(yearSheetName.trim());
+        } else {
+            const yearMatch = otrosSheetName.match(/(\d{4})/);
+            year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
+        }
 
         // Find header row with "Cuenta" or similar
         let headerRow = -1;
