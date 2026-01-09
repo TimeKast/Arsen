@@ -134,37 +134,39 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
                 </select>
             </div>
 
-            {/* Upload Zone */}
-            <div
-                className={`bg-white dark:bg-gray-800 rounded-lg shadow p-8 mb-6 text-center border-2 border-dashed transition-colors ${dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-            >
-                <FileSpreadsheet size={48} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium mb-2 dark:text-white">
-                    {file ? file.name : 'Arrastra un archivo Excel aquí'}
-                </p>
-                <p className="text-sm text-gray-500 mb-4">
-                    o selecciona el archivo
-                </p>
-                <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-                    className="hidden"
-                    id="file-input"
-                />
-                <label
-                    htmlFor="file-input"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+            {/* Upload Zone - Only show when no file parsed */}
+            {!parsedData && !loading && (
+                <div
+                    className={`bg-white dark:bg-gray-800 rounded-lg shadow p-8 mb-6 text-center border-2 border-dashed transition-colors ${dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600'
+                        }`}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
                 >
-                    <Upload size={18} />
-                    Seleccionar Archivo
-                </label>
-            </div>
+                    <FileSpreadsheet size={48} className="mx-auto mb-4 text-gray-400" />
+                    <p className="text-lg font-medium mb-2 dark:text-white">
+                        Arrastra un archivo Excel aquí
+                    </p>
+                    <p className="text-sm text-gray-500 mb-4">
+                        o selecciona el archivo
+                    </p>
+                    <input
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                        className="hidden"
+                        id="file-input"
+                    />
+                    <label
+                        htmlFor="file-input"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+                    >
+                        <Upload size={18} />
+                        Seleccionar Archivo
+                    </label>
+                </div>
+            )}
 
             {/* Loading */}
             {loading && (
