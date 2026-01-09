@@ -186,9 +186,9 @@ export function parseResultsSheet(
                     columnIndex: c,
                     name,
                     // Only mark as recognized if knownProjects has entries AND matches
-                    isRecognized: knownProjects && knownProjects.length > 0 && knownProjects.some(p =>
+                    isRecognized: !!(knownProjects && knownProjects.length > 0 && knownProjects.some(p =>
                         normalizeString(p) === normalizeString(name)
-                    ),
+                    )),
                 });
             }
         }
