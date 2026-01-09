@@ -176,6 +176,8 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
     }, [parsedData]);
 
     const handleResolved = useCallback((resolutions: ConflictResolution[]) => {
+        console.log('Resolutions received from conflict resolver:', resolutions);
+        console.log('Project resolutions:', resolutions.filter(r => r.type === 'PROJECT'));
         setResolvedConflicts(resolutions);
         setShowResolver(false);
         // After resolving, mark all as resolved for UI purposes
