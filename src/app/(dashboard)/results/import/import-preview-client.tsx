@@ -27,9 +27,10 @@ interface ImportPreviewClientProps {
     companyId: string;
     companyName: string;
     currentYear: number;
+    validSheetNames: string[];
 }
 
-export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: defaultCompanyName, currentYear }: ImportPreviewClientProps) {
+export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: defaultCompanyName, currentYear, validSheetNames }: ImportPreviewClientProps) {
     const router = useRouter();
 
     // Use selected company from store (falls back to props if not set)
@@ -65,7 +66,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
 
         try {
             const buffer = await selectedFile.arrayBuffer();
-            const sheets = getMonthSheets(buffer);
+            const sheets = getMonthSheets(buffer, validSheetNames);
             setAvailableSheets(sheets);
 
             // Auto-detect date from file
@@ -77,7 +78,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
 
             if (sheets.length > 0) {
                 setSelectedSheet(sheets[0]);
-                const result = parseResultsSheet(buffer, sheets[0]);
+                const result = parseResultsSheet(buffer, sheets[0], undefined, validSheetNames);
                 setParsedData(result);
             } else {
                 setParsedData({
@@ -105,7 +106,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [validSheetNames]);
 
     const handleSheetChange = useCallback(async (sheetName: string) => {
         if (!file) return;
@@ -113,12 +114,12 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         setLoading(true);
         try {
             const buffer = await file.arrayBuffer();
-            const result = parseResultsSheet(buffer, sheetName);
+            const result = parseResultsSheet(buffer, sheetName, undefined, validSheetNames);
             setParsedData(result);
         } finally {
             setLoading(false);
         }
-    }, [file]);
+    }, [file, validSheetNames]);
 
     const handleDrag = useCallback((e: React.DragEvent) => {
         e.preventDefault();

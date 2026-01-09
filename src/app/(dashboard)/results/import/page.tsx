@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth/config';
 import { getUserCompanies } from '@/actions/company-context';
+import { getActiveSheetNames } from '@/actions/valid-sheet-names';
 import { ImportPreviewClient } from './import-preview-client';
 
 export default async function ImportPage() {
@@ -23,12 +24,14 @@ export default async function ImportPage() {
     }
 
     const currentYear = new Date().getFullYear();
+    const validSheetNames = await getActiveSheetNames();
 
     return (
         <ImportPreviewClient
             companyId={defaultCompany.id}
             companyName={defaultCompany.name}
             currentYear={currentYear}
+            validSheetNames={validSheetNames}
         />
     );
 }

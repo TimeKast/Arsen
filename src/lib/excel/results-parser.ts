@@ -61,15 +61,15 @@ const KNOWN_COST_CONCEPTS = [
     'compensaciones', 'varios', 'no deducibles', 'nomina operativa', 'nomina gerencial'
 ];
 
-// Valid sheet names for import (EXACT match, case-insensitive)
-// To add new valid sheet names, add them to this list
-const VALID_SHEET_NAMES = [
+// Default valid sheet names - used as FALLBACK when no DB entries exist
+// These can be managed via /catalogs/sheet-names UI
+const DEFAULT_VALID_SHEET_NAMES = [
     // Monthly pattern sheets
     'EneR', 'FebR', 'MarR', 'AbrR', 'MayR', 'JunR',
     'JulR', 'AgoR', 'SepR', 'OctR', 'NovR', 'DicR',
-    // Alternative names - MUST BE EXACT (add more here as needed)
-    'Desglose de Ingresos y costm',      // wepark format
-    'Desglose de Ingresos y costos m',   // sigma format with space before 'm'
+    // Alternative names - MUST BE EXACT
+    'Desglose de Ingresos y costm',
+    'Desglose de Ingresos y costos m',
 ];
 
 // Note: These lists are used as fallback when no DB concepts are provided
@@ -93,9 +93,11 @@ function isConceptRecognized(name: string, concepts: string[]): boolean {
 export function parseResultsSheet(
     buffer: ArrayBuffer,
     sheetName?: string,
-    knownProjects?: string[]
+    knownProjects?: string[],
+    validSheetNames?: string[] // From DB or defaults
 ): ParsedResults {
     const warnings: ParseWarning[] = [];
+    const sheetNamesToUse = validSheetNames && validSheetNames.length > 0 ? validSheetNames : DEFAULT_VALID_SHEET_NAMES;
 
     try {
         // Read workbook
@@ -106,7 +108,7 @@ export function parseResultsSheet(
         if (!targetSheet) {
             // Find first matching sheet (case-insensitive exact match)
             targetSheet = workbook.SheetNames.find(name =>
-                VALID_SHEET_NAMES.some(valid =>
+                sheetNamesToUse.some(valid =>
                     name.toLowerCase().trim() === valid.toLowerCase().trim()
                 )
             ) || workbook.SheetNames[0];
@@ -369,12 +371,13 @@ export function getAvailableSheets(buffer: ArrayBuffer): string[] {
 }
 
 // Get valid sheets for import
-export function getMonthSheets(buffer: ArrayBuffer): string[] {
+export function getMonthSheets(buffer: ArrayBuffer, validSheetNames?: string[]): string[] {
     const allSheets = getAvailableSheets(buffer);
+    const sheetNamesToUse = validSheetNames && validSheetNames.length > 0 ? validSheetNames : DEFAULT_VALID_SHEET_NAMES;
 
     // Find sheets that match valid names (case-insensitive exact match)
     return allSheets.filter(name =>
-        VALID_SHEET_NAMES.some(valid =>
+        sheetNamesToUse.some(valid =>
             name.toLowerCase().trim() === valid.toLowerCase().trim()
         )
     );

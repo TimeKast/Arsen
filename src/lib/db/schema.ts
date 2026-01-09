@@ -225,6 +225,15 @@ export const importRules = pgTable('import_rules', {
     createdBy: uuid('created_by').references(() => users.id),
 });
 
+// --- Valid Sheet Names (for Excel import) ---
+export const validSheetNames = pgTable('valid_sheet_names', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: varchar('name', { length: 255 }).notNull().unique(),
+    description: text('description'),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
 // ==================== RELATIONS ====================
 
 export const usersRelations = relations(users, ({ one, many }) => ({
