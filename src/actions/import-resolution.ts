@@ -1,7 +1,7 @@
 'use server';
 
 import { eq, and } from 'drizzle-orm';
-import { db, concepts, projects, conceptMappings } from '@/lib/db';
+import { db, concepts, projects, conceptMappings, projectMappings } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
 import { z } from 'zod';
 
@@ -43,6 +43,18 @@ export async function getSavedMappings(companyId: string) {
 
     return await db.query.conceptMappings.findMany({
         where: eq(conceptMappings.companyId, companyId),
+    });
+}
+
+// Get saved project mappings for a company
+export async function getSavedProjectMappings(companyId: string) {
+    const session = await auth();
+    if (!session?.user) {
+        throw new Error('No autenticado');
+    }
+
+    return await db.query.projectMappings.findMany({
+        where: eq(projectMappings.companyId, companyId),
     });
 }
 
@@ -109,7 +121,28 @@ export async function saveResolutions(data: z.infer<typeof resolutionSchema>) {
                         .where(eq(conceptMappings.id, existing.id));
                 }
             }
-            // Note: Project mappings could be added if needed
+
+            // Save project mappings
+            if (resolution.type === 'PROJECT' && resolution.targetId && resolution.targetId !== '__ADMIN__') {
+                const existing = await db.query.projectMappings.findFirst({
+                    where: and(
+                        eq(projectMappings.companyId, validated.companyId),
+                        eq(projectMappings.externalName, resolution.originalName)
+                    ),
+                });
+
+                if (!existing) {
+                    await db.insert(projectMappings).values({
+                        companyId: validated.companyId,
+                        externalName: resolution.originalName,
+                        projectId: resolution.targetId,
+                    });
+                } else {
+                    await db.update(projectMappings)
+                        .set({ projectId: resolution.targetId })
+                        .where(eq(projectMappings.id, existing.id));
+                }
+            }
         } else if (resolution.action === 'CREATE' && resolution.newName) {
             console.log(`Creating ${resolution.type}: "${resolution.newName}"`);
 

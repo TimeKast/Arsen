@@ -145,6 +145,15 @@ export const conceptMappings = pgTable('concept_mappings', {
     createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
+// --- Project Mappings (for import - maps external names to project IDs) ---
+export const projectMappings = pgTable('project_mappings', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    companyId: uuid('company_id').notNull().references(() => companies.id),
+    externalName: varchar('external_name', { length: 255 }).notNull(),
+    projectId: uuid('project_id').notNull().references(() => projects.id),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
 // --- Periods ---
 export const periods = pgTable('periods', {
     id: uuid('id').primaryKey().defaultRandom(),

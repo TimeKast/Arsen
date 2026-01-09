@@ -17,7 +17,7 @@ import {
 } from '@/lib/excel/results-parser';
 import { ConflictResolver } from './conflict-resolver';
 import type { ConflictResolution } from '@/actions/import-resolution';
-import { getSavedMappings } from '@/actions/import-resolution';
+import { getSavedMappings, getSavedProjectMappings } from '@/actions/import-resolution';
 import { checkExistingResults, confirmResultsImport } from '@/actions/results';
 import { getActiveImportRules, type ImportRule } from '@/actions/import-rules';
 import { applyImportRules } from '@/lib/import-rules-utils';
@@ -61,6 +61,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [importRules, setImportRules] = useState<ImportRule[]>([]);
     const [savedMappings, setSavedMappings] = useState<{ externalName: string; conceptId: string }[]>([]);
+    const [savedProjectMappings, setSavedProjectMappings] = useState<{ externalName: string; projectId: string }[]>([]);
     const [appliedRulesInfo, setAppliedRulesInfo] = useState<{ excluded: number; redirected: number }>({ excluded: 0, redirected: 0 });
     const [otrosMonthlyData, setOtrosMonthlyData] = useState<OtrosMonthlyData | null>(null);
     const [isOtrosSheet, setIsOtrosSheet] = useState(false);
@@ -71,6 +72,9 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         getActiveImportRules(companyId).then(setImportRules).catch(console.error);
         getSavedMappings(companyId).then(mappings => {
             setSavedMappings(mappings.map(m => ({ externalName: m.externalName, conceptId: m.conceptId })));
+        }).catch(console.error);
+        getSavedProjectMappings(companyId).then(mappings => {
+            setSavedProjectMappings(mappings.map(m => ({ externalName: m.externalName, projectId: m.projectId })));
         }).catch(console.error);
     }, [companyId]);
 
@@ -219,8 +223,15 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         if (!parsedData) return [];
         const conflicts: { originalName: string; type: 'PROJECT' | 'CONCEPT'; conceptType?: 'INCOME' | 'COST' }[] = [];
 
+        // Check savedProjectMappings to exclude already mapped projects
+        const mappedProjectNames = new Set(savedProjectMappings.map(m => m.externalName.toLowerCase()));
+
         // Exclude admin expenses from project conflicts (they don't need a project in DB)
         parsedData.projects.filter(p => !p.isRecognized && !p.isAdministration).forEach(p => {
+            // Skip if this project name was already mapped before
+            if (mappedProjectNames.has(p.name.toLowerCase())) {
+                return;
+            }
             conflicts.push({ originalName: p.name, type: 'PROJECT' });
         });
 
@@ -236,7 +247,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         });
 
         return conflicts;
-    }, [parsedData, savedMappings]);
+    }, [parsedData, savedMappings, savedProjectMappings]);
 
     const handleResolved = useCallback((resolutions: ConflictResolution[]) => {
         console.log('Resolutions received from conflict resolver:', resolutions);
@@ -309,6 +320,27 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                     return undefined;
                 };
 
+                // Helper to get projectId from resolution or saved mapping
+                const getProjectIdForOtros = (projectName: string | undefined): string | null => {
+                    if (!projectName) return null;
+
+                    // First check resolved conflicts
+                    const resolution = resolvedConflicts.find(
+                        r => r.type === 'PROJECT' && r.originalName === projectName
+                    );
+                    if (resolution?.targetId) {
+                        return resolution.targetId === '__ADMIN__' ? null : resolution.targetId;
+                    }
+
+                    // Then check saved project mappings (case insensitive)
+                    const savedMapping = savedProjectMappings.find(
+                        m => m.externalName.toLowerCase() === projectName.toLowerCase()
+                    );
+                    if (savedMapping?.projectId) return savedMapping.projectId;
+
+                    return null; // Will be resolved by name in backend
+                };
+
                 // Import each month that has data
                 for (let month = 1; month <= 12; month++) {
                     const monthValues = otrosMonthlyData.valuesByMonth.get(month);
@@ -320,13 +352,8 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                         const project = otrosMonthlyData.projects[v.projectIndex];
                         const concept = otrosMonthlyData.concepts[v.conceptIndex];
 
-                        // Handle project resolution
-                        const projectResolution = resolvedConflicts.find(
-                            r => r.type === 'PROJECT' && r.originalName === project?.name
-                        );
-                        const resolvedProjectId = projectResolution?.targetId;
-                        const finalProjectId = project?.isAdministration ? null :
-                            (resolvedProjectId === '__ADMIN__' ? null : resolvedProjectId || null);
+                        // Handle project resolution - check saved mappings too
+                        const finalProjectId = project?.isAdministration ? null : getProjectIdForOtros(project?.name);
 
                         return {
                             projectId: finalProjectId,
