@@ -143,33 +143,54 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                 </select>
             </div>
 
-            {/* Upload Zone */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                    <Upload className="mx-auto text-gray-400 mb-4" size={48} />
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        Arrastra un archivo Excel o haz clic para seleccionar
-                    </p>
-                    <input
-                        type="file"
-                        accept=".xlsx,.xls"
-                        onChange={handleFileChange}
-                        className="hidden"
-                        id="file-input"
-                    />
-                    <label
-                        htmlFor="file-input"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700"
-                    >
-                        Seleccionar Archivo
-                    </label>
-                    {file && (
-                        <p className="mt-4 text-sm text-gray-600">
-                            Archivo: {file.name}
+            {/* Upload Zone - Only show when no preview data */}
+            {preview.length === 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                        <Upload className="mx-auto text-gray-400 mb-4" size={48} />
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">
+                            Arrastra un archivo Excel o haz clic para seleccionar
                         </p>
-                    )}
+                        <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            id="file-input"
+                        />
+                        <label
+                            htmlFor="file-input"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700"
+                        >
+                            Seleccionar Archivo
+                        </label>
+                        {file && (
+                            <p className="mt-4 text-sm text-gray-600">
+                                Archivo: {file.name}
+                            </p>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {/* Selected file info - Show when preview has data */}
+            {preview.length > 0 && file && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <FileSpreadsheet className="text-blue-600" size={24} />
+                        <div>
+                            <p className="font-medium dark:text-white">{file.name}</p>
+                            <p className="text-sm text-gray-500">{preview.length} registros listos para importar</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => { setPreview([]); setFile(null); setErrors([]); setResult(null); }}
+                        className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                    >
+                        Cambiar archivo
+                    </button>
+                </div>
+            )}
 
             {/* Parsing indicator */}
             {parsing && (
