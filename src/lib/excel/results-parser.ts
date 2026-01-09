@@ -61,6 +61,19 @@ const KNOWN_COST_CONCEPTS = [
     'compensaciones', 'varios', 'no deducibles', 'nomina operativa', 'nomina gerencial'
 ];
 
+// Valid sheet names for import (exact match, case-insensitive)
+// To add new valid sheet names, add them to this list
+const VALID_SHEET_NAMES = [
+    // Monthly pattern sheets
+    'EneR', 'FebR', 'MarR', 'AbrR', 'MayR', 'JunR',
+    'JulR', 'AgoR', 'SepR', 'OctR', 'NovR', 'DicR',
+    // Alternative names (add more here as needed)
+    'Desglose de Ingresos y costm',
+    'Desglose de Ingresos y costos',
+    'Desglose de Ingresos',
+    'Desglose',
+];
+
 // Note: These lists are used as fallback when no DB concepts are provided
 // When DB is queried, the actual concepts from DB should be passed
 const KNOWN_INCOME_CONCEPTS_DEFAULT: string[] = [];
@@ -93,18 +106,6 @@ export function parseResultsSheet(
         // Find sheet (use specified or find by exact name match)
         let targetSheet = sheetName;
         if (!targetSheet) {
-            // Valid sheet names (exact match, case-insensitive)
-            const VALID_SHEET_NAMES = [
-                // Monthly pattern sheets
-                'EneR', 'FebR', 'MarR', 'AbrR', 'MayR', 'JunR',
-                'JulR', 'AgoR', 'SepR', 'OctR', 'NovR', 'DicR',
-                // Alternative names (add more here as needed)
-                'Desglose de Ingresos y costm',
-                'Desglose de Ingresos y costos',
-                'Desglose de Ingresos',
-                'Desglose',
-            ];
-
             // Find first matching sheet (case-insensitive exact match)
             targetSheet = workbook.SheetNames.find(name =>
                 VALID_SHEET_NAMES.some(valid =>
@@ -369,21 +370,15 @@ export function getAvailableSheets(buffer: ArrayBuffer): string[] {
     }
 }
 
-// Get month sheets (EneR, FebR, etc.) - original format
+// Get valid sheets for import
 export function getMonthSheets(buffer: ArrayBuffer): string[] {
     const allSheets = getAvailableSheets(buffer);
 
-    // Check for accountant format first
-    const accountantSheets = allSheets.filter(name =>
-        name.toLowerCase().includes('desglose de ingresos y costos m')
-    );
-    if (accountantSheets.length > 0) {
-        return accountantSheets;
-    }
-
-    // Fall back to original EneR/FebR format
+    // Find sheets that match valid names (case-insensitive exact match)
     return allSheets.filter(name =>
-        /^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)R$/i.test(name)
+        VALID_SHEET_NAMES.some(valid =>
+            name.toLowerCase().trim() === valid.toLowerCase().trim()
+        )
     );
 }
 
