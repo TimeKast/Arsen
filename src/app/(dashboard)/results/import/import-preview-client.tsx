@@ -765,7 +765,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                                 <span className="font-medium dark:text-white">{file?.name}</span>
                             </div>
 
-                            {availableSheets.length > 0 && (
+                            {availableSheets.length > 0 && !isMultiMonthMode && (
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-500">Hoja:</span>
                                     <select
