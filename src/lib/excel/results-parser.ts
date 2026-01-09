@@ -808,11 +808,8 @@ export function parseOtrosAllMonths(
             // Add values for ALL 12 months
             for (let month = 1; month <= 12; month++) {
                 const monthColIndex = 3 + month; // Column E=4 (Jan), Column P=15 (Dec)
-                // Check if column exists in this row
-                if (monthColIndex >= row.length) {
-                    // Row doesn't have this month's column
-                    continue;
-                }
+                // Access column directly - sparse arrays from xlsx have undefined for empty cells
+                // which correctly becomes 0 via the typeof check
                 const rawValue = row[monthColIndex];
                 const amount = typeof rawValue === 'number' ? rawValue : 0;
                 if (amount !== 0) {
