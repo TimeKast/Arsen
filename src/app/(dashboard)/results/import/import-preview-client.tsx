@@ -15,6 +15,7 @@ import {
 } from '@/lib/excel/results-parser';
 import { ConflictResolver } from './conflict-resolver';
 import type { ConflictResolution } from '@/actions/import-resolution';
+import { getSavedMappings } from '@/actions/import-resolution';
 import { checkExistingResults, confirmResultsImport } from '@/actions/results';
 import { getActiveImportRules, type ImportRule } from '@/actions/import-rules';
 import { applyImportRules } from '@/lib/import-rules-utils';
@@ -57,11 +58,15 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [importRules, setImportRules] = useState<ImportRule[]>([]);
+    const [savedMappings, setSavedMappings] = useState<{ externalName: string; conceptId: string }[]>([]);
     const [appliedRulesInfo, setAppliedRulesInfo] = useState<{ excluded: number; redirected: number }>({ excluded: 0, redirected: 0 });
 
-    // Load import rules on mount
+    // Load import rules and saved mappings on mount
     useEffect(() => {
         getActiveImportRules(companyId).then(setImportRules).catch(console.error);
+        getSavedMappings(companyId).then(mappings => {
+            setSavedMappings(mappings.map(m => ({ externalName: m.externalName, conceptId: m.conceptId })));
+        }).catch(console.error);
     }, [companyId]);
 
     const handleFile = useCallback(async (selectedFile: File) => {
@@ -204,12 +209,19 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
             conflicts.push({ originalName: p.name, type: 'PROJECT' });
         });
 
+        // Check savedMappings to exclude already mapped concepts
+        const mappedNames = new Set(savedMappings.map(m => m.externalName.toLowerCase()));
+
         parsedData.concepts.filter(c => !c.isRecognized).forEach(c => {
+            // Skip if this concept name was already mapped before
+            if (mappedNames.has(c.name.toLowerCase())) {
+                return;
+            }
             conflicts.push({ originalName: c.name, type: 'CONCEPT', conceptType: c.type });
         });
 
         return conflicts;
-    }, [parsedData]);
+    }, [parsedData, savedMappings]);
 
     const handleResolved = useCallback((resolutions: ConflictResolution[]) => {
         console.log('Resolutions received from conflict resolver:', resolutions);
@@ -267,7 +279,27 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
 
             // Build entries from parsed data
             console.log('Resolved conflicts:', resolvedConflicts);
+            console.log('Saved mappings:', savedMappings);
             console.log('Parsed projects:', parsedData.projects.map(p => p.name));
+
+            // Helper to get conceptId from resolution or saved mapping
+            const getConceptId = (conceptName: string | undefined, conceptType: 'INCOME' | 'COST' | undefined): string | undefined => {
+                if (!conceptName) return undefined;
+
+                // First check resolved conflicts
+                const resolution = resolvedConflicts.find(
+                    r => r.type === 'CONCEPT' && r.originalName === conceptName && r.conceptType === conceptType
+                );
+                if (resolution?.targetId) return resolution.targetId;
+
+                // Then check saved mappings (case insensitive)
+                const savedMapping = savedMappings.find(
+                    m => m.externalName.toLowerCase() === conceptName.toLowerCase()
+                );
+                if (savedMapping?.conceptId) return savedMapping.conceptId;
+
+                return undefined;
+            };
 
             let entries = parsedData.values.map(v => {
                 const project = parsedData.projects[v.projectIndex];
@@ -275,13 +307,10 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
 
                 // Admin expenses have no project (projectId = null)
                 if (project?.isAdministration) {
-                    const conceptResolution = resolvedConflicts.find(
-                        r => r.type === 'CONCEPT' && r.originalName === concept?.name && r.conceptType === concept?.type
-                    );
                     return {
                         projectId: null,
                         projectName: null, // No project for admin expenses
-                        conceptId: conceptResolution?.targetId || undefined,
+                        conceptId: getConceptId(concept?.name, concept?.type),
                         conceptName: concept?.name || undefined,
                         conceptType: concept?.type as 'INCOME' | 'COST' | undefined,
                         amount: v.value,
@@ -291,10 +320,6 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                 // Find resolved project/concept IDs if they were mapped
                 const projectResolution = resolvedConflicts.find(
                     r => r.type === 'PROJECT' && r.originalName === project?.name
-                );
-                // Match concept by name AND type to differentiate "Etiquetas" INCOME vs COST
-                const conceptResolution = resolvedConflicts.find(
-                    r => r.type === 'CONCEPT' && r.originalName === concept?.name && r.conceptType === concept?.type
                 );
 
                 if (project && !projectResolution && !project.isAdministration) {
@@ -308,7 +333,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                 return {
                     projectId: finalProjectId,
                     projectName: project?.name || null,
-                    conceptId: conceptResolution?.targetId || undefined,
+                    conceptId: getConceptId(concept?.name, concept?.type),
                     conceptName: concept?.name || undefined,
                     conceptType: concept?.type as 'INCOME' | 'COST' | undefined, // Pass type for backend lookup
                     amount: v.value,
