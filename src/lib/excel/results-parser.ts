@@ -496,7 +496,12 @@ export function getOtrosYear(buffer: ArrayBuffer): number {
 
 // Parse "Otros" sheet (budget format) as ParsedResults for Results import
 // This adapts the budget-format Otros sheet to the ParsedResults structure
-export function parseOtrosAsResults(buffer: ArrayBuffer, month: number): ParsedResults {
+export function parseOtrosAsResults(
+    buffer: ArrayBuffer,
+    month: number,
+    knownProjects?: string[],
+    knownConcepts?: string[]
+): ParsedResults {
     const warnings: ParseWarning[] = [];
 
     try {
@@ -576,10 +581,14 @@ export function parseOtrosAsResults(buffer: ArrayBuffer, month: number): ParsedR
             if (projectIndex === undefined) {
                 projectIndex = projects.length;
                 projectsMap.set(projectKey, projectIndex);
+                // Check if project is known (case-insensitive)
+                const isRecognized = knownProjects?.some(
+                    p => normalizeString(p) === normalizeString(projectKey)
+                ) ?? false;
                 projects.push({
                     columnIndex: projectIndex,
                     name: projectKey,
-                    isRecognized: false, // Will be resolved by conflict resolver
+                    isRecognized,
                 });
             }
 
@@ -590,11 +599,15 @@ export function parseOtrosAsResults(buffer: ArrayBuffer, month: number): ParsedR
             if (conceptIndex === undefined) {
                 conceptIndex = concepts.length;
                 conceptsMap.set(conceptName, conceptIndex);
+                // Check if concept is known (case-insensitive)
+                const isRecognized = knownConcepts?.some(
+                    c => normalizeString(c) === normalizeString(conceptName)
+                ) ?? false;
                 concepts.push({
                     rowIndex: r,
                     name: conceptName,
                     type: 'COST', // Otros sheet typically contains costs
-                    isRecognized: false,
+                    isRecognized,
                 });
             }
 
@@ -606,8 +619,8 @@ export function parseOtrosAsResults(buffer: ArrayBuffer, month: number): ParsedR
             });
         }
 
-        // Generate warnings for all unrecognized projects and concepts
-        projects.forEach(p => {
+        // Generate warnings only for unrecognized projects and concepts
+        projects.filter(p => !p.isRecognized).forEach(p => {
             warnings.push({
                 type: 'PROJECT_NOT_FOUND',
                 message: `Proyecto no reconocido: "${p.name}"`,
@@ -615,7 +628,7 @@ export function parseOtrosAsResults(buffer: ArrayBuffer, month: number): ParsedR
             });
         });
 
-        concepts.forEach(c => {
+        concepts.filter(c => !c.isRecognized).forEach(c => {
             warnings.push({
                 type: 'CONCEPT_NOT_FOUND',
                 message: `Concepto no reconocido: "${c.name}" (${c.type})`,

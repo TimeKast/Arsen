@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth/config';
 import { getUserCompanies } from '@/actions/company-context';
 import { getActiveSheetNames } from '@/actions/valid-sheet-names';
 import { ImportPreviewClient } from './import-preview-client';
+import { db, projects, concepts } from '@/lib/db';
+import { eq } from 'drizzle-orm';
 
 export default async function ImportPage() {
     const session = await auth();
@@ -26,12 +28,24 @@ export default async function ImportPage() {
     const currentYear = new Date().getFullYear();
     const validSheetNames = await getActiveSheetNames();
 
+    // Load project and concept names for recognition
+    const allProjects = await db.query.projects.findMany({
+        where: eq(projects.isActive, true),
+        columns: { name: true },
+    });
+    const allConcepts = await db.query.concepts.findMany({
+        where: eq(concepts.isActive, true),
+        columns: { name: true },
+    });
+
     return (
         <ImportPreviewClient
             companyId={defaultCompany.id}
             companyName={defaultCompany.name}
             currentYear={currentYear}
             validSheetNames={validSheetNames}
+            knownProjects={allProjects.map(p => p.name)}
+            knownConcepts={allConcepts.map(c => c.name)}
         />
     );
 }

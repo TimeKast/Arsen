@@ -31,9 +31,11 @@ interface ImportPreviewClientProps {
     companyName: string;
     currentYear: number;
     validSheetNames: string[];
+    knownProjects?: string[];
+    knownConcepts?: string[];
 }
 
-export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: defaultCompanyName, currentYear, validSheetNames }: ImportPreviewClientProps) {
+export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: defaultCompanyName, currentYear, validSheetNames, knownProjects, knownConcepts }: ImportPreviewClientProps) {
     const router = useRouter();
 
     // Use selected company from store (falls back to props if not set)
@@ -93,7 +95,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                 setSelectedSheet(sheets[0]);
                 // Handle Otros sheet differently
                 if (sheets[0].includes('Otros')) {
-                    const result = parseOtrosAsResults(buffer, selectedMonth);
+                    const result = parseOtrosAsResults(buffer, selectedMonth, knownProjects, knownConcepts);
                     setParsedData(result);
                 } else {
                     const result = parseResultsSheet(buffer, sheets[0], undefined, validSheetNames);
@@ -135,7 +137,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
             const buffer = await file.arrayBuffer();
             // Handle Otros sheet differently
             if (sheetName.includes('Otros')) {
-                const result = parseOtrosAsResults(buffer, selectedMonth);
+                const result = parseOtrosAsResults(buffer, selectedMonth, knownProjects, knownConcepts);
                 setParsedData(result);
             } else {
                 const result = parseResultsSheet(buffer, sheetName, undefined, validSheetNames);
@@ -144,7 +146,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         } finally {
             setLoading(false);
         }
-    }, [file, validSheetNames, selectedMonth]);
+    }, [file, validSheetNames, selectedMonth, knownProjects, knownConcepts]);
 
     const handleDrag = useCallback((e: React.DragEvent) => {
         e.preventDefault();
