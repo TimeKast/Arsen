@@ -107,6 +107,8 @@ export async function saveResolutions(data: z.infer<typeof resolutionSchema>) {
             }
             // Note: Project mappings could be added if needed
         } else if (resolution.action === 'CREATE' && resolution.newName) {
+            console.log(`Creating ${resolution.type}: "${resolution.newName}"`);
+
             if (resolution.type === 'PROJECT') {
                 // Create new project
                 const [newProject] = await db.insert(projects).values({
@@ -115,6 +117,7 @@ export async function saveResolutions(data: z.infer<typeof resolutionSchema>) {
                     appliesProfitSharing: false,
                 }).returning();
 
+                console.log(`Created project with ID: ${newProject.id}`);
                 createdEntities.push({
                     type: 'PROJECT',
                     id: newProject.id,

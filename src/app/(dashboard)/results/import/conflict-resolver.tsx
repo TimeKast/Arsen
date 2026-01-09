@@ -156,10 +156,14 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
         setSaving(true);
         try {
             const resolutionList = Object.values(resolutions).filter(r => r.action !== 'IGNORE');
+            console.log('Sending resolutions to server:', resolutionList);
+            console.log('Projects to create:', resolutionList.filter(r => r.type === 'PROJECT' && r.action === 'CREATE'));
+
             const result = await saveResolutions({
                 companyId,
                 resolutions: resolutionList,
             });
+            console.log('Server response:', result);
 
             // Update resolutions with created entity IDs
             const updatedResolutions = Object.values(resolutions).map(res => {
