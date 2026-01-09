@@ -606,6 +606,23 @@ export function parseOtrosAsResults(buffer: ArrayBuffer, month: number): ParsedR
             });
         }
 
+        // Generate warnings for all unrecognized projects and concepts
+        projects.forEach(p => {
+            warnings.push({
+                type: 'PROJECT_NOT_FOUND',
+                message: `Proyecto no reconocido: "${p.name}"`,
+                column: p.columnIndex,
+            });
+        });
+
+        concepts.forEach(c => {
+            warnings.push({
+                type: 'CONCEPT_NOT_FOUND',
+                message: `Concepto no reconocido: "${c.name}" (${c.type})`,
+                row: c.rowIndex,
+            });
+        });
+
         return {
             success: true,
             sheetName: otrosSheetName,
