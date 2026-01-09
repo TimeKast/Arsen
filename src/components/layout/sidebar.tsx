@@ -21,7 +21,8 @@ import {
     Tag,
     Layers,
     FileSpreadsheet,
-    Shuffle
+    Shuffle,
+    Scale
 } from 'lucide-react';
 
 interface NavItem {
@@ -33,7 +34,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { href: '/comparison', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { href: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { href: '/comparison', label: 'Comparativo', icon: <Scale size={20} /> },
     { href: '/results', label: 'Resultados', icon: <FileText size={20} /> },
     { href: '/budgets', label: 'Presupuestos', icon: <DollarSign size={20} /> },
     { href: '/profit-sharing', label: 'Reparto', icon: <PieChart size={20} /> },
