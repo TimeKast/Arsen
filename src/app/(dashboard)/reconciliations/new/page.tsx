@@ -21,7 +21,7 @@ export default async function ReconciliationNewPage() {
     // Get all active projects
     const allProjects = await db.query.projects.findMany({
         where: eq(projects.isActive, true),
-        columns: { id: true, name: true },
+        columns: { id: true, name: true, companyId: true },
     });
 
     // Get all active concepts

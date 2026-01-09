@@ -14,6 +14,7 @@ interface Company {
 interface Project {
     id: string;
     name: string;
+    companyId: string;
 }
 
 interface Concept {
@@ -52,6 +53,14 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
     useEffect(() => {
         setTotal(subtotal + tax);
     }, [subtotal, tax]);
+
+    // Filter projects by selected company
+    const filteredProjects = projects.filter(p => p.companyId === companyId);
+
+    // Reset project when company changes
+    useEffect(() => {
+        setProjectId('');
+    }, [companyId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -135,7 +144,7 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
                             className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
                             <option value="">Sin proyecto</option>
-                            {projects.map((p) => (
+                            {filteredProjects.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
