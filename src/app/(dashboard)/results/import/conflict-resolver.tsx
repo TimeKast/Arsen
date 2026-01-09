@@ -328,7 +328,10 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
                     </div>
                     <div className="divide-y dark:divide-gray-700">
                         {conceptConflicts.map((conflict) => {
-                            const key = `CONCEPT-${conflict.originalName}`;
+                            // Use same key format as initialization
+                            const key = conflict.conceptType
+                                ? `CONCEPT-${conflict.originalName}-${conflict.conceptType}`
+                                : `CONCEPT-${conflict.originalName}`;
                             const resolution = resolutions[key];
                             if (!resolution) return null;
 
