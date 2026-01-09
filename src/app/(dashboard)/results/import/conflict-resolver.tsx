@@ -156,11 +156,25 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
         setSaving(true);
         try {
             const resolutionList = Object.values(resolutions).filter(r => r.action !== 'IGNORE');
-            await saveResolutions({
+            const result = await saveResolutions({
                 companyId,
                 resolutions: resolutionList,
             });
-            onResolved(Object.values(resolutions));
+
+            // Update resolutions with created entity IDs
+            const updatedResolutions = Object.values(resolutions).map(res => {
+                if (res.action === 'CREATE') {
+                    const created = result.createdEntities.find(
+                        e => e.type === res.type && e.name === res.newName
+                    );
+                    if (created) {
+                        return { ...res, targetId: created.id };
+                    }
+                }
+                return res;
+            });
+
+            onResolved(updatedResolutions);
         } catch (error) {
             alert(error instanceof Error ? error.message : 'Error al guardar');
         } finally {
