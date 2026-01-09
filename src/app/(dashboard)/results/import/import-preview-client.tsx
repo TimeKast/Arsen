@@ -124,7 +124,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                 } else {
                     setIsOtrosSheet(false);
                     setOtrosMonthlyData(null);
-                    const result = parseResultsSheet(buffer, sheets[0], undefined, validSheetNames);
+                    const result = parseResultsSheet(buffer, sheets[0], knownProjects, validSheetNames);
                     setParsedData(result);
                 }
             } else {
@@ -153,7 +153,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         } finally {
             setLoading(false);
         }
-    }, [validSheetNames]);
+    }, [validSheetNames, knownProjects]);
 
     const handleSheetChange = useCallback(async (sheetName: string) => {
         if (!file) return;
