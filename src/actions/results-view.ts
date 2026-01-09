@@ -32,13 +32,19 @@ export async function getResultsForPeriod(
         throw new Error('No autenticado');
     }
 
+    // Build conditions - month=0 means all months
+    const conditions = [
+        eq(results.companyId, companyId),
+        eq(results.year, year),
+    ];
+    // Only filter by month if specific month selected (not 0 = all months)
+    if (month > 0) {
+        conditions.push(eq(results.month, month));
+    }
+
     // Get all results for the period
     const periodResults = await db.query.results.findMany({
-        where: and(
-            eq(results.companyId, companyId),
-            eq(results.year, year),
-            eq(results.month, month)
-        ),
+        where: and(...conditions),
         with: {
             project: true,
             concept: true,
@@ -161,12 +167,17 @@ export async function getResultsForView(
         throw new Error('No autenticado');
     }
 
+    // Build conditions - month=0 means all months
+    const viewConditions = [
+        eq(results.companyId, companyId),
+        eq(results.year, year),
+    ];
+    if (month > 0) {
+        viewConditions.push(eq(results.month, month));
+    }
+
     const periodResults = await db.query.results.findMany({
-        where: and(
-            eq(results.companyId, companyId),
-            eq(results.year, year),
-            eq(results.month, month)
-        ),
+        where: and(...viewConditions),
         with: {
             project: true,
             concept: {
