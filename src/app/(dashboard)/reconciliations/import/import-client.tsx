@@ -22,6 +22,8 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
     const [preview, setPreview] = useState<ParsedReconciliation[]>([]);
     const [errors, setErrors] = useState<string[]>([]);
     const [result, setResult] = useState<{ success: boolean; count: number } | null>(null);
+    const [hasOtros, setHasOtros] = useState(false);
+    const [importOtros, setImportOtros] = useState(false);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -32,6 +34,8 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
         setErrors([]);
         setPreview([]);
         setResult(null);
+        setHasOtros(false);
+        setImportOtros(false);
 
         try {
             const formData = new FormData();
@@ -47,6 +51,7 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
             if (data.success) {
                 setPreview(data.data);
                 setErrors(data.errors || []);
+                setHasOtros(data.hasOtros || false);
             } else {
                 setErrors(data.errors || ['Error al parsear archivo']);
             }
@@ -175,20 +180,38 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
 
             {/* Selected file info - Show when preview has data */}
             {preview.length > 0 && file && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <FileSpreadsheet className="text-blue-600" size={24} />
-                        <div>
-                            <p className="font-medium dark:text-white">{file.name}</p>
-                            <p className="text-sm text-gray-500">{preview.length} registros listos para importar</p>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <FileSpreadsheet className="text-blue-600" size={24} />
+                            <div>
+                                <p className="font-medium dark:text-white">{file.name}</p>
+                                <p className="text-sm text-gray-500">{preview.length} registros listos para importar</p>
+                            </div>
                         </div>
+                        <button
+                            onClick={() => { setPreview([]); setFile(null); setErrors([]); setResult(null); setHasOtros(false); setImportOtros(false); }}
+                            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                        >
+                            Cambiar archivo
+                        </button>
                     </div>
-                    <button
-                        onClick={() => { setPreview([]); setFile(null); setErrors([]); setResult(null); }}
-                        className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                    >
-                        Cambiar archivo
-                    </button>
+                    {/* Otros sheet option */}
+                    {hasOtros && (
+                        <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={importOtros}
+                                    onChange={(e) => setImportOtros(e.target.checked)}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                    También importar hoja &quot;Otros&quot; como Resultados
+                                </span>
+                            </label>
+                        </div>
+                    )}
                 </div>
             )}
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
-import { parseReconciliationsFile } from '@/lib/excel/reconciliations-parser';
+import { parseReconciliationsFile, hasOtrosSheet } from '@/lib/excel/reconciliations-parser';
 
 export async function POST(request: NextRequest) {
     const session = await auth();
@@ -19,15 +19,17 @@ export async function POST(request: NextRequest) {
 
         const buffer = Buffer.from(await file.arrayBuffer());
         const result = parseReconciliationsFile(buffer);
+        const hasOtros = hasOtrosSheet(buffer);
 
-        return NextResponse.json(result);
+        return NextResponse.json({ ...result, hasOtros });
     } catch (error) {
         console.error('Parse error:', error);
         return NextResponse.json({
             success: false,
             errors: ['Error processing file'],
             data: [],
-            rawHeaders: []
+            rawHeaders: [],
+            hasOtros: false
         }, { status: 500 });
     }
 }

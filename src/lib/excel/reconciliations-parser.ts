@@ -167,6 +167,16 @@ export function getReconciliationSheets(buffer: Buffer): string[] {
     }
 }
 
+// Check if workbook has "Otros" sheet (for results import)
+export function hasOtrosSheet(buffer: Buffer): boolean {
+    try {
+        const workbook = XLSX.read(buffer, { type: 'buffer' });
+        return workbook.SheetNames.some(name => name.toLowerCase() === 'otros');
+    } catch {
+        return false;
+    }
+}
+
 function detectColumnMapping(headers: string[]): ColumnMapping {
     const mapping: ColumnMapping = {
         date: -1,
