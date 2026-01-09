@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq, and } from 'drizzle-orm';
-import { db, budgets, concepts, areas } from '@/lib/db';
+import { db, budgets, concepts, areas, projects } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
 import { z } from 'zod';
 
@@ -154,4 +154,115 @@ export async function saveBudget(data: SaveBudgetData) {
 
     revalidatePath('/budgets');
     return { success: true };
+}
+
+// Project budget result type
+export interface ProjectBudget {
+    projectId: string | null;
+    projectName: string;
+    totalIncome: number;
+    totalCost: number;
+    netBudget: number;
+    concepts: {
+        conceptId: string;
+        conceptName: string;
+        conceptType: 'INCOME' | 'COST';
+        amount: number;
+    }[];
+}
+
+// Get budgets grouped by project for a year
+export async function getBudgetsByProject(companyId: string, year: number): Promise<ProjectBudget[]> {
+    const session = await auth();
+    if (!session?.user) {
+        throw new Error('No autenticado');
+    }
+
+    // Get all budgets for the year with relations
+    const budgetData = await db.query.budgets.findMany({
+        where: and(
+            eq(budgets.companyId, companyId),
+            eq(budgets.year, year)
+        ),
+    });
+
+    // Get all concepts and projects for lookup
+    const allConcepts = await db.select().from(concepts);
+    const conceptMap = new Map(allConcepts.map(c => [c.id, { name: c.name, type: c.type }]));
+
+    const allProjects = await db.select().from(projects).where(eq(projects.companyId, companyId));
+    const projectMap = new Map(allProjects.map(p => [p.id, p.name]));
+
+    // Group by project
+    const projectGroups = new Map<string, {
+        projectName: string;
+        conceptAmounts: Map<string, number>;
+    }>();
+
+    for (const budget of budgetData) {
+        const projectKey = budget.projectId || 'admin';
+        const projectName = budget.projectId ? (projectMap.get(budget.projectId) || 'Proyecto Desconocido') : 'Gastos de Administración';
+
+        if (!projectGroups.has(projectKey)) {
+            projectGroups.set(projectKey, {
+                projectName,
+                conceptAmounts: new Map(),
+            });
+        }
+
+        const group = projectGroups.get(projectKey)!;
+        const currentAmount = group.conceptAmounts.get(budget.conceptId) || 0;
+        group.conceptAmounts.set(budget.conceptId, currentAmount + Number(budget.amount));
+    }
+
+    // Convert to result array
+    const results: ProjectBudget[] = [];
+
+    for (const [projectKey, group] of projectGroups) {
+        const conceptsList: ProjectBudget['concepts'] = [];
+        let totalIncome = 0;
+        let totalCost = 0;
+
+        for (const [conceptId, amount] of group.conceptAmounts) {
+            const conceptInfo = conceptMap.get(conceptId);
+            if (!conceptInfo) continue;
+
+            conceptsList.push({
+                conceptId,
+                conceptName: conceptInfo.name,
+                conceptType: conceptInfo.type,
+                amount,
+            });
+
+            if (conceptInfo.type === 'INCOME') {
+                totalIncome += amount;
+            } else {
+                totalCost += amount;
+            }
+        }
+
+        // Sort concepts by type then name
+        conceptsList.sort((a, b) => {
+            if (a.conceptType !== b.conceptType) return a.conceptType === 'INCOME' ? -1 : 1;
+            return a.conceptName.localeCompare(b.conceptName);
+        });
+
+        results.push({
+            projectId: projectKey === 'admin' ? null : projectKey,
+            projectName: group.projectName,
+            totalIncome,
+            totalCost,
+            netBudget: totalIncome - totalCost,
+            concepts: conceptsList,
+        });
+    }
+
+    // Sort: projects first (sorted by name), admin last
+    results.sort((a, b) => {
+        if (a.projectId === null) return 1;
+        if (b.projectId === null) return -1;
+        return a.projectName.localeCompare(b.projectName);
+    });
+
+    return results;
 }
