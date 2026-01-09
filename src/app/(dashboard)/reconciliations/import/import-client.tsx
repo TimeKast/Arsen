@@ -68,39 +68,25 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
 
         setSaving(true);
         try {
-            // Resolve project/concept names to IDs
-            const entries: ReconciliationEntry[] = await Promise.all(
-                preview.map(async (item) => {
-                    // Resolve project from businessUnit (U. Negocio column)
-                    const projectId = item.businessUnit
-                        ? await resolveProjectByName(selectedCompanyId, item.businessUnit)
-                        : null;
-                    const conceptId = item.conceptName
-                        ? await resolveConceptByName(item.conceptName)
-                        : null;
-
-                    return {
-                        date: item.date,
-                        reference: item.reference,
-                        invoice: item.invoice,
-                        policy: item.policy,
-                        checkNumber: item.checkNumber,
-                        supplier: item.supplier,
-                        businessUnit: item.businessUnit,
-                        account: item.account,
-                        cancelled: item.cancelled,
-                        inTransit: item.inTransit,
-                        entries: item.entries,
-                        subtotal: item.subtotal,
-                        tax: item.tax,
-                        withdrawals: item.withdrawals,
-                        balance: item.balance,
-                        observations: item.observations,
-                        projectId,
-                        conceptId,
-                    };
-                })
-            );
+            // Pass entries directly - server will resolve projectIds in bulk
+            const entries: ReconciliationEntry[] = preview.map(item => ({
+                date: item.date,
+                reference: item.reference,
+                invoice: item.invoice,
+                policy: item.policy,
+                checkNumber: item.checkNumber,
+                supplier: item.supplier,
+                businessUnit: item.businessUnit,
+                account: item.account,
+                cancelled: item.cancelled,
+                inTransit: item.inTransit,
+                entries: item.entries,
+                subtotal: item.subtotal,
+                tax: item.tax,
+                withdrawals: item.withdrawals,
+                balance: item.balance,
+                observations: item.observations,
+            }));
 
             const response = await confirmReconciliationImport({
                 companyId: selectedCompanyId,

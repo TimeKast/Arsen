@@ -64,12 +64,19 @@ export async function POST(request: NextRequest) {
             importedBy: string;
         }> = [];
 
+        const skippedConcepts = new Set<string>();
+        const matchedConcepts = new Set<string>();
+
         for (const entry of entries) {
             // Find concept by code (e.g., "A01 Seguridad" -> look for "Seguridad")
             const conceptName = entry.conceptCode.split(/\s+/).slice(1).join(' ') || entry.conceptCode;
             const conceptInfo = conceptByName.get(conceptName.toLowerCase());
 
-            if (!conceptInfo) continue; // Skip if concept not found
+            if (!conceptInfo) {
+                skippedConcepts.add(conceptName);
+                continue; // Skip if concept not found
+            }
+            matchedConcepts.add(conceptName);
 
             const projectId = entry.projectName
                 ? projectByName.get(entry.projectName.toLowerCase()) || null
@@ -93,6 +100,12 @@ export async function POST(request: NextRequest) {
                 });
             }
         }
+
+        console.log('Otros import - Year:', year);
+        console.log('Otros import - Entries parsed:', entries.length);
+        console.log('Otros import - Matched concepts:', Array.from(matchedConcepts).slice(0, 10));
+        console.log('Otros import - Skipped concepts (not found):', Array.from(skippedConcepts).slice(0, 10));
+        console.log('Otros import - Result entries to insert:', resultEntries.length);
 
         // Delete existing results for affected months
         for (const month of monthsWithData) {

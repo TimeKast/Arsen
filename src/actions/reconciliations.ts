@@ -66,34 +66,50 @@ export async function confirmReconciliationImport(data: ConfirmReconciliationImp
 
     const validated = confirmImportSchema.parse(data);
 
+    // Build project cache for bulk resolution (single DB query)
+    const companyProjects = await db.query.projects.findMany({
+        where: and(eq(projects.companyId, validated.companyId), eq(projects.isActive, true)),
+    });
+    const projectByName = new Map<string, string>();
+    for (const p of companyProjects) {
+        projectByName.set(p.name.toLowerCase(), p.id);
+    }
+
     // Filter out entries without any meaningful data and prepare batch insert
     const entriesToInsert = validated.entries
         .filter(entry => {
             // Keep if has any amount or supplier
             return entry.subtotal || entry.withdrawals || entry.entries || entry.balance || entry.supplier;
         })
-        .map(entry => ({
-            companyId: validated.companyId,
-            projectId: entry.projectId || null,
-            conceptId: entry.conceptId || null,
-            date: new Date(entry.date),
-            reference: entry.reference || null,
-            invoice: entry.invoice || null,
-            policy: entry.policy || null,
-            checkNumber: entry.checkNumber || null,
-            supplier: entry.supplier || null,
-            businessUnit: entry.businessUnit || null,
-            account: entry.account || null,
-            cancelled: entry.cancelled?.toFixed(2) || null,
-            inTransit: entry.inTransit?.toFixed(2) || null,
-            entries: entry.entries?.toFixed(2) || null,
-            subtotal: entry.subtotal?.toFixed(2) || null,
-            tax: entry.tax?.toFixed(2) || null,
-            withdrawals: entry.withdrawals?.toFixed(2) || null,
-            balance: entry.balance?.toFixed(2) || null,
-            observations: entry.observations || null,
-            createdBy: session.user.id,
-        }));
+        .map(entry => {
+            // Resolve projectId from businessUnit using cache
+            const projectId = entry.businessUnit
+                ? projectByName.get(entry.businessUnit.toLowerCase()) || null
+                : null;
+
+            return {
+                companyId: validated.companyId,
+                projectId,
+                conceptId: entry.conceptId || null,
+                date: new Date(entry.date),
+                reference: entry.reference || null,
+                invoice: entry.invoice || null,
+                policy: entry.policy || null,
+                checkNumber: entry.checkNumber || null,
+                supplier: entry.supplier || null,
+                businessUnit: entry.businessUnit || null,
+                account: entry.account || null,
+                cancelled: entry.cancelled?.toFixed(2) || null,
+                inTransit: entry.inTransit?.toFixed(2) || null,
+                entries: entry.entries?.toFixed(2) || null,
+                subtotal: entry.subtotal?.toFixed(2) || null,
+                tax: entry.tax?.toFixed(2) || null,
+                withdrawals: entry.withdrawals?.toFixed(2) || null,
+                balance: entry.balance?.toFixed(2) || null,
+                observations: entry.observations || null,
+                createdBy: session.user.id,
+            };
+        });
 
     // Batch insert in chunks of 100 to avoid "value too large to transmit" error
     const BATCH_SIZE = 100;
