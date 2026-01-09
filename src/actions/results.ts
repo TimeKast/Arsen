@@ -127,12 +127,14 @@ export async function confirmResultsImport(data: ConfirmImportData) {
                 if (foundId) {
                     conceptCache.set(cacheKey, foundId);
                     conceptId = foundId;
+                } else {
+                    console.warn(`[IMPORT] Concept not found by name: "${entry.conceptName}" (type: ${entry.conceptType})`);
                 }
             }
         }
 
         if (!conceptId) {
-            console.warn(`Concept not found: ${entry.conceptName}, skipping entry`);
+            console.warn(`[IMPORT] Skipping entry - no conceptId. Name: "${entry.conceptName}", Amount: ${entry.amount}`);
             continue;
         }
 
