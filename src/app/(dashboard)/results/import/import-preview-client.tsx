@@ -241,8 +241,9 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                 const projectResolution = resolvedConflicts.find(
                     r => r.type === 'PROJECT' && r.originalName === project?.name
                 );
+                // Match concept by name AND type to differentiate "Etiquetas" INCOME vs COST
                 const conceptResolution = resolvedConflicts.find(
-                    r => r.type === 'CONCEPT' && r.originalName === concept?.name
+                    r => r.type === 'CONCEPT' && r.originalName === concept?.name && r.conceptType === concept?.type
                 );
 
                 if (project && !projectResolution) {
@@ -254,6 +255,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                     projectName: project?.name || null,
                     conceptId: conceptResolution?.targetId || undefined,
                     conceptName: concept?.name || undefined,
+                    conceptType: concept?.type, // Pass type for backend lookup
                     amount: v.value,
                 };
             }).filter(e => (e.conceptId || e.conceptName) && e.amount !== 0);

@@ -16,6 +16,7 @@ const confirmImportSchema = z.object({
         projectName: z.string().optional(), // Project name for lookup
         conceptId: z.string().optional(), // Can be UUID
         conceptName: z.string().optional(), // Concept name for lookup
+        conceptType: z.enum(['INCOME', 'COST']).optional(), // For differentiation
         amount: z.number(),
     })),
 });
@@ -44,13 +45,19 @@ export async function checkExistingResults(
     return { exists: existing.length > 0, count: existing.length };
 }
 
-// Helper to find concept by name (case insensitive)
-async function findConceptByName(name: string): Promise<string | null> {
+// Helper to find concept by name and optionally type (case insensitive)
+async function findConceptByName(name: string, type?: 'INCOME' | 'COST'): Promise<string | null> {
+    const conditions = [ilike(concepts.name, name)];
+    if (type) {
+        conditions.push(eq(concepts.type, type));
+    }
+
     const concept = await db.query.concepts.findFirst({
-        where: ilike(concepts.name, name),
+        where: and(...conditions),
     });
     return concept?.id || null;
 }
+
 
 // Helper to find project by name in company (case insensitive)
 async function findProjectByName(name: string, companyId: string): Promise<string | null> {
@@ -107,13 +114,18 @@ export async function confirmResultsImport(data: ConfirmImportData) {
         // Resolve concept ID
         let conceptId = entry.conceptId;
         if (!conceptId && entry.conceptName) {
+            // Use name+type as cache key to differentiate concepts with same name
+            const cacheKey = entry.conceptType
+                ? `${entry.conceptName}|${entry.conceptType}`
+                : entry.conceptName;
+
             // Check cache first
-            if (conceptCache.has(entry.conceptName)) {
-                conceptId = conceptCache.get(entry.conceptName)!;
+            if (conceptCache.has(cacheKey)) {
+                conceptId = conceptCache.get(cacheKey)!;
             } else {
-                const foundId = await findConceptByName(entry.conceptName);
+                const foundId = await findConceptByName(entry.conceptName, entry.conceptType);
                 if (foundId) {
-                    conceptCache.set(entry.conceptName, foundId);
+                    conceptCache.set(cacheKey, foundId);
                     conceptId = foundId;
                 }
             }
