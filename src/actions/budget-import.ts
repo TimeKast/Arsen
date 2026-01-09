@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { getActiveConceptTypeOverrides } from './concept-type-overrides';
 
 const budgetEntrySchema = z.object({
     areaName: z.string(),
@@ -77,6 +78,11 @@ export async function confirmBudgetImport(
         const allConcepts = await db.select().from(concepts);
         allConcepts.forEach(c => conceptCache.set(c.name.toLowerCase(), c.id));
 
+        // Get concept type overrides for this company
+        const conceptTypeOverrides = await getActiveConceptTypeOverrides(companyId);
+        const overrideMap = new Map<string, 'INCOME' | 'COST'>();
+        conceptTypeOverrides.forEach(o => overrideMap.set(o.conceptName.toLowerCase(), o.conceptType));
+
         // Use Map to aggregate amounts for same area/project/concept/month (avoids duplicate key violations)
         const budgetAggregator = new Map<string, {
             companyId: string;
@@ -109,10 +115,14 @@ export async function confirmBudgetImport(
             // Resolve or create concept
             let conceptId = conceptCache.get(entry.conceptCode.toLowerCase());
             if (!conceptId) {
-                // Create new concept (as COST type, most budgets are costs)
+                // Check if there's a type override for this concept
+                const overrideType = overrideMap.get(entry.conceptCode.toLowerCase());
+                const conceptType = overrideType || 'COST'; // Default to COST if no override
+
+                // Create new concept with the appropriate type
                 const [newConcept] = await db.insert(concepts).values({
                     name: entry.conceptCode,
-                    type: 'COST',
+                    type: conceptType,
                 }).returning({ id: concepts.id });
                 conceptId = newConcept.id;
                 conceptCache.set(entry.conceptCode.toLowerCase(), conceptId);
