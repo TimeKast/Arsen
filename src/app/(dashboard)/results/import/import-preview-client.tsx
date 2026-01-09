@@ -283,6 +283,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                         projectName: te.projectName,
                         conceptId: original?.conceptId,
                         conceptName: te.conceptName,
+                        conceptType: original?.conceptType, // Preserve the type
                         amount: te.amount,
                     };
                 });
