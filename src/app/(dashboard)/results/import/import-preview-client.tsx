@@ -458,9 +458,11 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                     // Parse this sheet
                     const sheetData = parseResultsSheet(fileBuffer, sheet.sheetName, knownProjects, validSheetNames);
                     if (!sheetData.success) {
-                        console.warn(`[MULTI-MONTH] Failed to parse sheet ${sheet.sheetName}`);
+                        console.warn(`[MULTI-MONTH] Failed to parse sheet ${sheet.sheetName}:`, sheetData.warnings);
                         continue;
                     }
+
+                    console.log(`[MULTI-MONTH] Sheet ${sheet.sheetName}: parsed ${sheetData.values.length} values, ${sheetData.projects.length} projects, ${sheetData.concepts.length} concepts`);
 
                     // Build entries for this sheet
                     const getConceptIdForSheet = (conceptName: string | undefined, conceptType: 'INCOME' | 'COST' | undefined): string | undefined => {
@@ -512,16 +514,24 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                         };
                     }).filter(e => (e.conceptId || e.conceptName) && e.amount !== 0);
 
+                    console.log(`[MULTI-MONTH] Sheet ${sheet.sheetName} month ${sheet.month}: ${entries.length} entries after filtering (from ${sheetData.values.length} values)`);
+
                     if (entries.length > 0) {
-                        const result = await confirmResultsImport({
-                            companyId,
-                            year: selectedYear,
-                            month: sheet.month, // Use the detected month for this sheet
-                            source: 'M',
-                            entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; conceptType?: 'INCOME' | 'COST'; amount: number }>,
-                        });
-                        totalInserted += result.insertedCount || 0;
-                        console.log(`[MULTI-MONTH] Sheet ${sheet.sheetName} (month ${sheet.month}): inserted ${result.insertedCount} entries`);
+                        try {
+                            const result = await confirmResultsImport({
+                                companyId,
+                                year: selectedYear,
+                                month: sheet.month, // Use the detected month for this sheet
+                                source: 'M',
+                                entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; conceptType?: 'INCOME' | 'COST'; amount: number }>,
+                            });
+                            totalInserted += result.insertedCount || 0;
+                            console.log(`[MULTI-MONTH] Sheet ${sheet.sheetName} (month ${sheet.month}): inserted ${result.insertedCount} entries`);
+                        } catch (error) {
+                            console.error(`[MULTI-MONTH] ERROR importing sheet ${sheet.sheetName} (month ${sheet.month}):`, error);
+                        }
+                    } else {
+                        console.warn(`[MULTI-MONTH] Sheet ${sheet.sheetName} (month ${sheet.month}): NO ENTRIES to import!`);
                     }
                 }
 
