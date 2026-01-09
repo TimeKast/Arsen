@@ -228,6 +228,9 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
             const month = getMonth();
 
             // Build entries from parsed data
+            console.log('Resolved conflicts:', resolvedConflicts);
+            console.log('Parsed projects:', parsedData.projects.map(p => p.name));
+
             let entries = parsedData.values.map(v => {
                 const project = parsedData.projects[v.projectIndex];
                 const concept = parsedData.concepts[v.conceptIndex];
@@ -239,6 +242,10 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                 const conceptResolution = resolvedConflicts.find(
                     r => r.type === 'CONCEPT' && r.originalName === concept?.name
                 );
+
+                if (project && !projectResolution) {
+                    console.log(`No resolution for project: "${project.name}"`);
+                }
 
                 return {
                     projectId: projectResolution?.targetId || null,
