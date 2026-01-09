@@ -21,9 +21,7 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
     const [saving, setSaving] = useState(false);
     const [preview, setPreview] = useState<ParsedReconciliation[]>([]);
     const [errors, setErrors] = useState<string[]>([]);
-    const [result, setResult] = useState<{ success: boolean; count: number; otrosCount?: number; otrosYear?: number } | null>(null);
-    const [hasOtros, setHasOtros] = useState(false);
-    const [importOtros, setImportOtros] = useState(false);
+    const [result, setResult] = useState<{ success: boolean; count: number } | null>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -51,8 +49,6 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
             if (data.success) {
                 setPreview(data.data);
                 setErrors(data.errors || []);
-                console.log('API response - hasOtros:', data.hasOtros, 'sheetName:', data.sheetName);
-                setHasOtros(data.hasOtros || false);
             } else {
                 setErrors(data.errors || ['Error al parsear archivo']);
             }
@@ -67,10 +63,6 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
         if (preview.length === 0 || !selectedCompanyId) return;
 
         setSaving(true);
-
-        // Save file reference for Otros import (file state may change during async operations)
-        const fileForOtros = file;
-
         try {
             // Pass entries directly - server will resolve projectIds in bulk
             const entries: ReconciliationEntry[] = preview.map(item => ({
@@ -97,36 +89,9 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                 entries,
             });
 
-            let otrosResult = null;
-
-            // Import Otros sheet as results if option is checked
-            if (importOtros && fileForOtros) {
-                try {
-                    const otrosFormData = new FormData();
-                    otrosFormData.append('file', fileForOtros);
-                    otrosFormData.append('companyId', selectedCompanyId);
-
-                    const otrosResponse = await fetch('/api/reconciliations/import-otros', {
-                        method: 'POST',
-                        body: otrosFormData,
-                    });
-
-                    otrosResult = await otrosResponse.json();
-                    console.log('Otros import result:', otrosResult);
-                } catch (err) {
-                    console.error('Error importing Otros:', err);
-                }
-            }
-
-            const successMessage = otrosResult?.success
-                ? `${response.insertedCount} conciliaciones + ${otrosResult.insertedCount} resultados de Otros (año ${otrosResult.year})`
-                : `${response.insertedCount}`;
-
-            setResult({ success: true, count: response.insertedCount, otrosCount: otrosResult?.insertedCount, otrosYear: otrosResult?.year });
+            setResult({ success: true, count: response.insertedCount });
             setPreview([]);
             setFile(null);
-            setHasOtros(false);
-            setImportOtros(false);
         } catch (error) {
             setErrors(['Error al guardar conciliaciones']);
         } finally {
@@ -215,129 +180,111 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                             Cambiar archivo
                         </button>
                     </div>
-                    {/* Otros sheet option */}
-                    {hasOtros && (
-                        <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={importOtros}
-                                    onChange={(e) => setImportOtros(e.target.checked)}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">
-                                    También importar hoja &quot;Otros&quot; como Resultados
-                                </span>
-                            </label>
+            )}
+
+                    {/* Parsing indicator */}
+                    {parsing && (
+                        <div className="text-center py-4 text-blue-600">
+                            Procesando archivo...
                         </div>
                     )}
-                </div>
-            )}
 
-            {/* Parsing indicator */}
-            {parsing && (
-                <div className="text-center py-4 text-blue-600">
-                    Procesando archivo...
-                </div>
-            )}
-
-            {/* Errors */}
-            {errors.length > 0 && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-                    <div className="flex items-center gap-2 text-red-700 dark:text-red-400 mb-2">
-                        <AlertCircle size={20} />
-                        <span className="font-medium">Errores encontrados</span>
-                    </div>
-                    <ul className="text-sm text-red-600 dark:text-red-400 list-disc pl-5">
-                        {errors.map((error, i) => (
-                            <li key={i}>{error}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            {/* Success Result */}
-            {result?.success && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
-                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                        <Check size={20} />
-                        <span className="font-medium">
-                            {result.count} conciliaciones importadas correctamente
-                            {result.otrosCount && ` + ${result.otrosCount} resultados de Otros (${result.otrosYear})`}
-                        </span>
-                    </div>
-                </div>
-            )}
-
-            {/* Preview Table */}
-            {preview.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
-                        <h2 className="font-medium dark:text-white">
-                            Vista Previa ({preview.length} registros)
-                        </h2>
-                        <button
-                            onClick={handleConfirm}
-                            disabled={saving}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-                        >
-                            <Check size={16} />
-                            {saving ? 'Guardando...' : 'Confirmar Importacion'}
-                        </button>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-100 dark:bg-gray-700">
-                                <tr>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Fecha</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Referencia</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Factura</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Poliza</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cheque</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Proveedor</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">U. Negocio</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cuenta</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Cancelados</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Transito</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Entradas</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Subtotal</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">IVA</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Salidas</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Saldo</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Observaciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                                {preview.slice(0, 50).map((row, i) => (
-                                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="px-3 py-2 whitespace-nowrap">{formatDate(row.date)}</td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{row.reference || '-'}</td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{row.invoice || '-'}</td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{row.policy || '-'}</td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{row.checkNumber || '-'}</td>
-                                        <td className="px-3 py-2">{row.supplier || '-'}</td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{row.businessUnit || '-'}</td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{row.account || '-'}</td>
-                                        <td className="px-3 py-2 text-right">{row.cancelled ? formatCurrency(row.cancelled) : '-'}</td>
-                                        <td className="px-3 py-2 text-right">{row.inTransit ? formatCurrency(row.inTransit) : '-'}</td>
-                                        <td className="px-3 py-2 text-right text-green-600">{row.entries ? formatCurrency(row.entries) : '-'}</td>
-                                        <td className="px-3 py-2 text-right">{row.subtotal ? formatCurrency(row.subtotal) : '-'}</td>
-                                        <td className="px-3 py-2 text-right">{row.tax ? formatCurrency(row.tax) : '-'}</td>
-                                        <td className="px-3 py-2 text-right text-red-600">{row.withdrawals ? formatCurrency(row.withdrawals) : '-'}</td>
-                                        <td className="px-3 py-2 text-right font-medium">{row.balance ? formatCurrency(row.balance) : '-'}</td>
-                                        <td className="px-3 py-2 max-w-xs truncate">{row.observations || '-'}</td>
-                                    </tr>
+                    {/* Errors */}
+                    {errors.length > 0 && (
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                            <div className="flex items-center gap-2 text-red-700 dark:text-red-400 mb-2">
+                                <AlertCircle size={20} />
+                                <span className="font-medium">Errores encontrados</span>
+                            </div>
+                            <ul className="text-sm text-red-600 dark:text-red-400 list-disc pl-5">
+                                {errors.map((error, i) => (
+                                    <li key={i}>{error}</li>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    {preview.length > 50 && (
-                        <div className="px-4 py-2 text-sm text-gray-500 bg-gray-50 dark:bg-gray-700">
-                            Mostrando primeros 50 de {preview.length} registros
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Success Result */}
+                    {result?.success && (
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+                            <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                                <Check size={20} />
+                                <span className="font-medium">
+                                    {result.count} conciliaciones importadas correctamente
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Preview Table */}
+                    {preview.length > 0 && (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
+                            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
+                                <h2 className="font-medium dark:text-white">
+                                    Vista Previa ({preview.length} registros)
+                                </h2>
+                                <button
+                                    onClick={handleConfirm}
+                                    disabled={saving}
+                                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                                >
+                                    <Check size={16} />
+                                    {saving ? 'Guardando...' : 'Confirmar Importacion'}
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-100 dark:bg-gray-700">
+                                        <tr>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Fecha</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Referencia</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Factura</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Poliza</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cheque</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Proveedor</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">U. Negocio</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cuenta</th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Cancelados</th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Transito</th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Entradas</th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Subtotal</th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">IVA</th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Salidas</th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Saldo</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                                        {preview.slice(0, 50).map((row, i) => (
+                                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                <td className="px-3 py-2 whitespace-nowrap">{formatDate(row.date)}</td>
+                                                <td className="px-3 py-2 whitespace-nowrap">{row.reference || '-'}</td>
+                                                <td className="px-3 py-2 whitespace-nowrap">{row.invoice || '-'}</td>
+                                                <td className="px-3 py-2 whitespace-nowrap">{row.policy || '-'}</td>
+                                                <td className="px-3 py-2 whitespace-nowrap">{row.checkNumber || '-'}</td>
+                                                <td className="px-3 py-2">{row.supplier || '-'}</td>
+                                                <td className="px-3 py-2 whitespace-nowrap">{row.businessUnit || '-'}</td>
+                                                <td className="px-3 py-2 whitespace-nowrap">{row.account || '-'}</td>
+                                                <td className="px-3 py-2 text-right">{row.cancelled ? formatCurrency(row.cancelled) : '-'}</td>
+                                                <td className="px-3 py-2 text-right">{row.inTransit ? formatCurrency(row.inTransit) : '-'}</td>
+                                                <td className="px-3 py-2 text-right text-green-600">{row.entries ? formatCurrency(row.entries) : '-'}</td>
+                                                <td className="px-3 py-2 text-right">{row.subtotal ? formatCurrency(row.subtotal) : '-'}</td>
+                                                <td className="px-3 py-2 text-right">{row.tax ? formatCurrency(row.tax) : '-'}</td>
+                                                <td className="px-3 py-2 text-right text-red-600">{row.withdrawals ? formatCurrency(row.withdrawals) : '-'}</td>
+                                                <td className="px-3 py-2 text-right font-medium">{row.balance ? formatCurrency(row.balance) : '-'}</td>
+                                                <td className="px-3 py-2 max-w-xs truncate">{row.observations || '-'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {preview.length > 50 && (
+                                <div className="px-4 py-2 text-sm text-gray-500 bg-gray-50 dark:bg-gray-700">
+                                    Mostrando primeros 50 de {preview.length} registros
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
-            )}
-        </div>
-    );
+            );
 }
