@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Plus, Eye } from 'lucide-react';
+import { Plus, Eye, Upload } from 'lucide-react';
 import {
     getAreasForBudget,
     getBudgetData,
     getConceptsForArea,
 } from '@/actions/budgets';
+import { useCompanyStore } from '@/stores/company-store';
 
 interface Company {
     id: string;
@@ -36,7 +37,10 @@ interface BudgetsClientProps {
 const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 export function BudgetsClient({ companies, initialYear, userRole }: BudgetsClientProps) {
-    const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
+    // Use global company store
+    const { selectedCompanyId: globalCompanyId } = useCompanyStore();
+    const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
+
     const [selectedYear, setSelectedYear] = useState(initialYear);
     const [areas, setAreas] = useState<Area[]>([]);
     const [summaries, setSummaries] = useState<BudgetSummary[]>([]);
@@ -142,13 +146,22 @@ export function BudgetsClient({ companies, initialYear, userRole }: BudgetsClien
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold dark:text-white">Presupuestos</h1>
                 {canEdit && (
-                    <Link
-                        href="/budgets/capture"
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                        <Plus size={20} />
-                        Capturar
-                    </Link>
+                    <div className="flex gap-2">
+                        <Link
+                            href="/budgets/import"
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                            <Upload size={20} />
+                            Importar
+                        </Link>
+                        <Link
+                            href="/budgets/capture"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            <Plus size={20} />
+                            Capturar
+                        </Link>
+                    </div>
                 )}
             </div>
 
@@ -157,27 +170,7 @@ export function BudgetsClient({ companies, initialYear, userRole }: BudgetsClien
                 <div className="flex flex-wrap gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Empresa
-                        </label>
-                        <select
-                            value={selectedCompanyId}
-                            onChange={(e) => {
-                                setSelectedCompanyId(e.target.value);
-                                setSelectedAreaId(null);
-                                setDetailData(null);
-                            }}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        >
-                            {companies.map((company) => (
-                                <option key={company.id} value={company.id}>
-                                    {company.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Ano
+                            Año
                         </label>
                         <select
                             value={selectedYear}
@@ -245,8 +238,8 @@ export function BudgetsClient({ companies, initialYear, userRole }: BudgetsClien
                                             <td className="px-4 py-2 dark:text-white font-medium">{concept.name}</td>
                                             <td className="px-2 py-2 text-center">
                                                 <span className={`inline-flex px-2 py-0.5 rounded text-xs ${concept.type === 'INCOME'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
                                                     }`}>
                                                     {concept.type === 'INCOME' ? 'I' : 'C'}
                                                 </span>
@@ -334,7 +327,7 @@ export function BudgetsClient({ companies, initialYear, userRole }: BudgetsClien
                                         ${summaries.reduce((sum, s) => sum + s.totalCost, 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className={`px-4 py-3 text-right ${summaries.reduce((sum, s) => sum + (s.totalIncome - s.totalCost), 0) >= 0
-                                            ? 'text-green-600' : 'text-red-600'
+                                        ? 'text-green-600' : 'text-red-600'
                                         }`}>
                                         ${summaries.reduce((sum, s) => sum + (s.totalIncome - s.totalCost), 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                     </td>
