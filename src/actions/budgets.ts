@@ -171,19 +171,25 @@ export interface ProjectBudget {
     }[];
 }
 
-// Get budgets grouped by project for a year
-export async function getBudgetsByProject(companyId: string, year: number): Promise<ProjectBudget[]> {
+// Get budgets grouped by project for a year (optionally filtered by area)
+export async function getBudgetsByProject(companyId: string, year: number, areaId?: string): Promise<ProjectBudget[]> {
     const session = await auth();
     if (!session?.user) {
         throw new Error('No autenticado');
     }
 
+    // Build where conditions
+    const conditions = [
+        eq(budgets.companyId, companyId),
+        eq(budgets.year, year)
+    ];
+    if (areaId) {
+        conditions.push(eq(budgets.areaId, areaId));
+    }
+
     // Get all budgets for the year with relations
     const budgetData = await db.query.budgets.findMany({
-        where: and(
-            eq(budgets.companyId, companyId),
-            eq(budgets.year, year)
-        ),
+        where: and(...conditions),
     });
 
     // Get all concepts and projects for lookup

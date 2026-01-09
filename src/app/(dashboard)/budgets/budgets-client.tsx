@@ -2,12 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Upload } from 'lucide-react';
-import {
-    getAreasForBudget,
-    getBudgetData,
-    getConceptsForArea,
-} from '@/actions/budgets';
+import { Upload, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
+import { getBudgetsByProject, type ProjectBudget } from '@/actions/budgets';
 import { useCompanyStore } from '@/stores/company-store';
 
 interface Company {
@@ -18,150 +14,85 @@ interface Company {
 interface Area {
     id: string;
     name: string;
-}
-
-interface BudgetSummary {
-    areaId: string;
-    areaName: string;
-    totalIncome: number;
-    totalCost: number;
-    monthlyTotals: Record<number, { income: number; cost: number }>;
+    companyId: string;
 }
 
 interface BudgetsClientProps {
     companies: Company[];
+    areas: Area[];
     initialYear: number;
     userRole: string;
 }
 
-const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
 
-export function BudgetsClient({ companies, initialYear, userRole }: BudgetsClientProps) {
-    // Use global company store
+export function BudgetsClient({ companies, areas, initialYear, userRole }: BudgetsClientProps) {
     const { selectedCompanyId: globalCompanyId } = useCompanyStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
 
     const [selectedYear, setSelectedYear] = useState(initialYear);
-    const [areas, setAreas] = useState<Area[]>([]);
-    const [summaries, setSummaries] = useState<BudgetSummary[]>([]);
+    const [selectedAreaId, setSelectedAreaId] = useState<string>('');
+    const [projectBudgets, setProjectBudgets] = useState<ProjectBudget[]>([]);
+    const [adminBudget, setAdminBudget] = useState<ProjectBudget | null>(null);
     const [loading, setLoading] = useState(false);
-    const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
-    const [detailData, setDetailData] = useState<{
-        concepts: Array<{ id: string; name: string; type: string }>;
-        values: Record<string, Record<number, string>>;
-    } | null>(null);
+    const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
-    const canEdit = userRole === 'ADMIN' || userRole === 'STAFF' || userRole === 'AREA_USER';
+    const canImport = userRole === 'ADMIN' || userRole === 'STAFF';
 
-    // Load areas and budget summary
+    // Filter areas by company
+    const companyAreas = areas.filter(a => a.companyId === selectedCompanyId);
+
+    // Load budget data
     const loadData = useCallback(async () => {
         if (!selectedCompanyId) return;
         setLoading(true);
         try {
-            const areasData = await getAreasForBudget(selectedCompanyId);
-            setAreas(areasData);
+            const data = await getBudgetsByProject(selectedCompanyId, selectedYear, selectedAreaId || undefined);
 
-            // Get budget data for each area
-            const summaryPromises = areasData.map(async (area) => {
-                const [budgetData, concepts] = await Promise.all([
-                    getBudgetData(selectedCompanyId, area.id, selectedYear),
-                    getConceptsForArea(area.id),
-                ]);
+            // Separate projects from admin expenses
+            const projects = data.filter(d => d.projectId !== null);
+            const admin = data.find(d => d.projectId === null) || null;
 
-                const monthlyTotals: Record<number, { income: number; cost: number }> = {};
-                for (let m = 1; m <= 12; m++) {
-                    monthlyTotals[m] = { income: 0, cost: 0 };
-                }
-
-                let totalIncome = 0;
-                let totalCost = 0;
-
-                for (const entry of budgetData) {
-                    const concept = concepts.find(c => c.id === entry.conceptId);
-                    const amount = parseFloat(entry.amount) || 0;
-
-                    if (concept?.type === 'INCOME') {
-                        monthlyTotals[entry.month].income += amount;
-                        totalIncome += amount;
-                    } else {
-                        monthlyTotals[entry.month].cost += amount;
-                        totalCost += amount;
-                    }
-                }
-
-                return {
-                    areaId: area.id,
-                    areaName: area.name,
-                    totalIncome,
-                    totalCost,
-                    monthlyTotals,
-                };
-            });
-
-            const allSummaries = await Promise.all(summaryPromises);
-            setSummaries(allSummaries);
+            setProjectBudgets(projects);
+            setAdminBudget(admin);
+        } catch (error) {
+            console.error('Error loading budgets:', error);
         } finally {
             setLoading(false);
         }
-    }, [selectedCompanyId, selectedYear]);
+    }, [selectedCompanyId, selectedYear, selectedAreaId]);
 
     useEffect(() => {
         loadData();
     }, [loadData]);
 
-    // Load detail for selected area
-    const loadDetail = useCallback(async (areaId: string) => {
-        if (!selectedCompanyId) return;
-        setLoading(true);
-        try {
-            const [budgetData, concepts] = await Promise.all([
-                getBudgetData(selectedCompanyId, areaId, selectedYear),
-                getConceptsForArea(areaId),
-            ]);
-
-            const values: Record<string, Record<number, string>> = {};
-            for (const concept of concepts) {
-                values[concept.id] = {};
-                for (let m = 1; m <= 12; m++) {
-                    const entry = budgetData.find(b => b.conceptId === concept.id && b.month === m);
-                    values[concept.id][m] = entry?.amount || '0';
-                }
-            }
-
-            setDetailData({ concepts, values });
-        } finally {
-            setLoading(false);
+    const toggleProject = (projectId: string) => {
+        const newExpanded = new Set(expandedProjects);
+        if (newExpanded.has(projectId)) {
+            newExpanded.delete(projectId);
+        } else {
+            newExpanded.add(projectId);
         }
-    }, [selectedCompanyId, selectedYear]);
-
-    const handleViewDetail = (areaId: string) => {
-        setSelectedAreaId(areaId);
-        loadDetail(areaId);
+        setExpandedProjects(newExpanded);
     };
 
-    const years = [initialYear - 1, initialYear, initialYear + 1];
+    // Calculate totals
+    const totalIncome = projectBudgets.reduce((sum, p) => sum + p.totalIncome, 0) + (adminBudget?.totalIncome || 0);
+    const totalCost = projectBudgets.reduce((sum, p) => sum + p.totalCost, 0) + (adminBudget?.totalCost || 0);
+    const totalNet = totalIncome - totalCost;
 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold dark:text-white">Presupuestos</h1>
-                {canEdit && (
-                    <div className="flex gap-2">
-                        <Link
-                            href="/budgets/import"
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                        >
-                            <Upload size={20} />
-                            Importar
-                        </Link>
-                        <Link
-                            href="/budgets/capture"
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            <Plus size={20} />
-                            Capturar
-                        </Link>
-                    </div>
+                {canImport && (
+                    <Link
+                        href="/budgets/import"
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                        <Upload size={20} />
+                        Importar
+                    </Link>
                 )}
             </div>
 
@@ -174,15 +105,26 @@ export function BudgetsClient({ companies, initialYear, userRole }: BudgetsClien
                         </label>
                         <select
                             value={selectedYear}
-                            onChange={(e) => {
-                                setSelectedYear(Number(e.target.value));
-                                setSelectedAreaId(null);
-                                setDetailData(null);
-                            }}
+                            onChange={(e) => setSelectedYear(Number(e.target.value))}
                             className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
-                            {years.map((year) => (
-                                <option key={year} value={year}>{year}</option>
+                            {years.map((y) => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Área
+                        </label>
+                        <select
+                            value={selectedAreaId}
+                            onChange={(e) => setSelectedAreaId(e.target.value)}
+                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        >
+                            <option value="">Todas las áreas</option>
+                            {companyAreas.map((a) => (
+                                <option key={a.id} value={a.id}>{a.name}</option>
                             ))}
                         </select>
                     </div>
@@ -191,151 +133,163 @@ export function BudgetsClient({ companies, initialYear, userRole }: BudgetsClien
 
             {loading ? (
                 <div className="text-center py-8 text-gray-500">Cargando...</div>
-            ) : selectedAreaId && detailData ? (
-                /* Detail View */
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                        <h2 className="text-lg font-semibold dark:text-white">
-                            Detalle: {areas.find(a => a.id === selectedAreaId)?.name}
-                        </h2>
-                        <button
-                            onClick={() => {
-                                setSelectedAreaId(null);
-                                setDetailData(null);
-                            }}
-                            className="text-blue-600 hover:underline text-sm"
-                        >
-                            Volver al resumen
-                        </button>
+            ) : projectBudgets.length === 0 && !adminBudget ? (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center text-gray-500">
+                    <p>No hay presupuestos para este año.</p>
+                    {canImport && (
+                        <p className="text-sm mt-2">
+                            Usa el botón "Importar" para cargar datos.
+                        </p>
+                    )}
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {/* Totals Summary */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p className="text-sm text-gray-500">Ingresos Totales</p>
+                                <p className="text-xl font-bold text-green-600">
+                                    ${totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Costos Totales</p>
+                                <p className="text-xl font-bold text-red-600">
+                                    ${totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Utilidad Neta</p>
+                                <p className={`text-xl font-bold ${totalNet >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    ${totalNet.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="overflow-x-auto">
+
+                    {/* Projects Table */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                            <h3 className="font-medium dark:text-white">Presupuesto por Proyecto</h3>
+                        </div>
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase min-w-[180px]">
-                                        Concepto
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Proyecto
                                     </th>
-                                    <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                        Tipo
-                                    </th>
-                                    {months.map((m, idx) => (
-                                        <th key={idx} className="px-2 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase min-w-[70px]">
-                                            {m}
-                                        </th>
-                                    ))}
                                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                        Total
+                                        Ingresos
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Costos
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Utilidad
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {detailData.concepts.map((concept) => {
-                                    const rowTotal = Object.values(detailData.values[concept.id] || {}).reduce(
-                                        (sum, val) => sum + (parseFloat(val) || 0), 0
-                                    );
+                                {projectBudgets.map((project) => {
+                                    const isExpanded = expandedProjects.has(project.projectId || 'admin');
                                     return (
-                                        <tr key={concept.id}>
-                                            <td className="px-4 py-2 dark:text-white font-medium">{concept.name}</td>
-                                            <td className="px-2 py-2 text-center">
-                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs ${concept.type === 'INCOME'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
-                                                    }`}>
-                                                    {concept.type === 'INCOME' ? 'I' : 'C'}
-                                                </span>
-                                            </td>
-                                            {months.map((_, idx) => (
-                                                <td key={idx} className="px-2 py-2 text-right dark:text-white">
-                                                    {parseFloat(detailData.values[concept.id]?.[idx + 1] || '0').toLocaleString('es-MX')}
+                                        <>
+                                            <tr
+                                                key={project.projectId}
+                                                onClick={() => toggleProject(project.projectId || 'admin')}
+                                                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                                            >
+                                                <td className="px-4 py-3 dark:text-white">
+                                                    <div className="flex items-center gap-2">
+                                                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                        {project.projectName}
+                                                    </div>
                                                 </td>
+                                                <td className="px-4 py-3 text-right text-green-600">
+                                                    ${project.totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-red-600">
+                                                    ${project.totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                </td>
+                                                <td className={`px-4 py-3 text-right font-medium ${project.netBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    ${project.netBudget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                </td>
+                                            </tr>
+                                            {isExpanded && project.concepts.map((concept) => (
+                                                <tr key={`${project.projectId}-${concept.conceptId}`} className="bg-gray-50 dark:bg-gray-900">
+                                                    <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
+                                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.conceptType === 'INCOME'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
+                                                            }`}>
+                                                            {concept.conceptType === 'INCOME' ? 'I' : 'C'}
+                                                        </span>
+                                                        {concept.conceptName}
+                                                    </td>
+                                                    <td className={`px-4 py-2 text-right ${concept.conceptType === 'INCOME' ? 'text-green-600' : ''}`}>
+                                                        {concept.conceptType === 'INCOME' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
+                                                    </td>
+                                                    <td className={`px-4 py-2 text-right ${concept.conceptType === 'COST' ? 'text-red-600' : ''}`}>
+                                                        {concept.conceptType === 'COST' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
                                             ))}
-                                            <td className="px-4 py-2 text-right font-medium dark:text-white">
-                                                {rowTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                            </td>
-                                        </tr>
+                                        </>
                                     );
                                 })}
                             </tbody>
                         </table>
                     </div>
-                </div>
-            ) : (
-                /* Summary View */
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Area
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Ingresos
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Costos
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Neto
-                                </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {summaries.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                                        No hay datos de presupuesto
-                                    </td>
-                                </tr>
-                            ) : (
-                                summaries.map((summary) => (
-                                    <tr key={summary.areaId}>
-                                        <td className="px-4 py-3 dark:text-white font-medium">{summary.areaName}</td>
-                                        <td className="px-4 py-3 text-right text-green-600">
-                                            ${summary.totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                        </td>
-                                        <td className="px-4 py-3 text-right text-red-600">
-                                            ${summary.totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                        </td>
-                                        <td className={`px-4 py-3 text-right font-medium ${(summary.totalIncome - summary.totalCost) >= 0 ? 'text-green-600' : 'text-red-600'
-                                            }`}>
-                                            ${(summary.totalIncome - summary.totalCost).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <button
-                                                onClick={() => handleViewDetail(summary.areaId)}
-                                                className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
-                                                title="Ver detalle"
-                                            >
-                                                <Eye size={16} />
-                                            </button>
+
+                    {/* Admin Expenses */}
+                    {adminBudget && (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                            <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/30 border-b dark:border-gray-600 flex items-center gap-2">
+                                <Building2 size={18} className="text-amber-600" />
+                                <h3 className="font-medium text-amber-800 dark:text-amber-200">Gastos de Administración</h3>
+                            </div>
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                            Concepto
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                            Monto
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {adminBudget.concepts.map((concept) => (
+                                        <tr key={concept.conceptId}>
+                                            <td className="px-4 py-2 dark:text-white">
+                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.conceptType === 'INCOME'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                                    }`}>
+                                                    {concept.conceptType === 'INCOME' ? 'I' : 'C'}
+                                                </span>
+                                                {concept.conceptName}
+                                            </td>
+                                            <td className={`px-4 py-2 text-right ${concept.conceptType === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
+                                                ${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="bg-gray-50 dark:bg-gray-700 font-medium">
+                                    <tr>
+                                        <td className="px-4 py-3 dark:text-white">Total Administración</td>
+                                        <td className={`px-4 py-3 text-right ${adminBudget.netBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            ${adminBudget.netBudget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                        {summaries.length > 0 && (
-                            <tfoot className="bg-gray-50 dark:bg-gray-700 font-medium">
-                                <tr>
-                                    <td className="px-4 py-3 dark:text-white">Total General</td>
-                                    <td className="px-4 py-3 text-right text-green-600">
-                                        ${summaries.reduce((sum, s) => sum + s.totalIncome, 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                    </td>
-                                    <td className="px-4 py-3 text-right text-red-600">
-                                        ${summaries.reduce((sum, s) => sum + s.totalCost, 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                    </td>
-                                    <td className={`px-4 py-3 text-right ${summaries.reduce((sum, s) => sum + (s.totalIncome - s.totalCost), 0) >= 0
-                                        ? 'text-green-600' : 'text-red-600'
-                                        }`}>
-                                        ${summaries.reduce((sum, s) => sum + (s.totalIncome - s.totalCost), 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                    </td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        )}
-                    </table>
+                                </tfoot>
+                            </table>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
