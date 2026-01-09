@@ -90,11 +90,21 @@ export function parseResultsSheet(
         // Read workbook
         const workbook = XLSX.read(buffer, { type: 'array' });
 
-        // Find sheet (use specified or first with 'R' suffix)
+        // Find sheet (use specified or find by patterns)
         let targetSheet = sheetName;
         if (!targetSheet) {
+            // Try monthly sheets first (EneR, FebR, etc.)
             const monthSheets = workbook.SheetNames.filter(name => /^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)R$/i.test(name));
-            targetSheet = monthSheets[0] || workbook.SheetNames[0];
+            if (monthSheets.length > 0) {
+                targetSheet = monthSheets[0];
+            } else {
+                // Try "Desglose de Ingresos" pattern
+                const desgloseSheet = workbook.SheetNames.find(name =>
+                    normalizeString(name).includes('desglose') &&
+                    (normalizeString(name).includes('ingreso') || normalizeString(name).includes('costo'))
+                );
+                targetSheet = desgloseSheet || workbook.SheetNames[0];
+            }
         }
 
         const sheet = workbook.Sheets[targetSheet];
