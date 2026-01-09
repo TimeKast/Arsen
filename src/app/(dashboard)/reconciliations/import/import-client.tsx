@@ -67,6 +67,10 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
         if (preview.length === 0 || !selectedCompanyId) return;
 
         setSaving(true);
+
+        // Save file reference for Otros import (file state may change during async operations)
+        const fileForOtros = file;
+
         try {
             // Pass entries directly - server will resolve projectIds in bulk
             const entries: ReconciliationEntry[] = preview.map(item => ({
@@ -96,10 +100,10 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
             let otrosResult = null;
 
             // Import Otros sheet as results if option is checked
-            if (importOtros && file) {
+            if (importOtros && fileForOtros) {
                 try {
                     const otrosFormData = new FormData();
-                    otrosFormData.append('file', file);
+                    otrosFormData.append('file', fileForOtros);
                     otrosFormData.append('companyId', selectedCompanyId);
 
                     const otrosResponse = await fetch('/api/reconciliations/import-otros', {
