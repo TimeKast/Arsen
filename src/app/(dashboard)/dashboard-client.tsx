@@ -10,24 +10,35 @@ interface Company {
     name: string;
 }
 
+interface Project {
+    id: string;
+    name: string;
+    companyId: string;
+}
+
 interface DashboardClientProps {
     companies: Company[];
+    projects: Project[];
     initialYear: number;
     userName: string;
 }
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-export function DashboardClient({ companies, initialYear, userName }: DashboardClientProps) {
+export function DashboardClient({ companies, projects, initialYear, userName }: DashboardClientProps) {
     const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
     const [selectedCompany, setSelectedCompany] = useState(companies[0]?.name || '');
     const [selectedYear, setSelectedYear] = useState(initialYear);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedProjectId, setSelectedProjectId] = useState<string>(''); // empty = all projects
     const [availablePeriods, setAvailablePeriods] = useState<{ year: number; month: number }[]>([]);
     const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
     const [topProjects, setTopProjects] = useState<TopProject[]>([]);
     const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // Filter projects by company
+    const companyProjects = projects.filter(p => p.companyId === selectedCompanyId);
 
     // Load available periods
     useEffect(() => {
@@ -61,10 +72,11 @@ export function DashboardClient({ companies, initialYear, userName }: DashboardC
         if (!selectedCompanyId) return;
         setLoading(true);
         try {
+            const projectFilter = selectedProjectId || undefined;
             const [kpiData, topData, trend] = await Promise.all([
-                getDashboardKPIs(selectedCompanyId, selectedYear, selectedMonth),
-                getTopProjects(selectedCompanyId, selectedYear, selectedMonth),
-                getTrendData(selectedCompanyId, selectedYear, selectedMonth),
+                getDashboardKPIs(selectedCompanyId, selectedYear, selectedMonth, projectFilter),
+                getTopProjects(selectedCompanyId, selectedYear, selectedMonth, projectFilter),
+                getTrendData(selectedCompanyId, selectedYear, selectedMonth, projectFilter),
             ]);
             setKpis(kpiData);
             setTopProjects(topData);
@@ -74,7 +86,7 @@ export function DashboardClient({ companies, initialYear, userName }: DashboardC
         } finally {
             setLoading(false);
         }
-    }, [selectedCompanyId, selectedYear, selectedMonth]);
+    }, [selectedCompanyId, selectedYear, selectedMonth, selectedProjectId]);
 
     useEffect(() => {
         loadData();
@@ -142,6 +154,21 @@ export function DashboardClient({ companies, initialYear, userName }: DashboardC
                                     </option>
                                 ))
                             )}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Proyecto
+                        </label>
+                        <select
+                            value={selectedProjectId}
+                            onChange={(e) => setSelectedProjectId(e.target.value)}
+                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        >
+                            <option value="">Todos los proyectos</option>
+                            {companyProjects.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
                         </select>
                     </div>
                 </div>
