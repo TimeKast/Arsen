@@ -163,9 +163,19 @@ export async function confirmResultsImport(data: ConfirmImportData) {
         });
     }
 
+    console.log(`[IMPORT] Total entries to insert: ${entriesToInsert.length}`);
+    console.log(`[IMPORT] Sample entries:`, entriesToInsert.slice(0, 3).map(e => ({
+        projectId: e.projectId,
+        conceptId: e.conceptId,
+        amount: e.amount
+    })));
+
     // Batch insert all entries at once
     if (entriesToInsert.length > 0) {
         await db.insert(results).values(entriesToInsert);
+        console.log(`[IMPORT] Successfully inserted ${entriesToInsert.length} entries`);
+    } else {
+        console.warn('[IMPORT] WARNING: No entries to insert!');
     }
 
     // Hook: Calculate profit sharing after import
