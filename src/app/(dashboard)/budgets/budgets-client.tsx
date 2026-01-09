@@ -21,8 +21,15 @@ interface Area {
 interface BudgetsClientProps {
     companies: Company[];
     areas: Area[];
+    projects: Project[];
     initialYear: number;
     userRole: string;
+}
+
+interface Project {
+    id: string;
+    name: string;
+    companyId: string;
 }
 
 const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
@@ -42,13 +49,13 @@ const months = [
     { value: 12, label: 'Diciembre' },
 ];
 
-export function BudgetsClient({ companies, areas, initialYear, userRole }: BudgetsClientProps) {
+export function BudgetsClient({ companies, areas, projects, initialYear, userRole }: BudgetsClientProps) {
     const { selectedCompanyId: globalCompanyId } = useCompanyStore();
-    const { selectedYear } = usePeriodStore();
+    const { selectedYear, selectedMonth } = usePeriodStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
 
-    const [selectedMonth, setSelectedMonth] = useState<number>(0); // 0 = all months
     const [selectedAreaId, setSelectedAreaId] = useState<string>('');
+    const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]); // empty = all projects
     const [projectBudgets, setProjectBudgets] = useState<ProjectBudget[]>([]);
     const [adminBudget, setAdminBudget] = useState<ProjectBudget | null>(null);
     const [loading, setLoading] = useState(false);
@@ -56,8 +63,9 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
 
     const canImport = userRole === 'ADMIN' || userRole === 'STAFF';
 
-    // Filter areas by company
+    // Filter areas and projects by company
     const companyAreas = areas.filter(a => a.companyId === selectedCompanyId);
+    const companyProjects = projects.filter(p => p.companyId === selectedCompanyId);
 
     // Load budget data
     const loadData = useCallback(async () => {
@@ -68,11 +76,14 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
                 selectedCompanyId,
                 selectedYear,
                 selectedAreaId || undefined,
-                selectedMonth || undefined
+                selectedMonth || undefined // 0 means all months
             );
 
-            // Separate projects from admin expenses
-            const projects = data.filter(d => d.projectId !== null);
+            // Filter by selected projects if any
+            let projects = data.filter(d => d.projectId !== null);
+            if (selectedProjectIds.length > 0) {
+                projects = projects.filter(p => p.projectId && selectedProjectIds.includes(p.projectId));
+            }
             const admin = data.find(d => d.projectId === null) || null;
 
             setProjectBudgets(projects);
@@ -82,7 +93,7 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
         } finally {
             setLoading(false);
         }
-    }, [selectedCompanyId, selectedYear, selectedAreaId, selectedMonth]);
+    }, [selectedCompanyId, selectedYear, selectedAreaId, selectedMonth, selectedProjectIds]);
 
     useEffect(() => {
         loadData();
@@ -118,7 +129,7 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
                 )}
             </div>
 
-            {/* Filters - Area and Month only (Year is controlled by global header) */}
+            {/* Filters - Area and Project (Year and Month are controlled by global header) */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-wrap gap-4">
                     <div>
@@ -138,17 +149,22 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Mes
+                            Proyectos
                         </label>
                         <select
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            multiple
+                            value={selectedProjectIds}
+                            onChange={(e) => {
+                                const values = Array.from(e.target.selectedOptions, o => o.value);
+                                setSelectedProjectIds(values);
+                            }}
+                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px] h-20"
                         >
-                            {months.map((m) => (
-                                <option key={m.value} value={m.value}>{m.label}</option>
+                            {companyProjects.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
+                        <p className="text-xs text-gray-500 mt-1">Ctrl+click para seleccionar varios. Vacío = todos.</p>
                     </div>
                 </div>
             </div>

@@ -63,16 +63,27 @@ export function Header({ sidebarCollapsed, userCompanies, availablePeriods }: He
         }
     };
 
-    const handlePeriodChange = (value: string) => {
-        const [year, month] = value.split('-').map(Number);
-        if (year !== selectedYear || month !== selectedMonth) {
-            setSelectedPeriod(year, month);
+    const handleYearChange = (year: number) => {
+        if (year !== selectedYear) {
+            setSelectedPeriod(year, selectedMonth);
+        }
+    };
+
+    const handleMonthChange = (month: number) => {
+        if (month !== selectedMonth) {
+            setSelectedPeriod(selectedYear, month);
         }
     };
 
     const selectedCompany = companies.find(c => c.id === selectedCompanyId);
-    const periodValue = `${selectedYear}-${selectedMonth}`;
     const isClosed = isCurrentPeriodClosed();
+
+    // Get unique years from available periods
+    const availableYears = [...new Set(availablePeriods.map(p => p.year))].sort((a, b) => b - a);
+    // If selectedYear is not in availableYears, add it
+    if (!availableYears.includes(selectedYear)) {
+        availableYears.unshift(selectedYear);
+    }
 
     return (
         <header
@@ -108,20 +119,37 @@ export function Header({ sidebarCollapsed, userCompanies, availablePeriods }: He
                         )}
                     </div>
 
-                    {/* Period Selector */}
+                    {/* Period Selector - Year */}
                     <div className="relative">
                         <select
-                            value={periodValue}
-                            onChange={(e) => handlePeriodChange(e.target.value)}
+                            value={selectedYear}
+                            onChange={(e) => handleYearChange(Number(e.target.value))}
                             className="appearance-none pl-9 pr-8 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
                         >
-                            {availablePeriods.map((period) => (
-                                <option key={`${period.year}-${period.month}`} value={`${period.year}-${period.month}`}>
-                                    {monthNames[period.month - 1]} {period.year}
+                            {availableYears.map((year) => (
+                                <option key={year} value={year}>
+                                    {year}
                                 </option>
                             ))}
                         </select>
                         <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                    </div>
+
+                    {/* Period Selector - Month */}
+                    <div className="relative">
+                        <select
+                            value={selectedMonth}
+                            onChange={(e) => handleMonthChange(Number(e.target.value))}
+                            className="appearance-none pl-3 pr-8 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
+                        >
+                            <option value={0}>Todos</option>
+                            {monthNames.map((name, idx) => (
+                                <option key={idx + 1} value={idx + 1}>
+                                    {name}
+                                </option>
+                            ))}
+                        </select>
                         <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                     </div>
 

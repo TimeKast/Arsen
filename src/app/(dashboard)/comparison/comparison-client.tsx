@@ -28,7 +28,7 @@ const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Se
 export function ComparisonClient({ companies, projects, initialYear }: ComparisonClientProps) {
     const { selectedCompanyId: globalCompanyId } = useCompanyStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
-    const [selectedProjectId, setSelectedProjectId] = useState('');
+    const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
     const { selectedYear, selectedMonth } = usePeriodStore();
     const [data, setData] = useState<ComparisonData | null>(null);
     const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
 
     // Reset project selection when company changes
     useEffect(() => {
-        setSelectedProjectId('');
+        setSelectedProjectIds([]);
     }, [selectedCompanyId]);
 
     // Load comparison data
@@ -49,14 +49,16 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
         if (!selectedCompanyId) return;
         setLoading(true);
         try {
-            const compData = await getComparisonData(selectedCompanyId, selectedYear, selectedMonth, selectedProjectId || undefined);
+            // Use first selected project or undefined for all
+            const projectFilter = selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined;
+            const compData = await getComparisonData(selectedCompanyId, selectedYear, selectedMonth, projectFilter);
             setData(compData);
         } catch (error) {
             console.error('Error loading comparison:', error);
         } finally {
             setLoading(false);
         }
-    }, [selectedCompanyId, selectedYear, selectedMonth, selectedProjectId]);
+    }, [selectedCompanyId, selectedYear, selectedMonth, selectedProjectIds]);
 
     useEffect(() => {
         loadData();
@@ -101,23 +103,27 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
         <div>
             <h1 className="text-2xl font-bold dark:text-white mb-6">Comparativo Real vs Presupuesto</h1>
 
-            {/* Filters - Project only (Company and Period are in global header) */}
+            {/* Filters - Project (Company and Period are in global header) */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-wrap gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Proyecto
+                            Proyectos
                         </label>
                         <select
-                            value={selectedProjectId}
-                            onChange={(e) => setSelectedProjectId(e.target.value)}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            multiple
+                            value={selectedProjectIds}
+                            onChange={(e) => {
+                                const values = Array.from(e.target.selectedOptions, o => o.value);
+                                setSelectedProjectIds(values);
+                            }}
+                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px] h-20"
                         >
-                            <option value="">Todos los proyectos</option>
                             {companyProjects.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
+                        <p className="text-xs text-gray-500 mt-1">Ctrl+click para seleccionar varios. Vacío = todos.</p>
                     </div>
                 </div>
             </div>

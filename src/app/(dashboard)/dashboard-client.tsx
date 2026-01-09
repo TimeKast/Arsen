@@ -30,7 +30,7 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
     const { selectedCompanyId: globalCompanyId, companies: storeCompanies } = useCompanyStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
     const { selectedYear, selectedMonth } = usePeriodStore();
-    const [selectedProjectId, setSelectedProjectId] = useState<string>(''); // empty = all projects
+    const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]); // empty = all projects
     const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
     const [topProjects, setTopProjects] = useState<TopProject[]>([]);
     const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
@@ -39,17 +39,19 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
     // Filter projects by company
     const companyProjects = projects.filter(p => p.companyId === selectedCompanyId);
     const selectedCompany = storeCompanies.find(c => c.id === selectedCompanyId)?.name || companies.find(c => c.id === selectedCompanyId)?.name || '';
+    const monthDisplay = selectedMonth === 0 ? 'Todo el año' : MONTH_NAMES[selectedMonth - 1];
 
     // Load dashboard data
     const loadData = useCallback(async () => {
         if (!selectedCompanyId) return;
         setLoading(true);
         try {
-            const projectFilter = selectedProjectId || undefined;
+            // Use first selected project or undefined for all
+            const projectFilter = selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined;
             const [kpiData, topData, trend] = await Promise.all([
                 getDashboardKPIs(selectedCompanyId, selectedYear, selectedMonth, projectFilter),
-                getTopProjects(selectedCompanyId, selectedYear, selectedMonth, projectFilter),
-                getTrendData(selectedCompanyId, selectedYear, selectedMonth, projectFilter),
+                getTopProjects(selectedCompanyId, selectedYear, selectedMonth),
+                getTrendData(selectedCompanyId, selectedYear)
             ]);
             setKpis(kpiData);
             setTopProjects(topData);
@@ -59,7 +61,7 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
         } finally {
             setLoading(false);
         }
-    }, [selectedCompanyId, selectedYear, selectedMonth, selectedProjectId]);
+    }, [selectedCompanyId, selectedYear, selectedMonth, selectedProjectIds]);
 
     useEffect(() => {
         loadData();
@@ -82,27 +84,31 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold dark:text-white">Bienvenido, {userName}</h1>
                 <p className="text-gray-500">
-                    {selectedCompany} - {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+                    {selectedCompany} - {monthDisplay} {selectedYear}
                 </p>
             </div>
 
-            {/* Filters - Project only (Company and Period are in global header) */}
+            {/* Filters - Project (Company and Period are in global header) */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-wrap gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Proyecto
+                            Proyectos
                         </label>
                         <select
-                            value={selectedProjectId}
-                            onChange={(e) => setSelectedProjectId(e.target.value)}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            multiple
+                            value={selectedProjectIds}
+                            onChange={(e) => {
+                                const values = Array.from(e.target.selectedOptions, o => o.value);
+                                setSelectedProjectIds(values);
+                            }}
+                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px] h-20"
                         >
-                            <option value="">Todos los proyectos</option>
                             {companyProjects.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
+                        <p className="text-xs text-gray-500 mt-1">Ctrl+click para seleccionar varios. Vacío = todos.</p>
                     </div>
                 </div>
             </div>

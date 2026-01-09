@@ -40,6 +40,7 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
     const { selectedCompanyId: globalCompanyId, companies: storeCompanies } = useCompanyStore();
     const { selectedYear, selectedMonth } = usePeriodStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
+    const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]); // empty = all
     const [projectResults, setProjectResults] = useState<ProjectResult[]>([]);
     const [adminResults, setAdminResults] = useState<ProjectResult | null>(null);
     const [loading, setLoading] = useState(false);
@@ -50,6 +51,8 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
     const [editingResult, setEditingResult] = useState<{ id: string; projectId: string | null; conceptId: string; amount: number } | null>(null);
 
     const canEdit = userRole === 'ADMIN' || userRole === 'STAFF';
+    const companyProjects = projects.filter(p => p.companyId === selectedCompanyId);
+    const monthDisplay = selectedMonth === 0 ? 'Todo el año' : MONTH_NAMES[selectedMonth - 1];
 
     // Load results for selected period
     const loadResults = useCallback(async () => {
@@ -61,14 +64,19 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                 selectedYear,
                 selectedMonth
             );
-            setProjectResults(pr);
+            // Filter by selected projects if any
+            let filteredProjects = pr;
+            if (selectedProjectIds.length > 0) {
+                filteredProjects = pr.filter(p => p.projectId && selectedProjectIds.includes(p.projectId));
+            }
+            setProjectResults(filteredProjects);
             setAdminResults(ar);
         } catch (error) {
             console.error('Error loading results:', error);
         } finally {
             setLoading(false);
         }
-    }, [selectedCompanyId, selectedYear, selectedMonth]);
+    }, [selectedCompanyId, selectedYear, selectedMonth, selectedProjectIds]);
 
     useEffect(() => {
         loadResults();
@@ -115,12 +123,32 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                 )}
             </div>
 
-            {/* Period info - displays current selection from global header */}
+            {/* Filters - Project (Period is in global header) */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <p className="text-sm text-gray-500">
-                    Mostrando resultados para {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
-                    <span className="ml-2 text-xs">(Cambia el periodo en el selector del encabezado)</span>
-                </p>
+                <div className="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Proyectos
+                        </label>
+                        <select
+                            multiple
+                            value={selectedProjectIds}
+                            onChange={(e) => {
+                                const values = Array.from(e.target.selectedOptions, o => o.value);
+                                setSelectedProjectIds(values);
+                            }}
+                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px] h-20"
+                        >
+                            {companyProjects.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">Ctrl+click para seleccionar varios. Vacío = todos.</p>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                        Mostrando resultados para {monthDisplay} {selectedYear}
+                    </div>
+                </div>
             </div>
 
             {loading ? (
