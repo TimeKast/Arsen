@@ -4,7 +4,7 @@ import { getUserCompanies } from '@/actions/company-context';
 import { getActiveSheetNames } from '@/actions/valid-sheet-names';
 import { ImportPreviewClient } from './import-preview-client';
 import { db, projects, concepts } from '@/lib/db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export default async function ImportPage() {
     const session = await auth();
@@ -29,8 +29,12 @@ export default async function ImportPage() {
     const validSheetNames = await getActiveSheetNames();
 
     // Load project and concept names for recognition
+    // Projects are company-specific, concepts are global
     const allProjects = await db.query.projects.findMany({
-        where: eq(projects.isActive, true),
+        where: and(
+            eq(projects.isActive, true),
+            eq(projects.companyId, defaultCompany.id)
+        ),
         columns: { name: true },
     });
     const allConcepts = await db.query.concepts.findMany({
