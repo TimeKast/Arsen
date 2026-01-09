@@ -4,6 +4,7 @@ export interface ParsedProject {
     columnIndex: number;
     name: string;
     isRecognized: boolean;
+    isAdministration?: boolean; // True for "Gastos de Administración" column
 }
 
 export interface ParsedConcept {
@@ -176,19 +177,24 @@ export function parseResultsSheet(
             if (cell && typeof cell === 'string' && cell.trim().length > 0) {
                 const name = cell.trim();
                 const normalized = normalizeString(name);
-                // Skip summary/calculation columns
+                // Skip summary/calculation columns (but NOT gastos de administración)
                 if (normalized.includes('total') ||
                     normalized === '%' ||
-                    normalized.includes('gastos admon') ||
                     normalized.includes('porcentaje')) continue;
+
+                // Check if this is the administration expenses column
+                const isAdministration = normalized.includes('gastos admon') ||
+                    normalized.includes('gastos de admon') ||
+                    normalized.includes('gastos de administracion') ||
+                    normalized.includes('administracion');
 
                 projects.push({
                     columnIndex: c,
-                    name,
-                    // Only mark as recognized if knownProjects has entries AND matches
+                    name: isAdministration ? 'Gastos de Administración' : name,
                     isRecognized: !!(knownProjects && knownProjects.length > 0 && knownProjects.some(p =>
                         normalizeString(p) === normalizeString(name)
                     )),
+                    isAdministration, // Mark as admin expenses
                 });
             }
         }

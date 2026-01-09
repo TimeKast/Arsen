@@ -164,7 +164,8 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
         if (!parsedData) return [];
         const conflicts: { originalName: string; type: 'PROJECT' | 'CONCEPT'; conceptType?: 'INCOME' | 'COST' }[] = [];
 
-        parsedData.projects.filter(p => !p.isRecognized).forEach(p => {
+        // Exclude admin expenses from project conflicts (they don't need a project in DB)
+        parsedData.projects.filter(p => !p.isRecognized && !p.isAdministration).forEach(p => {
             conflicts.push({ originalName: p.name, type: 'PROJECT' });
         });
 
@@ -237,6 +238,22 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                 const project = parsedData.projects[v.projectIndex];
                 const concept = parsedData.concepts[v.conceptIndex];
 
+                // Admin expenses have no project (projectId = null)
+                if (project?.isAdministration) {
+                    const conceptResolution = resolvedConflicts.find(
+                        r => r.type === 'CONCEPT' && r.originalName === concept?.name && r.conceptType === concept?.type
+                    );
+                    return {
+                        projectId: null,
+                        projectName: null, // No project for admin expenses
+                        isAdministration: true,
+                        conceptId: conceptResolution?.targetId || undefined,
+                        conceptName: concept?.name || undefined,
+                        conceptType: concept?.type as 'INCOME' | 'COST' | undefined,
+                        amount: v.value,
+                    };
+                }
+
                 // Find resolved project/concept IDs if they were mapped
                 const projectResolution = resolvedConflicts.find(
                     r => r.type === 'PROJECT' && r.originalName === project?.name
@@ -246,7 +263,7 @@ export function ImportPreviewClient({ companyId, companyName, currentYear }: Imp
                     r => r.type === 'CONCEPT' && r.originalName === concept?.name && r.conceptType === concept?.type
                 );
 
-                if (project && !projectResolution) {
+                if (project && !projectResolution && !project.isAdministration) {
                     console.log(`No resolution for project: "${project.name}"`);
                 }
 
