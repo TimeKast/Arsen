@@ -185,7 +185,8 @@ export function parseResultsSheet(
                 projects.push({
                     columnIndex: c,
                     name,
-                    isRecognized: !knownProjects || knownProjects.some(p =>
+                    // Only mark as recognized if knownProjects has entries AND matches
+                    isRecognized: knownProjects && knownProjects.length > 0 && knownProjects.some(p =>
                         normalizeString(p) === normalizeString(name)
                     ),
                 });
