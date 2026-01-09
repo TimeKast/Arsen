@@ -40,12 +40,15 @@ export async function getComparisonData(
         throw new Error('No autenticado');
     }
 
-    // Build budget conditions
+    // Build budget conditions - month=0 means all months
     const budgetConditions = [
         eq(budgets.companyId, companyId),
         eq(budgets.year, year),
-        eq(budgets.month, month)
     ];
+    // Only filter by month if specific month selected (not 0 = all months)
+    if (month > 0) {
+        budgetConditions.push(eq(budgets.month, month));
+    }
     if (projectId) {
         budgetConditions.push(eq(budgets.projectId, projectId));
     }
@@ -59,15 +62,18 @@ export async function getComparisonData(
         },
     });
 
-    console.log(`[COMPARISON] Query: companyId=${companyId}, year=${year}, month=${month}, projectId=${projectId || 'all'}`);
+    console.log(`[COMPARISON] Query: companyId=${companyId}, year=${year}, month=${month === 0 ? 'ALL' : month}, projectId=${projectId || 'all'}`);
     console.log(`[COMPARISON] Found ${periodBudgets.length} budgets, ${periodBudgets.slice(0, 3).map(b => b.conceptId).join(', ')}`);
 
-    // Build result conditions
+    // Build result conditions - month=0 means all months
     const resultConditions = [
         eq(results.companyId, companyId),
         eq(results.year, year),
-        eq(results.month, month)
     ];
+    // Only filter by month if specific month selected (not 0 = all months)
+    if (month > 0) {
+        resultConditions.push(eq(results.month, month));
+    }
     if (projectId) {
         resultConditions.push(eq(results.projectId, projectId));
     }
