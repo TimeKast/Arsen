@@ -171,8 +171,8 @@ export interface ProjectBudget {
     }[];
 }
 
-// Get budgets grouped by project for a year (optionally filtered by area)
-export async function getBudgetsByProject(companyId: string, year: number, areaId?: string): Promise<ProjectBudget[]> {
+// Get budgets grouped by project for a year (optionally filtered by area and month)
+export async function getBudgetsByProject(companyId: string, year: number, areaId?: string, month?: number): Promise<ProjectBudget[]> {
     const session = await auth();
     if (!session?.user) {
         throw new Error('No autenticado');
@@ -185,6 +185,9 @@ export async function getBudgetsByProject(companyId: string, year: number, areaI
     ];
     if (areaId) {
         conditions.push(eq(budgets.areaId, areaId));
+    }
+    if (month) {
+        conditions.push(eq(budgets.month, month));
     }
 
     // Get all budgets for the year with relations

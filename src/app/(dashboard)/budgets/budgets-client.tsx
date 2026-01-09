@@ -25,12 +25,28 @@ interface BudgetsClientProps {
 }
 
 const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
+const months = [
+    { value: 0, label: 'Todos los meses' },
+    { value: 1, label: 'Enero' },
+    { value: 2, label: 'Febrero' },
+    { value: 3, label: 'Marzo' },
+    { value: 4, label: 'Abril' },
+    { value: 5, label: 'Mayo' },
+    { value: 6, label: 'Junio' },
+    { value: 7, label: 'Julio' },
+    { value: 8, label: 'Agosto' },
+    { value: 9, label: 'Septiembre' },
+    { value: 10, label: 'Octubre' },
+    { value: 11, label: 'Noviembre' },
+    { value: 12, label: 'Diciembre' },
+];
 
 export function BudgetsClient({ companies, areas, initialYear, userRole }: BudgetsClientProps) {
     const { selectedCompanyId: globalCompanyId } = useCompanyStore();
     const selectedCompanyId = globalCompanyId || companies[0]?.id || '';
 
     const [selectedYear, setSelectedYear] = useState(initialYear);
+    const [selectedMonth, setSelectedMonth] = useState<number>(0); // 0 = all months
     const [selectedAreaId, setSelectedAreaId] = useState<string>('');
     const [projectBudgets, setProjectBudgets] = useState<ProjectBudget[]>([]);
     const [adminBudget, setAdminBudget] = useState<ProjectBudget | null>(null);
@@ -47,7 +63,12 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
         if (!selectedCompanyId) return;
         setLoading(true);
         try {
-            const data = await getBudgetsByProject(selectedCompanyId, selectedYear, selectedAreaId || undefined);
+            const data = await getBudgetsByProject(
+                selectedCompanyId,
+                selectedYear,
+                selectedAreaId || undefined,
+                selectedMonth || undefined
+            );
 
             // Separate projects from admin expenses
             const projects = data.filter(d => d.projectId !== null);
@@ -60,7 +81,7 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
         } finally {
             setLoading(false);
         }
-    }, [selectedCompanyId, selectedYear, selectedAreaId]);
+    }, [selectedCompanyId, selectedYear, selectedAreaId, selectedMonth]);
 
     useEffect(() => {
         loadData();
@@ -125,6 +146,20 @@ export function BudgetsClient({ companies, areas, initialYear, userRole }: Budge
                             <option value="">Todas las áreas</option>
                             {companyAreas.map((a) => (
                                 <option key={a.id} value={a.id}>{a.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Mes
+                        </label>
+                        <select
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        >
+                            {months.map((m) => (
+                                <option key={m.value} value={m.value}>{m.label}</option>
                             ))}
                         </select>
                     </div>
