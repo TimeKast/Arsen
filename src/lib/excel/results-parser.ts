@@ -670,3 +670,163 @@ export function parseOtrosAsResults(
         };
     }
 }
+
+// Parse "Otros" sheet and return entries for ALL 12 months at once
+// Returns a map of month number (1-12) to array of parsed values
+export interface OtrosMonthlyData {
+    projects: ParsedProject[];
+    concepts: ParsedConcept[];
+    valuesByMonth: Map<number, ParsedValue[]>;
+    warnings: ParseWarning[];
+    year: number;
+}
+
+export function parseOtrosAllMonths(
+    buffer: ArrayBuffer,
+    knownProjects?: string[],
+    knownConcepts?: string[]
+): OtrosMonthlyData {
+    const warnings: ParseWarning[] = [];
+
+    // Helper to strip project prefix codes like "(01) " from names for comparison
+    const stripProjectPrefix = (name: string): string => {
+        return name.replace(/^\(\d+\)\s*/, '').trim();
+    };
+
+    try {
+        const workbook = XLSX.read(buffer, { type: 'array' });
+
+        // Find Otros sheet
+        const otrosSheetName = workbook.SheetNames.find(name =>
+            /otros/i.test(name)
+        );
+
+        if (!otrosSheetName) {
+            throw new Error('No se encontró hoja "Otros"');
+        }
+
+        const sheet = workbook.Sheets[otrosSheetName];
+        const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][];
+
+        // Get year from sheet name or filename pattern
+        const yearMatch = otrosSheetName.match(/(\d{4})/);
+        const year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
+
+        // Find header row with "Cuenta" or similar
+        let headerRow = -1;
+        for (let r = 0; r < Math.min(20, data.length); r++) {
+            const row = data[r];
+            if (row && row.some(cell => String(cell).toLowerCase().includes('cuenta'))) {
+                headerRow = r;
+                break;
+            }
+        }
+
+        if (headerRow === -1) {
+            throw new Error('No se encontró encabezado con "Cuenta"');
+        }
+
+        // Build projects and concepts from data
+        const projectsMap = new Map<string, number>(); // name -> index
+        const conceptsMap = new Map<string, number>(); // name -> index
+        const projects: ParsedProject[] = [];
+        const concepts: ParsedConcept[] = [];
+        const valuesByMonth = new Map<number, ParsedValue[]>();
+
+        // Initialize arrays for each month
+        for (let m = 1; m <= 12; m++) {
+            valuesByMonth.set(m, []);
+        }
+
+        // Parse data rows
+        for (let r = headerRow + 1; r < data.length; r++) {
+            const row = data[r];
+            if (!row || row.length < 5) continue;
+
+            const areaName = String(row[0] || '').trim();
+            const projectName = row[1] ? String(row[1]).trim() : null;
+            const conceptCode = String(row[2] || '').trim();
+
+            // Skip empty rows or header repeats
+            if (!areaName || !conceptCode) continue;
+            if (areaName.toLowerCase() === 'area') continue;
+
+            // Get or create project index
+            const projectKey = projectName || 'Sin Proyecto';
+            let projectIndex = projectsMap.get(projectKey);
+            if (projectIndex === undefined) {
+                projectIndex = projects.length;
+                projectsMap.set(projectKey, projectIndex);
+                const strippedProjectKey = stripProjectPrefix(projectKey);
+                const isRecognized = knownProjects?.some(
+                    p => normalizeString(stripProjectPrefix(p)) === normalizeString(strippedProjectKey)
+                ) ?? false;
+                const isAdministration = /administraci[oó]n|admin/i.test(projectKey);
+                projects.push({
+                    columnIndex: projectIndex,
+                    name: projectKey,
+                    isRecognized: isRecognized || isAdministration,
+                    isAdministration,
+                });
+            }
+
+            // Get or create concept index
+            const conceptName = conceptCode.split(/\s+/).slice(1).join(' ') || conceptCode;
+            let conceptIndex = conceptsMap.get(conceptName);
+            if (conceptIndex === undefined) {
+                conceptIndex = concepts.length;
+                conceptsMap.set(conceptName, conceptIndex);
+                const isRecognized = knownConcepts?.some(
+                    c => normalizeString(c) === normalizeString(conceptName)
+                ) ?? false;
+                concepts.push({
+                    rowIndex: r,
+                    name: conceptName,
+                    type: 'COST',
+                    isRecognized,
+                });
+            }
+
+            // Add values for ALL 12 months
+            for (let month = 1; month <= 12; month++) {
+                const monthColIndex = 3 + month; // Column 4 = Jan (month 1), etc.
+                const amount = typeof row[monthColIndex] === 'number' ? row[monthColIndex] : 0;
+                if (amount !== 0) {
+                    valuesByMonth.get(month)!.push({
+                        projectIndex,
+                        conceptIndex,
+                        value: amount,
+                    });
+                }
+            }
+        }
+
+        // Generate warnings only for unrecognized projects and concepts
+        projects.filter(p => !p.isRecognized).forEach(p => {
+            warnings.push({
+                type: 'PROJECT_NOT_FOUND',
+                message: `Proyecto no reconocido: "${p.name}"`,
+                column: p.columnIndex,
+            });
+        });
+
+        concepts.filter(c => !c.isRecognized).forEach(c => {
+            warnings.push({
+                type: 'CONCEPT_NOT_FOUND',
+                message: `Concepto no reconocido: "${c.name}" (${c.type})`,
+                row: c.rowIndex,
+            });
+        });
+
+        return { projects, concepts, valuesByMonth, warnings, year };
+
+    } catch (error) {
+        return {
+            projects: [],
+            concepts: [],
+            valuesByMonth: new Map(),
+            warnings: [{ type: 'STRUCTURE_ERROR', message: error instanceof Error ? error.message : 'Error parsing Otros sheet' }],
+            year: new Date().getFullYear(),
+        };
+    }
+}

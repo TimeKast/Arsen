@@ -11,7 +11,9 @@ import {
     hasOtrosSheet,
     getOtrosYear,
     parseOtrosAsResults,
-    type ParsedResults
+    parseOtrosAllMonths,
+    type ParsedResults,
+    type OtrosMonthlyData
 } from '@/lib/excel/results-parser';
 import { ConflictResolver } from './conflict-resolver';
 import type { ConflictResolution } from '@/actions/import-resolution';
@@ -60,6 +62,9 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
     const [importRules, setImportRules] = useState<ImportRule[]>([]);
     const [savedMappings, setSavedMappings] = useState<{ externalName: string; conceptId: string }[]>([]);
     const [appliedRulesInfo, setAppliedRulesInfo] = useState<{ excluded: number; redirected: number }>({ excluded: 0, redirected: 0 });
+    const [otrosMonthlyData, setOtrosMonthlyData] = useState<OtrosMonthlyData | null>(null);
+    const [isOtrosSheet, setIsOtrosSheet] = useState(false);
+    const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null);
 
     // Load import rules and saved mappings on mount
     useEffect(() => {
@@ -98,11 +103,21 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
 
             if (sheets.length > 0) {
                 setSelectedSheet(sheets[0]);
-                // Handle Otros sheet differently
+                // Handle Otros sheet differently - parse ALL months at once
                 if (sheets[0].includes('Otros')) {
-                    const result = parseOtrosAsResults(buffer, selectedMonth, knownProjects, knownConcepts);
+                    setIsOtrosSheet(true);
+                    setFileBuffer(buffer);
+                    // Parse all 12 months
+                    const otrosData = parseOtrosAllMonths(buffer, knownProjects, knownConcepts);
+                    setOtrosMonthlyData(otrosData);
+                    setSelectedYear(otrosData.year);
+                    // Create a preview using month 1 (January) data for display
+                    const previewMonth = 1;
+                    const result = parseOtrosAsResults(buffer, previewMonth, knownProjects, knownConcepts);
                     setParsedData(result);
                 } else {
+                    setIsOtrosSheet(false);
+                    setOtrosMonthlyData(null);
                     const result = parseResultsSheet(buffer, sheets[0], undefined, validSheetNames);
                     setParsedData(result);
                 }
@@ -275,6 +290,72 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
         setShowOverwriteWarning(false);
 
         try {
+            // Special handling for Otros sheet - import ALL 12 months at once
+            if (isOtrosSheet && otrosMonthlyData && otrosMonthlyData.valuesByMonth.size > 0) {
+                console.log('[OTROS] Importing all months from Otros sheet...');
+                let totalInserted = 0;
+
+                // Helper to get conceptId from resolution or saved mapping
+                const getConceptIdForOtros = (conceptName: string | undefined, conceptType: 'INCOME' | 'COST' | undefined): string | undefined => {
+                    if (!conceptName) return undefined;
+                    const resolution = resolvedConflicts.find(
+                        r => r.type === 'CONCEPT' && r.originalName === conceptName && r.conceptType === conceptType
+                    );
+                    if (resolution?.targetId) return resolution.targetId;
+                    const savedMapping = savedMappings.find(
+                        m => m.externalName.toLowerCase() === conceptName.toLowerCase()
+                    );
+                    if (savedMapping?.conceptId) return savedMapping.conceptId;
+                    return undefined;
+                };
+
+                // Import each month that has data
+                for (let month = 1; month <= 12; month++) {
+                    const monthValues = otrosMonthlyData.valuesByMonth.get(month);
+                    if (!monthValues || monthValues.length === 0) continue;
+
+                    console.log(`[OTROS] Processing month ${month} with ${monthValues.length} entries...`);
+
+                    const entries = monthValues.map(v => {
+                        const project = otrosMonthlyData.projects[v.projectIndex];
+                        const concept = otrosMonthlyData.concepts[v.conceptIndex];
+
+                        // Handle project resolution
+                        const projectResolution = resolvedConflicts.find(
+                            r => r.type === 'PROJECT' && r.originalName === project?.name
+                        );
+                        const resolvedProjectId = projectResolution?.targetId;
+                        const finalProjectId = project?.isAdministration ? null :
+                            (resolvedProjectId === '__ADMIN__' ? null : resolvedProjectId || null);
+
+                        return {
+                            projectId: finalProjectId,
+                            projectName: project?.name || null,
+                            conceptId: getConceptIdForOtros(concept?.name, concept?.type),
+                            conceptName: concept?.name || undefined,
+                            conceptType: concept?.type as 'INCOME' | 'COST' | undefined,
+                            amount: v.value,
+                        };
+                    }).filter(e => (e.conceptId || e.conceptName) && e.amount !== 0);
+
+                    if (entries.length > 0) {
+                        const result = await confirmResultsImport({
+                            companyId,
+                            year: selectedYear,
+                            month,
+                            entries: entries as Array<{ projectId: string | null; projectName?: string; conceptId?: string; conceptName?: string; conceptType?: 'INCOME' | 'COST'; amount: number }>,
+                        });
+                        totalInserted += result.insertedCount || 0;
+                        console.log(`[OTROS] Month ${month}: inserted ${result.insertedCount} entries`);
+                    }
+                }
+
+                console.log(`[OTROS] Total inserted across all months: ${totalInserted}`);
+                router.push('/results');
+                return;
+            }
+
+            // Regular single-month import
             const month = getMonth();
 
             // Build entries from parsed data
