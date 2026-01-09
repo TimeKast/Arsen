@@ -92,18 +92,29 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
     };
 
     const getDeviationColor = (row: ComparisonRow) => {
-        // For income: positive deviation (over budget) is good (green)
-        // For cost: positive deviation (under budget) is good (green)
+        // difference = budget - actual
+        // For INCOME: actual > budget (diff < 0) is GOOD (green), actual < budget (diff > 0) is BAD (red)
+        // For COST: actual < budget (diff > 0) is GOOD (green), actual > budget (diff < 0) is BAD (red)
         if (row.conceptType === 'INCOME') {
-            return row.difference >= 0 ? 'text-green-600' : 'text-red-600';
+            // For income: negative diff = actual > budget = good = green
+            return row.difference <= 0 ? 'text-green-600' : 'text-red-600';
         } else {
+            // For cost: positive diff = actual < budget = good = green  
             return row.difference >= 0 ? 'text-green-600' : 'text-red-600';
         }
     };
 
-    const getDeviationIcon = (diff: number) => {
-        if (diff > 0) return <TrendingUp size={14} className="text-green-600" />;
-        if (diff < 0) return <TrendingDown size={14} className="text-red-600" />;
+    const getDeviationIcon = (row: ComparisonRow) => {
+        // difference = budget - actual
+        // For INCOME: negative diff (actual > budget) = TrendingUp green
+        // For COST: positive diff (actual < budget) = TrendingDown green (we saved money)
+        if (row.conceptType === 'INCOME') {
+            if (row.difference < 0) return <TrendingUp size={14} className="text-green-600" />;
+            if (row.difference > 0) return <TrendingDown size={14} className="text-red-600" />;
+        } else {
+            if (row.difference > 0) return <TrendingDown size={14} className="text-green-600" />;
+            if (row.difference < 0) return <TrendingUp size={14} className="text-red-600" />;
+        }
         return <Minus size={14} className="text-gray-400" />;
     };
 
@@ -254,7 +265,7 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                                 <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
                                                 <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
                                                     <span className="flex items-center justify-end gap-1">
-                                                        {getDeviationIcon(row.difference)}
+                                                        {getDeviationIcon(row)}
                                                         {formatCurrency(Math.abs(row.difference))}
                                                     </span>
                                                 </td>
@@ -309,7 +320,7 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                                 <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
                                                 <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
                                                     <span className="flex items-center justify-end gap-1">
-                                                        {getDeviationIcon(row.difference)}
+                                                        {getDeviationIcon(row)}
                                                         {formatCurrency(Math.abs(row.difference))}
                                                     </span>
                                                 </td>

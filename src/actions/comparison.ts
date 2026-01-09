@@ -59,6 +59,9 @@ export async function getComparisonData(
         },
     });
 
+    console.log(`[COMPARISON] Query: companyId=${companyId}, year=${year}, month=${month}, projectId=${projectId || 'all'}`);
+    console.log(`[COMPARISON] Found ${periodBudgets.length} budgets, ${periodBudgets.slice(0, 3).map(b => b.conceptId).join(', ')}`);
+
     // Build result conditions
     const resultConditions = [
         eq(results.companyId, companyId),
