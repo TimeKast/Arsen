@@ -67,16 +67,39 @@ export async function POST(request: NextRequest) {
         const skippedConcepts = new Set<string>();
         const matchedConcepts = new Set<string>();
 
+        // Helper function to find concept using multiple strategies
+        function findConcept(conceptCode: string): { id: string; type: string } | undefined {
+            const lowerCode = conceptCode.toLowerCase().trim();
+
+            // Strategy 1: Exact match (full code)
+            if (conceptByName.has(lowerCode)) {
+                return conceptByName.get(lowerCode);
+            }
+
+            // Strategy 2: Match name part only (e.g., "A01 Seguridad" -> "Seguridad")
+            const namePart = conceptCode.split(/\s+/).slice(1).join(' ').toLowerCase().trim();
+            if (namePart && conceptByName.has(namePart)) {
+                return conceptByName.get(namePart);
+            }
+
+            // Strategy 3: Partial match (concept name contains or is contained by the code)
+            for (const [name, info] of conceptByName) {
+                if (lowerCode.includes(name) || name.includes(lowerCode)) {
+                    return info;
+                }
+            }
+
+            return undefined;
+        }
+
         for (const entry of entries) {
-            // Find concept by code (e.g., "A01 Seguridad" -> look for "Seguridad")
-            const conceptName = entry.conceptCode.split(/\s+/).slice(1).join(' ') || entry.conceptCode;
-            const conceptInfo = conceptByName.get(conceptName.toLowerCase());
+            const conceptInfo = findConcept(entry.conceptCode);
 
             if (!conceptInfo) {
-                skippedConcepts.add(conceptName);
+                skippedConcepts.add(entry.conceptCode);
                 continue; // Skip if concept not found
             }
-            matchedConcepts.add(conceptName);
+            matchedConcepts.add(entry.conceptCode);
 
             const projectId = entry.projectName
                 ? projectByName.get(entry.projectName.toLowerCase()) || null
