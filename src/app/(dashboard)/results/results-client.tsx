@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Upload, ChevronDown, ChevronRight, Plus, Pencil, Trash2, Building2 } from 'lucide-react';
 import { getResultsForPeriod, getAvailableResultPeriods, type ProjectResult } from '@/actions/results-view';
@@ -231,9 +231,8 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                                 {projectResults.map((project) => {
                                     const isExpanded = expandedProjects.has(project.projectId || 'admin');
                                     return (
-                                        <>
+                                        <React.Fragment key={project.projectId || project.projectName}>
                                             <tr
-                                                key={project.projectId}
                                                 onClick={() => toggleProject(project.projectId || 'admin')}
                                                 className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                                             >
@@ -273,7 +272,7 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                                                     <td></td>
                                                 </tr>
                                             ))}
-                                        </>
+                                        </React.Fragment>
                                     );
                                 })}
                             </tbody>
