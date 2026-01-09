@@ -13,18 +13,24 @@ export default async function DashboardPage() {
         redirect('/login');
     }
 
-    const companies = await getUserCompanies();
-    const currentYear = new Date().getFullYear();
+    try {
+        const companies = await getUserCompanies();
+        const currentYear = new Date().getFullYear();
 
-    // Get all projects for filter
-    const allProjects = await db.select({ id: projects.id, name: projects.name, companyId: projects.companyId }).from(projects).where(eq(projects.isActive, true));
+        // Get all projects for filter
+        const allProjects = await db.select({ id: projects.id, name: projects.name, companyId: projects.companyId }).from(projects).where(eq(projects.isActive, true));
 
-    return (
-        <DashboardClient
-            companies={companies}
-            projects={allProjects}
-            initialYear={currentYear}
-            userName={session.user.name || 'Usuario'}
-        />
-    );
+        return (
+            <DashboardClient
+                companies={companies}
+                projects={allProjects}
+                initialYear={currentYear}
+                userName={session.user.name || 'Usuario'}
+            />
+        );
+    } catch (error) {
+        // If any auth-related error, redirect to login
+        console.error('[DASHBOARD] Error:', error);
+        redirect('/login');
+    }
 }
