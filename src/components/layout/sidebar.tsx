@@ -3,26 +3,33 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 import {
     LayoutDashboard,
     FileText,
     DollarSign,
     PieChart,
-    FileCheck,
-    BarChart3,
-    FolderOpen,
     Users,
-    Settings,
+    FolderOpen,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
+    FileCheck,
+    Building2,
+    Briefcase,
+    Tag,
+    Layers,
+    FileSpreadsheet,
+    Shuffle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface NavItem {
     href: string;
     label: string;
     icon: React.ReactNode;
-    roles?: string[]; // If undefined, visible to all
+    roles?: string[];
+    subItems?: NavItem[];
 }
 
 const navItems: NavItem[] = [
@@ -31,7 +38,19 @@ const navItems: NavItem[] = [
     { href: '/budgets', label: 'Presupuestos', icon: <DollarSign size={20} /> },
     { href: '/profit-sharing', label: 'Reparto', icon: <PieChart size={20} /> },
     { href: '/reconciliations', label: 'Conciliaciones', icon: <FileCheck size={20} /> },
-    { href: '/catalogs/companies', label: 'Catalogos', icon: <FolderOpen size={20} /> },
+    {
+        href: '/catalogs',
+        label: 'Catálogos',
+        icon: <FolderOpen size={20} />,
+        subItems: [
+            { href: '/catalogs/companies', label: 'Empresas', icon: <Building2 size={16} /> },
+            { href: '/catalogs/projects', label: 'Proyectos', icon: <Briefcase size={16} /> },
+            { href: '/catalogs/areas', label: 'Áreas', icon: <Layers size={16} /> },
+            { href: '/catalogs/concepts', label: 'Conceptos', icon: <Tag size={16} /> },
+            { href: '/catalogs/import-rules', label: 'Reglas de Import', icon: <Shuffle size={16} /> },
+            { href: '/catalogs/sheet-names', label: 'Nombres de Pestañas', icon: <FileSpreadsheet size={16} /> },
+        ]
+    },
     { href: '/users', label: 'Usuarios', icon: <Users size={20} />, roles: ['ADMIN'] },
 ];
 
@@ -44,6 +63,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     const pathname = usePathname();
     const { data: session } = useSession();
     const userRole = session?.user?.role || 'READONLY';
+    const [catalogsExpanded, setCatalogsExpanded] = useState(pathname.startsWith('/catalogs'));
 
     const visibleItems = navItems.filter((item) => {
         if (!item.roles) return true;
@@ -58,10 +78,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             )}
         >
             {/* Logo */}
-            <div className="flex h-16 items-center justify-between border-b border-gray-800 px-4">
-                {!collapsed && (
-                    <span className="text-xl font-bold">Arsen</span>
-                )}
+            <div className="flex h-16 items-center justify-between px-4 border-b border-gray-800">
+                {!collapsed && <span className="text-xl font-bold">Arsen</span>}
                 <button
                     onClick={onToggle}
                     className="rounded p-1.5 hover:bg-gray-800"
@@ -76,6 +94,59 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     {visibleItems.map((item) => {
                         const isActive = pathname === item.href ||
                             (item.href !== '/' && pathname.startsWith(item.href));
+                        const hasSubItems = item.subItems && item.subItems.length > 0;
+
+                        if (hasSubItems) {
+                            return (
+                                <li key={item.href}>
+                                    <button
+                                        onClick={() => setCatalogsExpanded(!catalogsExpanded)}
+                                        className={cn(
+                                            'w-full flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors',
+                                            isActive
+                                                ? 'bg-blue-600 text-white'
+                                                : 'text-gray-400 hover:bg-gray-800 hover:text-white',
+                                            collapsed && 'justify-center'
+                                        )}
+                                        title={collapsed ? item.label : undefined}
+                                    >
+                                        {item.icon}
+                                        {!collapsed && (
+                                            <>
+                                                <span className="flex-1 text-left">{item.label}</span>
+                                                <ChevronDown
+                                                    size={16}
+                                                    className={cn('transition-transform', catalogsExpanded && 'rotate-180')}
+                                                />
+                                            </>
+                                        )}
+                                    </button>
+                                    {!collapsed && catalogsExpanded && (
+                                        <ul className="mt-1 ml-4 space-y-1 border-l border-gray-700 pl-3">
+                                            {item.subItems!.map((subItem) => {
+                                                const isSubActive = pathname === subItem.href;
+                                                return (
+                                                    <li key={subItem.href}>
+                                                        <Link
+                                                            href={subItem.href}
+                                                            className={cn(
+                                                                'flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors',
+                                                                isSubActive
+                                                                    ? 'bg-blue-600 text-white'
+                                                                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                                            )}
+                                                        >
+                                                            {subItem.icon}
+                                                            <span>{subItem.label}</span>
+                                                        </Link>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    )}
+                                </li>
+                            );
+                        }
 
                         return (
                             <li key={item.href}>
