@@ -1,6 +1,6 @@
 'use server';
 
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gte, lte } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { db, reconciliations, projects, concepts } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
@@ -98,6 +98,26 @@ export async function confirmReconciliationImport(data: ConfirmReconciliationImp
     // Batch insert in chunks of 100 to avoid "value too large to transmit" error
     const BATCH_SIZE = 100;
     let insertedCount = 0;
+
+    // Determine years present in the data
+    const yearsInData = new Set<number>();
+    for (const entry of entriesToInsert) {
+        yearsInData.add(entry.date.getFullYear());
+    }
+
+    // Delete existing reconciliations for this company/year(s)
+    for (const year of yearsInData) {
+        const startOfYear = new Date(year, 0, 1);
+        const endOfYear = new Date(year, 11, 31, 23, 59, 59);
+
+        await db.delete(reconciliations).where(
+            and(
+                eq(reconciliations.companyId, validated.companyId),
+                gte(reconciliations.date, startOfYear),
+                lte(reconciliations.date, endOfYear)
+            )
+        );
+    }
 
     for (let i = 0; i < entriesToInsert.length; i += BATCH_SIZE) {
         const batch = entriesToInsert.slice(i, i + BATCH_SIZE);
