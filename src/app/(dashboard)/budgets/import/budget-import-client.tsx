@@ -32,6 +32,7 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [dragActive, setDragActive] = useState(false);
     const [result, setResult] = useState<{ imported: number; errors: string[] } | null>(null);
+    const [showAll, setShowAll] = useState(false);
 
     const handleFile = useCallback(async (selectedFile: File) => {
         setFile(selectedFile);
@@ -238,39 +239,53 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
                                     </div>
                                 </div>
 
-                                {/* Sample Data */}
-                                <div className="overflow-x-auto">
+                                {/* Data Table */}
+                                <div className="flex justify-between items-center mb-2">
+                                    <h4 className="font-medium dark:text-white">Datos:</h4>
+                                    <button
+                                        onClick={() => setShowAll(!showAll)}
+                                        className="text-sm text-blue-600 hover:underline"
+                                    >
+                                        {showAll ? 'Ver muestra' : `Ver todo (${totalEntries} filas)`}
+                                    </button>
+                                </div>
+                                <div className={`overflow-x-auto ${showAll ? 'max-h-96 overflow-y-auto' : ''}`}>
                                     <table className="w-full text-sm">
-                                        <thead className="bg-gray-50 dark:bg-gray-700">
+                                        <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
                                             <tr>
                                                 <th className="px-3 py-2 text-left">Área</th>
+                                                <th className="px-3 py-2 text-left">Proyecto</th>
                                                 <th className="px-3 py-2 text-left">Concepto</th>
-                                                {MONTH_NAMES.slice(0, 6).map(m => (
+                                                {MONTH_NAMES.map(m => (
                                                     <th key={m} className="px-3 py-2 text-right">{m}</th>
                                                 ))}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                                            {parsedData.slice(0, 2).flatMap(p =>
-                                                p.entries.slice(0, 3).map((entry, i) => (
-                                                    <tr key={`${p.areaName}-${i}`}>
-                                                        <td className="px-3 py-2 dark:text-white">{entry.areaName}</td>
-                                                        <td className="px-3 py-2 dark:text-white">{entry.conceptCode}</td>
-                                                        {entry.amounts.slice(0, 6).map((amt, j) => (
-                                                            <td key={j} className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">
-                                                                ${amt.toLocaleString()}
-                                                            </td>
-                                                        ))}
-                                                    </tr>
-                                                ))
-                                            )}
+                                            {(showAll
+                                                ? parsedData.flatMap(p => p.entries)
+                                                : parsedData.slice(0, 2).flatMap(p => p.entries.slice(0, 5))
+                                            ).map((entry, i) => (
+                                                <tr key={i}>
+                                                    <td className="px-3 py-2 dark:text-white whitespace-nowrap">{entry.areaName}</td>
+                                                    <td className="px-3 py-2 dark:text-white whitespace-nowrap">{entry.projectName || '-'}</td>
+                                                    <td className="px-3 py-2 dark:text-white whitespace-nowrap">{entry.conceptCode}</td>
+                                                    {entry.amounts.map((amt, j) => (
+                                                        <td key={j} className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">
+                                                            ${amt.toLocaleString()}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <p className="text-sm text-gray-500 mt-2 text-center">
-                                    Mostrando muestra de datos...
-                                </p>
+                                {!showAll && (
+                                    <p className="text-sm text-gray-500 mt-2 text-center">
+                                        Mostrando muestra... <button onClick={() => setShowAll(true)} className="text-blue-600 hover:underline">Ver todo</button>
+                                    </p>
+                                )}
                             </div>
                             <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t dark:border-gray-600 flex justify-end gap-3">
                                 <button
