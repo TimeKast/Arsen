@@ -450,6 +450,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
             // Multi-month batch import - import all detected monthly sheets
             if (isMultiMonthMode && detectedMonthlySheets.length > 0 && fileBuffer) {
                 console.log('[MULTI-MONTH] Starting batch import for', detectedMonthlySheets.length, 'sheets');
+                let totalInserted = 0;
 
                 for (const sheet of detectedMonthlySheets) {
                     console.log(`[MULTI-MONTH] Processing sheet "${sheet.sheetName}" for month ${sheet.month}...`);
