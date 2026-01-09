@@ -227,25 +227,41 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                                 <tr>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Fecha</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Referencia</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Factura</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Poliza</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cheque</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Proveedor</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">U. Negocio</th>
                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cuenta</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Cancelados</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Transito</th>
                                     <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Entradas</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Subtotal</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">IVA</th>
                                     <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Salidas</th>
                                     <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Saldo</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Observaciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
                                 {preview.slice(0, 50).map((row, i) => (
                                     <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="px-3 py-2">{formatDate(row.date)}</td>
-                                        <td className="px-3 py-2">{row.reference}</td>
-                                        <td className="px-3 py-2">{row.supplier}</td>
-                                        <td className="px-3 py-2">{row.businessUnit}</td>
-                                        <td className="px-3 py-2">{row.account}</td>
-                                        <td className="px-3 py-2 text-right text-green-600">{row.entries ? formatCurrency(row.entries) : ''}</td>
-                                        <td className="px-3 py-2 text-right text-red-600">{row.withdrawals ? formatCurrency(row.withdrawals) : ''}</td>
-                                        <td className="px-3 py-2 text-right font-medium">{row.balance ? formatCurrency(row.balance) : ''}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{formatDate(row.date)}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{row.reference || '-'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{row.invoice || '-'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{row.policy || '-'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{row.checkNumber || '-'}</td>
+                                        <td className="px-3 py-2">{row.supplier || '-'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{row.businessUnit || '-'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{row.account || '-'}</td>
+                                        <td className="px-3 py-2 text-right">{row.cancelled ? formatCurrency(row.cancelled) : '-'}</td>
+                                        <td className="px-3 py-2 text-right">{row.inTransit ? formatCurrency(row.inTransit) : '-'}</td>
+                                        <td className="px-3 py-2 text-right text-green-600">{row.entries ? formatCurrency(row.entries) : '-'}</td>
+                                        <td className="px-3 py-2 text-right">{row.subtotal ? formatCurrency(row.subtotal) : '-'}</td>
+                                        <td className="px-3 py-2 text-right">{row.tax ? formatCurrency(row.tax) : '-'}</td>
+                                        <td className="px-3 py-2 text-right text-red-600">{row.withdrawals ? formatCurrency(row.withdrawals) : '-'}</td>
+                                        <td className="px-3 py-2 text-right font-medium">{row.balance ? formatCurrency(row.balance) : '-'}</td>
+                                        <td className="px-3 py-2 max-w-xs truncate">{row.observations || '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>

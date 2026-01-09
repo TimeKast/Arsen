@@ -95,15 +95,20 @@ export async function confirmReconciliationImport(data: ConfirmReconciliationImp
             createdBy: session.user.id,
         }));
 
-    // Batch insert all entries at once
-    if (entriesToInsert.length > 0) {
-        await db.insert(reconciliations).values(entriesToInsert);
+    // Batch insert in chunks of 100 to avoid "value too large to transmit" error
+    const BATCH_SIZE = 100;
+    let insertedCount = 0;
+
+    for (let i = 0; i < entriesToInsert.length; i += BATCH_SIZE) {
+        const batch = entriesToInsert.slice(i, i + BATCH_SIZE);
+        await db.insert(reconciliations).values(batch);
+        insertedCount += batch.length;
     }
 
     revalidatePath('/reconciliations');
     return {
         success: true,
-        insertedCount: entriesToInsert.length,
+        insertedCount,
     };
 }
 
