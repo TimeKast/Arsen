@@ -746,9 +746,20 @@ export function parseOtrosAllMonths(
         }
 
         // Parse data rows
+        // Log header row for debugging
+        const headerRowData = data[headerRow];
+        console.log('[OTROS DEBUG] Header row:', headerRow, 'content:', headerRowData?.slice(0, 20));
+
+        let rowsLogged = 0;
         for (let r = headerRow + 1; r < data.length; r++) {
             const row = data[r];
             if (!row || row.length < 5) continue;
+
+            // Log first 3 data rows for debugging
+            if (rowsLogged < 3) {
+                console.log(`[OTROS DEBUG] Row ${r} length=${row.length}, cols 0-5:`, row.slice(0, 6), 'cols 10-16:', row.slice(10, 17));
+                rowsLogged++;
+            }
 
             const areaName = String(row[0] || '').trim();
             const projectName = row[1] ? String(row[1]).trim() : null;
