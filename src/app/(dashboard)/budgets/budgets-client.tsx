@@ -6,7 +6,7 @@ import { Upload, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
 import { getBudgetsByProject, type ProjectBudget } from '@/actions/budgets';
 import { useCompanyStore } from '@/stores/company-store';
 import { usePeriodStore } from '@/stores/period-store';
-import { MultiProjectSelector } from '@/components/ui/multi-project-selector';
+import { MultiProjectSelector, ADMIN_PROJECT_ID } from '@/components/ui/multi-project-selector';
 
 interface Company {
     id: string;
@@ -80,14 +80,26 @@ export function BudgetsClient({ companies, areas, projects, initialYear, userRol
                 selectedMonth || undefined // 0 means all months
             );
 
-            // Filter by selected projects if any
-            let projects = data.filter(d => d.projectId !== null);
-            if (selectedProjectIds.length > 0) {
-                projects = projects.filter(p => p.projectId && selectedProjectIds.includes(p.projectId));
-            }
-            const admin = data.find(d => d.projectId === null) || null;
+            // Check if admin is selected
+            const adminSelected = selectedProjectIds.includes(ADMIN_PROJECT_ID);
+            // Get real project IDs (excluding admin)
+            const realProjectIds = selectedProjectIds.filter(id => id !== ADMIN_PROJECT_ID);
 
-            setProjectBudgets(projects);
+            // Filter by selected projects if any
+            let filteredProjects = data.filter(d => d.projectId !== null);
+            if (realProjectIds.length > 0) {
+                filteredProjects = filteredProjects.filter(p => p.projectId && realProjectIds.includes(p.projectId));
+            } else if (adminSelected && selectedProjectIds.length === 1) {
+                // Only admin is selected, show no projects
+                filteredProjects = [];
+            }
+
+            // Show admin budget if: no filter, admin selected, or nothing selected
+            const admin = (selectedProjectIds.length === 0 || adminSelected)
+                ? (data.find(d => d.projectId === null) || null)
+                : null;
+
+            setProjectBudgets(filteredProjects);
             setAdminBudget(admin);
         } catch (error) {
             console.error('Error loading budgets:', error);
@@ -156,6 +168,7 @@ export function BudgetsClient({ companies, areas, projects, initialYear, userRol
                             projects={companyProjects}
                             selectedIds={selectedProjectIds}
                             onChange={setSelectedProjectIds}
+                            showAdminOption
                         />
                     </div>
                 </div>

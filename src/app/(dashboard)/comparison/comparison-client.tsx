@@ -50,8 +50,8 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
         if (!selectedCompanyId) return;
         setLoading(true);
         try {
-            // Use first selected project or undefined for all
-            const projectFilter = selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined;
+            // Pass array of selected project IDs (or undefined for all)
+            const projectFilter = selectedProjectIds.length > 0 ? selectedProjectIds : undefined;
             const compData = await getComparisonData(selectedCompanyId, selectedYear, selectedMonth, projectFilter);
             setData(compData);
         } catch (error) {
@@ -119,6 +119,7 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                             projects={companyProjects}
                             selectedIds={selectedProjectIds}
                             onChange={setSelectedProjectIds}
+                            showAdminOption
                         />
                     </div>
                 </div>

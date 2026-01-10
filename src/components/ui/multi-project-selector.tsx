@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Check, ChevronDown, X } from 'lucide-react';
+import { Check, ChevronDown, X, Search, Building2 } from 'lucide-react';
+
+// Special ID for administrative expenses (items without a project)
+export const ADMIN_PROJECT_ID = '__ADMIN__';
 
 interface Project {
     id: string;
@@ -13,27 +16,42 @@ interface MultiProjectSelectorProps {
     selectedIds: string[];
     onChange: (ids: string[]) => void;
     placeholder?: string;
+    showAdminOption?: boolean;
 }
 
 export function MultiProjectSelector({
     projects,
     selectedIds,
     onChange,
-    placeholder = 'Todos los proyectos'
+    placeholder = 'Todos los proyectos',
+    showAdminOption = false
 }: MultiProjectSelectorProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Virtual "Administración" project for items without a project
+    const adminProject: Project = { id: ADMIN_PROJECT_ID, name: 'Administración' };
 
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+                setSearchQuery('');
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Autofocus search input when dropdown opens
+    useEffect(() => {
+        if (isOpen && searchInputRef.current) {
+            searchInputRef.current.focus();
+        }
+    }, [isOpen]);
 
     const toggleProject = (id: string) => {
         if (selectedIds.includes(id)) {
@@ -44,21 +62,38 @@ export function MultiProjectSelector({
     };
 
     const selectAll = () => {
-        onChange(projects.map(p => p.id));
+        const allIds = projects.map(p => p.id);
+        if (showAdminOption) {
+            allIds.unshift(ADMIN_PROJECT_ID);
+        }
+        onChange(allIds);
     };
 
     const clearAll = () => {
         onChange([]);
     };
 
-    const selectedProjects = projects.filter(p => selectedIds.includes(p.id));
+    // All projects including admin if enabled
+    const allProjects = showAdminOption ? [adminProject, ...projects] : projects;
+    const totalCount = allProjects.length;
+
+    // Filter projects based on search query and sort alphabetically
+    const filteredProjects = projects
+        .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Check if admin matches search
+    const showAdminInResults = showAdminOption &&
+        adminProject.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const selectedProjects = allProjects.filter(p => selectedIds.includes(p.id));
     const displayText = selectedIds.length === 0
         ? placeholder
-        : selectedIds.length === projects.length
+        : selectedIds.length === totalCount
             ? 'Todos seleccionados'
             : selectedIds.length === 1
                 ? selectedProjects[0]?.name
-                : `${selectedIds.length} proyectos`;
+                : `${selectedIds.length} seleccionados`;
 
     return (
         <div ref={containerRef} className="relative">
@@ -106,14 +141,80 @@ export function MultiProjectSelector({
                         </button>
                     </div>
 
+                    {/* Search Input */}
+                    <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+                        <div className="relative">
+                            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Buscar proyecto..."
+                                className="w-full pl-8 pr-8 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Project List */}
                     <div className="max-h-60 overflow-y-auto">
-                        {projects.length === 0 ? (
+                        {/* Admin Option - Always first when enabled and matches search */}
+                        {showAdminInResults && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => toggleProject(ADMIN_PROJECT_ID)}
+                                    className={`
+                                        flex items-center gap-3 w-full px-3 py-2 text-left text-sm
+                                        hover:bg-gray-50 dark:hover:bg-gray-700/50
+                                        transition-colors
+                                        ${selectedIds.includes(ADMIN_PROJECT_ID) ? 'bg-amber-50 dark:bg-amber-900/20' : ''}
+                                    `}
+                                >
+                                    <div className={`
+                                        flex items-center justify-center w-4 h-4 rounded border
+                                        ${selectedIds.includes(ADMIN_PROJECT_ID)
+                                            ? 'bg-amber-600 border-amber-600'
+                                            : 'border-gray-300 dark:border-gray-600'
+                                        }
+                                    `}>
+                                        {selectedIds.includes(ADMIN_PROJECT_ID) && <Check size={12} className="text-white" />}
+                                    </div>
+                                    <Building2 size={14} className="text-amber-600 dark:text-amber-400" />
+                                    <span className={`
+                                        flex-1 truncate
+                                        ${selectedIds.includes(ADMIN_PROJECT_ID)
+                                            ? 'text-amber-700 dark:text-amber-300 font-medium'
+                                            : 'text-gray-700 dark:text-gray-300'
+                                        }
+                                    `}>
+                                        Administración
+                                    </span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                                        Sin proyecto
+                                    </span>
+                                </button>
+                                {filteredProjects.length > 0 && (
+                                    <div className="border-b border-gray-100 dark:border-gray-700" />
+                                )}
+                            </>
+                        )}
+
+                        {filteredProjects.length === 0 && !showAdminInResults ? (
                             <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                No hay proyectos disponibles
+                                {searchQuery ? 'No se encontraron proyectos' : 'No hay proyectos disponibles'}
                             </div>
                         ) : (
-                            projects.map((project) => {
+                            filteredProjects.map((project) => {
                                 const isSelected = selectedIds.includes(project.id);
                                 return (
                                     <button
@@ -156,7 +257,7 @@ export function MultiProjectSelector({
                         <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs text-gray-500">
-                                    {selectedIds.length} de {projects.length} seleccionados
+                                    {selectedIds.length} de {totalCount} seleccionados
                                 </span>
                                 <button
                                     type="button"

@@ -7,7 +7,7 @@ import { getResultsForPeriod, type ProjectResult } from '@/actions/results-view'
 import { createResult, updateResult, deleteResult } from '@/actions/results';
 import { useCompanyStore } from '@/stores/company-store';
 import { usePeriodStore } from '@/stores/period-store';
-import { MultiProjectSelector } from '@/components/ui/multi-project-selector';
+import { MultiProjectSelector, ADMIN_PROJECT_ID } from '@/components/ui/multi-project-selector';
 import { ResultForm } from '@/components/forms/result-form';
 
 interface Company {
@@ -66,13 +66,26 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                 selectedYear,
                 selectedMonth
             );
+
+            // Check if admin is selected
+            const adminSelected = selectedProjectIds.includes(ADMIN_PROJECT_ID);
+            // Get real project IDs (excluding admin)
+            const realProjectIds = selectedProjectIds.filter(id => id !== ADMIN_PROJECT_ID);
+
             // Filter by selected projects if any
             let filteredProjects = pr;
-            if (selectedProjectIds.length > 0) {
-                filteredProjects = pr.filter(p => p.projectId && selectedProjectIds.includes(p.projectId));
+            if (realProjectIds.length > 0) {
+                filteredProjects = pr.filter(p => p.projectId && realProjectIds.includes(p.projectId));
+            } else if (adminSelected && selectedProjectIds.length === 1) {
+                // Only admin is selected, show no projects
+                filteredProjects = [];
             }
+
+            // Show admin results if: no filter, admin selected, or nothing selected
+            const adminData = (selectedProjectIds.length === 0 || adminSelected) ? ar : null;
+
             setProjectResults(filteredProjects);
-            setAdminResults(ar);
+            setAdminResults(adminData);
         } catch (error) {
             console.error('Error loading results:', error);
         } finally {
@@ -136,6 +149,7 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                             projects={companyProjects}
                             selectedIds={selectedProjectIds}
                             onChange={setSelectedProjectIds}
+                            showAdminOption
                         />
                     </div>
                     <div className="text-xs md:text-sm text-gray-500">

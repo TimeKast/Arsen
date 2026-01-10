@@ -1,8 +1,11 @@
 'use server';
 
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray, isNull, or } from 'drizzle-orm';
 import { db, results, projects, concepts, budgets } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
+
+// Special ID for admin/no-project items
+const ADMIN_PROJECT_ID = '__ADMIN__';
 
 export interface DashboardKPIs {
     totalIncome: number;
@@ -34,12 +37,16 @@ export async function getDashboardKPIs(
     companyId: string,
     year: number,
     month: number,
-    projectId?: string
+    projectIds?: string[]
 ): Promise<DashboardKPIs> {
     const session = await auth();
     if (!session?.user) {
         throw new Error('No autenticado');
     }
+
+    // Check if admin is selected
+    const includeAdmin = projectIds?.includes(ADMIN_PROJECT_ID);
+    const realProjectIds = projectIds?.filter(id => id !== ADMIN_PROJECT_ID) || [];
 
     // Build conditions - month=0 means all months
     const resultConditions = [
@@ -49,8 +56,15 @@ export async function getDashboardKPIs(
     if (month > 0) {
         resultConditions.push(eq(results.month, month));
     }
-    if (projectId) {
-        resultConditions.push(eq(results.projectId, projectId));
+    // Filter by multiple projects if specified
+    if (projectIds && projectIds.length > 0) {
+        if (realProjectIds.length > 0 && includeAdmin) {
+            resultConditions.push(or(inArray(results.projectId, realProjectIds), isNull(results.projectId))!);
+        } else if (realProjectIds.length > 0) {
+            resultConditions.push(inArray(results.projectId, realProjectIds));
+        } else if (includeAdmin) {
+            resultConditions.push(isNull(results.projectId));
+        }
     }
 
     // Get results for the period
@@ -69,8 +83,15 @@ export async function getDashboardKPIs(
     if (month > 0) {
         budgetConditions.push(eq(budgets.month, month));
     }
-    if (projectId) {
-        budgetConditions.push(eq(budgets.projectId, projectId));
+    // Filter by multiple projects if specified
+    if (projectIds && projectIds.length > 0) {
+        if (realProjectIds.length > 0 && includeAdmin) {
+            budgetConditions.push(or(inArray(budgets.projectId, realProjectIds), isNull(budgets.projectId))!);
+        } else if (realProjectIds.length > 0) {
+            budgetConditions.push(inArray(budgets.projectId, realProjectIds));
+        } else if (includeAdmin) {
+            budgetConditions.push(isNull(budgets.projectId));
+        }
     }
 
     // Get budgets for the period
@@ -128,12 +149,15 @@ export async function getTopProjects(
     companyId: string,
     year: number,
     month: number,
-    projectId?: string
+    projectIds?: string[]
 ): Promise<TopProject[]> {
     const session = await auth();
     if (!session?.user) {
         throw new Error('No autenticado');
     }
+
+    // Get real project IDs (excluding admin)
+    const realProjectIds = projectIds?.filter(id => id !== ADMIN_PROJECT_ID) || [];
 
     // Build conditions - month=0 means all months
     const conditions = [
@@ -143,8 +167,9 @@ export async function getTopProjects(
     if (month > 0) {
         conditions.push(eq(results.month, month));
     }
-    if (projectId) {
-        conditions.push(eq(results.projectId, projectId));
+    // Filter by multiple projects if specified
+    if (realProjectIds.length > 0) {
+        conditions.push(inArray(results.projectId, realProjectIds));
     }
 
     // Get all results for the period
@@ -197,12 +222,16 @@ export async function getTrendData(
     companyId: string,
     year: number,
     month: number,
-    projectId?: string
+    projectIds?: string[]
 ): Promise<TrendDataPoint[]> {
     const session = await auth();
     if (!session?.user) {
         throw new Error('No autenticado');
     }
+
+    // Check if admin is selected
+    const includeAdmin = projectIds?.includes(ADMIN_PROJECT_ID);
+    const realProjectIds = projectIds?.filter(id => id !== ADMIN_PROJECT_ID) || [];
 
     const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     const trendData: TrendDataPoint[] = [];
@@ -230,14 +259,20 @@ export async function getTrendData(
     }
 
     for (const { targetYear, targetMonth } of monthsToShow) {
-        // Build conditions
-        const conditions = [
+        const conditions: ReturnType<typeof eq>[] = [
             eq(results.companyId, companyId),
             eq(results.year, targetYear),
             eq(results.month, targetMonth)
         ];
-        if (projectId) {
-            conditions.push(eq(results.projectId, projectId));
+        // Filter by multiple projects if specified
+        if (projectIds && projectIds.length > 0) {
+            if (realProjectIds.length > 0 && includeAdmin) {
+                conditions.push(or(inArray(results.projectId, realProjectIds), isNull(results.projectId)) as ReturnType<typeof eq>);
+            } else if (realProjectIds.length > 0) {
+                conditions.push(inArray(results.projectId, realProjectIds) as ReturnType<typeof eq>);
+            } else if (includeAdmin) {
+                conditions.push(isNull(results.projectId) as ReturnType<typeof eq>);
+            }
         }
 
         // Get results for this month
