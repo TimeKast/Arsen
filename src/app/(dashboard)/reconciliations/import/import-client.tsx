@@ -107,20 +107,20 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
 
     return (
         <div>
-            <div className="flex items-center gap-3 mb-6">
-                <FileSpreadsheet className="text-blue-600" size={28} />
-                <h1 className="text-2xl font-bold dark:text-white">Importar Conciliaciones</h1>
+            <div className="flex items-center gap-2 mb-4">
+                <FileSpreadsheet className="text-blue-600" size={24} />
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Importar Conciliaciones</h1>
             </div>
 
             {/* Company Selector */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Empresa
                 </label>
                 <select
                     value={selectedCompanyId}
                     onChange={(e) => setSelectedCompanyId(e.target.value)}
-                    className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="w-full sm:w-auto px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                     {companies.map((company) => (
                         <option key={company.id} value={company.id}>
@@ -132,10 +132,10 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
 
             {/* Upload Zone - Only show when no preview data */}
             {preview.length === 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                        <Upload className="mx-auto text-gray-400 mb-4" size={48} />
-                        <p className="text-gray-600 dark:text-gray-400 mb-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 mb-4">
+                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 md:p-8 text-center">
+                        <Upload className="mx-auto text-gray-400 mb-3" size={40} />
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                             Arrastra un archivo Excel o haz clic para seleccionar
                         </p>
                         <input
@@ -147,12 +147,12 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
                         />
                         <label
                             htmlFor="file-input"
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700"
+                            className="inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded-md cursor-pointer hover:bg-blue-700"
                         >
                             Seleccionar Archivo
                         </label>
                         {file && (
-                            <p className="mt-4 text-sm text-gray-600">
+                            <p className="mt-3 text-sm text-gray-600">
                                 Archivo: {file.name}
                             </p>
                         )}
@@ -162,18 +162,18 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
 
             {/* Selected file info - Show when preview has data */}
             {preview.length > 0 && file && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <FileSpreadsheet className="text-blue-600" size={24} />
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 md:p-4 mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <FileSpreadsheet className="text-blue-600" size={20} />
                             <div>
-                                <p className="font-medium dark:text-white">{file.name}</p>
-                                <p className="text-sm text-gray-500">{preview.length} registros listos para importar</p>
+                                <p className="font-medium dark:text-white text-sm">{file.name}</p>
+                                <p className="text-xs text-gray-500">{preview.length} registros listos</p>
                             </div>
                         </div>
                         <button
                             onClick={() => { setPreview([]); setFile(null); setErrors([]); setResult(null); }}
-                            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                            className="self-end sm:self-auto px-3 py-1 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                         >
                             Cambiar archivo
                         </button>
@@ -217,20 +217,26 @@ export function ReconciliationImportClient({ companies }: ReconciliationImportCl
 
             {/* Preview Table */}
             {preview.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
-                        <h2 className="font-medium dark:text-white">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-4">
+                    <div className="px-3 py-3 bg-gray-50 dark:bg-gray-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <h2 className="font-medium dark:text-white text-sm">
                             Vista Previa ({preview.length} registros)
                         </h2>
                         <button
                             onClick={handleConfirm}
                             disabled={saving}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50"
                         >
                             <Check size={16} />
-                            {saving ? 'Guardando...' : 'Confirmar Importacion'}
+                            {saving ? 'Guardando...' : 'Confirmar'}
                         </button>
                     </div>
+
+                    {/* Mobile summary note */}
+                    <div className="md:hidden px-3 py-2 bg-amber-50 dark:bg-amber-900/20 text-xs text-amber-700 dark:text-amber-300">
+                        ⟷ Desliza horizontalmente para ver todos los campos
+                    </div>
+
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="bg-gray-100 dark:bg-gray-700">

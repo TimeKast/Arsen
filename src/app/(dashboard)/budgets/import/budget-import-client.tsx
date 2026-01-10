@@ -108,25 +108,25 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
 
     return (
         <div>
-            <div className="flex items-center gap-4 mb-6">
-                <Link href="/budgets" className="text-gray-500 hover:text-gray-700">
-                    <ArrowLeft size={24} />
+            <div className="flex items-center gap-2 mb-4">
+                <Link href="/budgets" className="p-1 text-gray-500 hover:text-gray-700">
+                    <ArrowLeft size={20} />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold dark:text-white">Importar Presupuestos</h1>
-                    <p className="text-sm text-gray-500">{companyName}</p>
+                    <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Importar Presupuestos</h1>
+                    <p className="text-xs text-gray-500">{companyName}</p>
                 </div>
             </div>
 
             {/* Year Selection */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-4">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Año del Presupuesto
                 </label>
                 <select
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(Number(e.target.value))}
-                    className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="w-full sm:w-auto px-2 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                     {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map(year => (
                         <option key={year} value={year}>{year}</option>
@@ -137,18 +137,18 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
             {/* Upload Zone - Only show when no file parsed */}
             {!parsedData && !loading && (
                 <div
-                    className={`bg-white dark:bg-gray-800 rounded-lg shadow p-8 mb-6 text-center border-2 border-dashed transition-colors ${dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600'
+                    className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-4 text-center border-2 border-dashed transition-colors ${dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600'
                         }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
                 >
-                    <FileSpreadsheet size={48} className="mx-auto mb-4 text-gray-400" />
-                    <p className="text-lg font-medium mb-2 dark:text-white">
+                    <FileSpreadsheet size={40} className="mx-auto mb-3 text-gray-400" />
+                    <p className="text-base font-medium mb-1 dark:text-white">
                         Arrastra un archivo Excel aquí
                     </p>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p className="text-sm text-gray-500 mb-3">
                         o selecciona el archivo
                     </p>
                     <input
@@ -160,9 +160,9 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
                     />
                     <label
                         htmlFor="file-input"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 cursor-pointer"
                     >
-                        <Upload size={18} />
+                        <Upload size={16} />
                         Seleccionar Archivo
                     </label>
                 </div>
@@ -205,27 +205,27 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
                             </button>
                         </div>
                     ) : (
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
-                            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                                <h3 className="font-medium dark:text-white">Vista Previa</h3>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-4">
+                            <div className="px-3 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                                <h3 className="font-medium text-sm dark:text-white">Vista Previa</h3>
                             </div>
-                            <div className="p-4">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                        <p className="text-2xl font-bold text-blue-600">{areas.length}</p>
-                                        <p className="text-sm text-gray-500">Áreas</p>
+                            <div className="p-3 md:p-4">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4">
+                                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                        <p className="text-xl font-bold text-blue-600">{areas.length}</p>
+                                        <p className="text-xs text-gray-500">Áreas</p>
                                     </div>
-                                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                        <p className="text-2xl font-bold text-green-600">{totalEntries}</p>
-                                        <p className="text-sm text-gray-500">Conceptos</p>
+                                    <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                        <p className="text-xl font-bold text-green-600">{totalEntries}</p>
+                                        <p className="text-xs text-gray-500">Conceptos</p>
                                     </div>
-                                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                        <p className="text-2xl font-bold text-purple-600">{selectedYear}</p>
-                                        <p className="text-sm text-gray-500">Año</p>
+                                    <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                        <p className="text-xl font-bold text-purple-600">{selectedYear}</p>
+                                        <p className="text-xs text-gray-500">Año</p>
                                     </div>
-                                    <div className="text-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                                        <p className="text-2xl font-bold text-amber-600">12</p>
-                                        <p className="text-sm text-gray-500">Meses</p>
+                                    <div className="text-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                                        <p className="text-xl font-bold text-amber-600">12</p>
+                                        <p className="text-xs text-gray-500">Meses</p>
                                     </div>
                                 </div>
 
@@ -243,13 +243,17 @@ export function BudgetImportClient({ companyId: defaultCompanyId, companyName: d
 
                                 {/* Data Table */}
                                 <div className="flex justify-between items-center mb-2">
-                                    <h4 className="font-medium dark:text-white">Datos:</h4>
+                                    <h4 className="font-medium text-sm dark:text-white">Datos:</h4>
                                     <button
                                         onClick={() => setShowAll(!showAll)}
-                                        className="text-sm text-blue-600 hover:underline"
+                                        className="text-xs text-blue-600 hover:underline"
                                     >
-                                        {showAll ? 'Ver muestra' : `Ver todo (${totalEntries} filas)`}
+                                        {showAll ? 'Ver muestra' : `Ver todo (${totalEntries})`}
                                     </button>
+                                </div>
+                                {/* Mobile scroll hint */}
+                                <div className="md:hidden px-2 py-1 mb-2 bg-amber-50 dark:bg-amber-900/20 text-xs text-amber-700 dark:text-amber-300 rounded">
+                                    ⟷ Desliza horizontalmente para ver todos los meses
                                 </div>
                                 <div className={`overflow-x-auto ${showAll ? 'max-h-96 overflow-y-auto' : ''}`}>
                                     <table className="w-full text-sm">
