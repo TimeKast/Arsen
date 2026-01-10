@@ -2,14 +2,18 @@
 
 import { useState, useTransition } from 'react';
 import { useSession } from 'next-auth/react';
-import { Plus, Pencil, Power, TrendingUp, TrendingDown, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Power, TrendingUp, TrendingDown, Trash2, Merge, AlertTriangle } from 'lucide-react';
 import { ConceptForm } from '@/components/forms/concept-form';
 import {
     createConcept,
     updateConcept,
     toggleConceptActive,
     deleteConcept,
+    checkConceptNameExists,
+    getConceptStats,
+    mergeConcepts,
     type ConceptFormData,
+    type ConceptStats,
 } from '@/actions/concepts';
 
 interface Area {
@@ -41,6 +45,14 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
     const [editingConcept, setEditingConcept] = useState<Concept | null>(null);
     const [isPending, startTransition] = useTransition();
 
+    // Merge modal state
+    const [showMergeModal, setShowMergeModal] = useState(false);
+    const [mergeSource, setMergeSource] = useState<Concept | null>(null);
+    const [mergeTargetId, setMergeTargetId] = useState<string | null>(null);
+    const [mergeTargetName, setMergeTargetName] = useState<string>('');
+    const [mergeStats, setMergeStats] = useState<ConceptStats | null>(null);
+    const [pendingFormData, setPendingFormData] = useState<ConceptFormData | null>(null);
+
     const filteredConcepts = concepts.filter((c) =>
         typeFilter === 'ALL' || c.type === typeFilter
     );
@@ -52,10 +64,56 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
 
     const handleUpdate = async (data: ConceptFormData) => {
         if (!editingConcept) return;
+
+        // Always check if name exists in another concept (to detect pre-existing duplicates)
+        const duplicate = await checkConceptNameExists(data.name, editingConcept.id);
+        if (duplicate.exists && duplicate.existingId) {
+            // Show merge modal
+            const stats = await getConceptStats(editingConcept.id);
+            setMergeSource(editingConcept);
+            setMergeTargetId(duplicate.existingId);
+            setMergeTargetName(data.name.trim());
+            setMergeStats(stats);
+            setPendingFormData(data);
+            setShowForm(false);
+            setShowMergeModal(true);
+            return;
+        }
+
         const concept = await updateConcept(editingConcept.id, data);
         setConcepts((prev) =>
             prev.map((c) => (c.id === editingConcept.id ? { ...concept, area: c.area } as Concept : c))
         );
+    };
+
+    const handleMerge = async () => {
+        if (!mergeSource || !mergeTargetId) return;
+
+        startTransition(async () => {
+            const result = await mergeConcepts(mergeSource.id, mergeTargetId);
+            if (result.success) {
+                // Remove merged concept from list
+                setConcepts((prev) => prev.filter((c) => c.id !== mergeSource.id));
+                setShowMergeModal(false);
+                setMergeSource(null);
+                setMergeTargetId(null);
+                setMergeStats(null);
+                setPendingFormData(null);
+                alert(`Fusión completada! Movidos: ${result.budgetsMoved} presupuestos, ${result.resultsMoved} resultados, ${result.mappingsMoved} mappings, ${result.reconciliationsMoved} conciliaciones.`);
+            } else {
+                alert(result.error || 'Error al fusionar');
+            }
+        });
+    };
+
+    const cancelMerge = () => {
+        setShowMergeModal(false);
+        setMergeSource(null);
+        setMergeTargetId(null);
+        setMergeStats(null);
+        setPendingFormData(null);
+        // Re-open form to let user choose different name
+        setShowForm(true);
     };
 
     const handleToggleActive = (id: string) => {
@@ -213,6 +271,54 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                         setEditingConcept(null);
                     }}
                 />
+            )}
+
+            {/* Merge Confirmation Modal */}
+            {showMergeModal && mergeSource && mergeStats && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+                        <div className="flex items-center gap-3 mb-4 text-amber-600">
+                            <AlertTriangle size={24} />
+                            <h3 className="text-lg font-semibold dark:text-white">Fusionar Conceptos</h3>
+                        </div>
+
+                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                            Ya existe un concepto llamado <strong>&quot;{mergeTargetName}&quot;</strong>.
+                            ¿Desea fusionar <strong>&quot;{mergeSource.name}&quot;</strong> con el existente?
+                        </p>
+
+                        <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Se moverán:</p>
+                            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                <li>• {mergeStats.budgetsCount} presupuestos</li>
+                                <li>• {mergeStats.resultsCount} resultados</li>
+                                <li>• {mergeStats.mappingsCount} mappings de importación</li>
+                                <li>• {mergeStats.reconciliationsCount} conciliaciones</li>
+                            </ul>
+                        </div>
+
+                        <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+                            El concepto &quot;{mergeSource.name}&quot; será eliminado después de la fusión.
+                        </p>
+
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={cancelMerge}
+                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-700"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleMerge}
+                                disabled={isPending}
+                                className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                            >
+                                <Merge size={16} />
+                                {isPending ? 'Fusionando...' : 'Fusionar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

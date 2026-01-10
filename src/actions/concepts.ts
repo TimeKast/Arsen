@@ -136,3 +136,145 @@ export async function deleteConcept(id: string): Promise<{ success: boolean; err
     return { success: true };
 }
 
+// Check if a concept with the given name already exists (excluding the current concept)
+export async function checkConceptNameExists(name: string, excludeId?: string): Promise<{ exists: boolean; existingId?: string; existingType?: string }> {
+    const session = await auth();
+    if (!session?.user) {
+        throw new Error('No autenticado');
+    }
+
+    const existing = await db.query.concepts.findFirst({
+        where: eq(concepts.name, name.trim()),
+    });
+
+    if (!existing || existing.id === excludeId) {
+        return { exists: false };
+    }
+
+    return { exists: true, existingId: existing.id, existingType: existing.type };
+}
+
+// Get stats for a concept (count of related records)
+export interface ConceptStats {
+    budgetsCount: number;
+    resultsCount: number;
+    mappingsCount: number;
+    reconciliationsCount: number;
+}
+
+export async function getConceptStats(id: string): Promise<ConceptStats> {
+    const session = await auth();
+    if (!session?.user) {
+        throw new Error('No autenticado');
+    }
+
+    // Import reconciliations for the count
+    const { reconciliations } = await import('@/lib/db');
+
+    const [budgetsList, resultsList, mappingsList, reconciliationsList] = await Promise.all([
+        db.query.budgets.findMany({ where: eq(budgets.conceptId, id) }),
+        db.query.results.findMany({ where: eq(results.conceptId, id) }),
+        db.query.conceptMappings.findMany({ where: eq(conceptMappings.conceptId, id) }),
+        db.query.reconciliations.findMany({ where: eq(reconciliations.conceptId, id) }),
+    ]);
+
+    return {
+        budgetsCount: budgetsList.length,
+        resultsCount: resultsList.length,
+        mappingsCount: mappingsList.length,
+        reconciliationsCount: reconciliationsList.length,
+    };
+}
+
+// Merge two concepts: move all references from source to target, then delete source
+export interface MergeResult {
+    success: boolean;
+    error?: string;
+    budgetsMoved?: number;
+    resultsMoved?: number;
+    mappingsMoved?: number;
+    reconciliationsMoved?: number;
+}
+
+export async function mergeConcepts(sourceId: string, targetId: string): Promise<MergeResult> {
+    const session = await auth();
+    if (!session?.user || !['ADMIN', 'STAFF'].includes(session.user.role)) {
+        return { success: false, error: 'No autorizado' };
+    }
+
+    // Validate both concepts exist
+    const [source, target] = await Promise.all([
+        db.query.concepts.findFirst({ where: eq(concepts.id, sourceId) }),
+        db.query.concepts.findFirst({ where: eq(concepts.id, targetId) }),
+    ]);
+
+    if (!source) {
+        return { success: false, error: 'Concepto origen no encontrado' };
+    }
+    if (!target) {
+        return { success: false, error: 'Concepto destino no encontrado' };
+    }
+
+    // Validate same type
+    if (source.type !== target.type) {
+        return { success: false, error: `No se pueden fusionar: tipos diferentes (${source.type} vs ${target.type})` };
+    }
+
+    // Import reconciliations
+    const { reconciliations } = await import('@/lib/db');
+
+    console.log(`[MERGE] Starting merge: ${source.name} (${sourceId}) -> ${target.name} (${targetId})`);
+
+    try {
+        // Update all references in a transaction-like manner
+        // Note: Drizzle doesn't have native transactions with Neon serverless, so we do sequential updates
+
+        // 1. Update budgets
+        const budgetsUpdated = await db.update(budgets)
+            .set({ conceptId: targetId })
+            .where(eq(budgets.conceptId, sourceId))
+            .returning();
+        console.log(`[MERGE] Moved ${budgetsUpdated.length} budgets`);
+
+        // 2. Update results
+        const resultsUpdated = await db.update(results)
+            .set({ conceptId: targetId })
+            .where(eq(results.conceptId, sourceId))
+            .returning();
+        console.log(`[MERGE] Moved ${resultsUpdated.length} results`);
+
+        // 3. Update concept mappings
+        const mappingsUpdated = await db.update(conceptMappings)
+            .set({ conceptId: targetId })
+            .where(eq(conceptMappings.conceptId, sourceId))
+            .returning();
+        console.log(`[MERGE] Moved ${mappingsUpdated.length} mappings`);
+
+        // 4. Update reconciliations
+        const reconciliationsUpdated = await db.update(reconciliations)
+            .set({ conceptId: targetId })
+            .where(eq(reconciliations.conceptId, sourceId))
+            .returning();
+        console.log(`[MERGE] Moved ${reconciliationsUpdated.length} reconciliations`);
+
+        // 5. Delete source concept
+        await db.delete(concepts).where(eq(concepts.id, sourceId));
+        console.log(`[MERGE] Deleted source concept: ${source.name}`);
+
+        revalidatePath('/catalogs/concepts');
+        revalidatePath('/budgets');
+        revalidatePath('/results');
+        revalidatePath('/comparison');
+
+        return {
+            success: true,
+            budgetsMoved: budgetsUpdated.length,
+            resultsMoved: resultsUpdated.length,
+            mappingsMoved: mappingsUpdated.length,
+            reconciliationsMoved: reconciliationsUpdated.length,
+        };
+    } catch (error) {
+        console.error('[MERGE] Error:', error);
+        return { success: false, error: 'Error al fusionar conceptos. Revisa los logs.' };
+    }
+}
