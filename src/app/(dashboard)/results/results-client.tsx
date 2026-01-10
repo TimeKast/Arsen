@@ -181,92 +181,138 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                         </div>
                     </div>
 
-                    {/* Projects Table */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                        <div className="px-3 md:px-4 py-2 md:py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                            <h3 className="text-sm md:text-base font-medium dark:text-white">Resultados por Proyecto</h3>
+                    {/* Projects - Mobile Cards View */}
+                    <div className="md:hidden space-y-2">
+                        <div className="text-xs text-gray-500 font-medium mb-2">Resultados por Proyecto</div>
+                        {projectResults.map((project) => {
+                            const isExpanded = expandedProjects.has(project.projectId || 'admin');
+                            return (
+                                <div key={project.projectId || project.projectName} className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                                    <div
+                                        onClick={() => toggleProject(project.projectId || 'admin')}
+                                        className="p-3 cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                <span className="font-medium dark:text-white truncate">{project.projectName}</span>
+                                            </div>
+                                            <span className={`text-sm font-bold ${project.netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                ${project.netResult.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between mt-1 text-xs">
+                                            <span className="text-green-600">+${project.totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                            <span className="text-red-600">-${project.totalCost.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                        </div>
+                                    </div>
+                                    {isExpanded && (
+                                        <div className="border-t dark:border-gray-700 px-3 py-2 space-y-1 bg-gray-50 dark:bg-gray-900">
+                                            {project.concepts.map((concept, idx) => (
+                                                <div key={`${project.projectId}-${concept.conceptId}-${idx}`} className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-1 min-w-0">
+                                                        <span className={`px-1 py-0.5 rounded text-xs ${concept.source === 'O' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'}`}>
+                                                            {concept.source || 'M'}
+                                                        </span>
+                                                        <span className={`px-1 py-0.5 rounded ${concept.conceptType === 'INCOME' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                            {concept.conceptType === 'INCOME' ? 'I' : 'C'}
+                                                        </span>
+                                                        <span className="truncate text-gray-600 dark:text-gray-400">{concept.conceptName}</span>
+                                                    </div>
+                                                    <span className={concept.conceptType === 'INCOME' ? 'text-green-600' : 'text-red-600'}>
+                                                        ${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Projects - Desktop Table View */}
+                    <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                            <h3 className="font-medium dark:text-white">Resultados por Proyecto</h3>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm min-w-[500px]">
-                                <thead className="bg-gray-50 dark:bg-gray-700">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                            Proyecto
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                            Ingresos
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                            Costos
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                            Utilidad
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {projectResults.map((project) => {
-                                        const isExpanded = expandedProjects.has(project.projectId || 'admin');
-                                        return (
-                                            <React.Fragment key={project.projectId || project.projectName}>
-                                                <tr
-                                                    onClick={() => toggleProject(project.projectId || 'admin')}
-                                                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                                                >
-                                                    <td className="px-4 py-3 dark:text-white">
-                                                        <div className="flex items-center gap-2">
-                                                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                                            {project.projectName}
-                                                        </div>
+                        <table className="w-full text-sm">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Proyecto
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Ingresos
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Costos
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Utilidad
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {projectResults.map((project) => {
+                                    const isExpanded = expandedProjects.has(project.projectId || 'admin');
+                                    return (
+                                        <React.Fragment key={project.projectId || project.projectName}>
+                                            <tr
+                                                onClick={() => toggleProject(project.projectId || 'admin')}
+                                                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                                            >
+                                                <td className="px-4 py-3 dark:text-white">
+                                                    <div className="flex items-center gap-2">
+                                                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                        {project.projectName}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-green-600">
+                                                    ${project.totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-red-600">
+                                                    ${project.totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                </td>
+                                                <td className={`px-4 py-3 text-right font-medium ${project.netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    ${project.netResult.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                </td>
+                                            </tr>
+                                            {isExpanded && project.concepts.map((concept, idx) => (
+                                                <tr key={`${project.projectId}-${concept.conceptId}-${idx}`} className="bg-gray-50 dark:bg-gray-900">
+                                                    <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
+                                                        <span className={`inline-flex px-1 py-0.5 rounded text-xs mr-1 ${concept.source === 'O'
+                                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                                            }`}>
+                                                            {concept.source || 'M'}
+                                                        </span>
+                                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.source === 'O'
+                                                            ? (concept.conceptType === 'INCOME'
+                                                                ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                                                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200')
+                                                            : (concept.conceptType === 'INCOME'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-red-100 text-red-800')
+                                                            }`}>
+                                                            {concept.conceptType === 'INCOME' ? 'I' : 'C'}
+                                                        </span>
+                                                        {concept.conceptName}
                                                     </td>
-                                                    <td className="px-4 py-3 text-right text-green-600">
-                                                        ${project.totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                    <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">
+                                                        {concept.conceptType === 'INCOME' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
                                                     </td>
-                                                    <td className="px-4 py-3 text-right text-red-600">
-                                                        ${project.totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                    <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">
+                                                        {concept.conceptType === 'COST' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
                                                     </td>
-                                                    <td className={`px-4 py-3 text-right font-medium ${project.netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                        ${project.netResult.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                    </td>
+                                                    <td></td>
                                                 </tr>
-                                                {isExpanded && project.concepts.map((concept) => (
-                                                    <tr key={`${project.projectId}-${concept.conceptId}`} className="bg-gray-50 dark:bg-gray-900">
-                                                        <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
-                                                            {/* Source badge - O for Otros, M for Monthly */}
-                                                            <span className={`inline-flex px-1 py-0.5 rounded text-xs mr-1 ${concept.source === 'O'
-                                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                                                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                                                                }`}>
-                                                                {concept.source || 'M'}
-                                                            </span>
-                                                            {/* Type badge - I for Income, C for Cost */}
-                                                            <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.source === 'O'
-                                                                ? (concept.conceptType === 'INCOME'
-                                                                    ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
-                                                                    : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200')
-                                                                : (concept.conceptType === 'INCOME'
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : 'bg-red-100 text-red-800')
-                                                                }`}>
-                                                                {concept.conceptType === 'INCOME' ? 'I' : 'C'}
-                                                            </span>
-                                                            {concept.conceptName}
-                                                        </td>
-                                                        <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">
-                                                            {concept.conceptType === 'INCOME' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
-                                                        </td>
-                                                        <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">
-                                                            {concept.conceptType === 'COST' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
-                                                        </td>
-                                                        <td></td>
-                                                    </tr>
-                                                ))}
-                                            </React.Fragment>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                            ))}
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
 
                     {/* Admin Section */}
