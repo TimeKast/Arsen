@@ -226,8 +226,11 @@ export function BudgetsClient({ companies, areas, projects, initialYear, userRol
                                     {isExpanded && (
                                         <div className="border-t dark:border-gray-700 px-3 py-2 space-y-1 bg-gray-50 dark:bg-gray-900">
                                             {project.concepts.map((concept) => (
-                                                <div key={`${project.projectId}-${concept.conceptId}`} className="flex items-center justify-between text-xs">
+                                                <div key={`${project.projectId}-${concept.conceptId}-${concept.isOtros ? 'O' : 'M'}`} className="flex items-center justify-between text-xs">
                                                     <div className="flex items-center gap-1 min-w-0">
+                                                        <span className={`px-1 py-0.5 rounded text-xs ${concept.isOtros ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'}`}>
+                                                            {concept.isOtros ? 'O' : 'M'}
+                                                        </span>
                                                         <span className={`px-1 py-0.5 rounded ${concept.conceptType === 'INCOME' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                                             {concept.conceptType === 'INCOME' ? 'I' : 'C'}
                                                         </span>
@@ -294,11 +297,21 @@ export function BudgetsClient({ companies, areas, projects, initialYear, userRol
                                                 </td>
                                             </tr>
                                             {isExpanded && project.concepts.map((concept) => (
-                                                <tr key={`${project.projectId}-${concept.conceptId}`} className="bg-gray-50 dark:bg-gray-900">
+                                                <tr key={`${project.projectId}-${concept.conceptId}-${concept.isOtros ? 'O' : 'M'}`} className="bg-gray-50 dark:bg-gray-900">
                                                     <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
-                                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.conceptType === 'INCOME'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-red-100 text-red-800'
+                                                        <span className={`inline-flex px-1 py-0.5 rounded text-xs mr-1 ${concept.isOtros
+                                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                                            }`}>
+                                                            {concept.isOtros ? 'O' : 'M'}
+                                                        </span>
+                                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.isOtros
+                                                            ? (concept.conceptType === 'INCOME'
+                                                                ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                                                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200')
+                                                            : (concept.conceptType === 'INCOME'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-red-100 text-red-800')
                                                             }`}>
                                                             {concept.conceptType === 'INCOME' ? 'I' : 'C'}
                                                         </span>
