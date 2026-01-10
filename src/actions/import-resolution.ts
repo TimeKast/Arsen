@@ -161,23 +161,40 @@ export async function saveResolutions(data: z.infer<typeof resolutionSchema>) {
                     name: newProject.name,
                 });
             } else if (resolution.type === 'CONCEPT' && resolution.conceptType) {
-                // Create new concept
-                const [newConcept] = await db.insert(concepts).values({
-                    name: resolution.newName,
-                    type: resolution.conceptType,
-                }).returning();
+                // Check if concept with this name already exists (case-insensitive)
+                const allConcepts = await db.query.concepts.findMany();
+                let existingConcept = allConcepts.find(c =>
+                    c.name.toLowerCase() === resolution.newName!.toLowerCase() &&
+                    c.type === resolution.conceptType
+                );
+
+                let conceptId: string;
+
+                if (existingConcept) {
+                    // Use existing concept instead of creating duplicate
+                    console.log(`Concept "${resolution.newName}" already exists, reusing ID: ${existingConcept.id}`);
+                    conceptId = existingConcept.id;
+                } else {
+                    // Create new concept only if it doesn't exist
+                    const [newConcept] = await db.insert(concepts).values({
+                        name: resolution.newName,
+                        type: resolution.conceptType,
+                    }).returning();
+                    conceptId = newConcept.id;
+                    console.log(`Created new concept "${resolution.newName}" with ID: ${conceptId}`);
+
+                    createdEntities.push({
+                        type: 'CONCEPT',
+                        id: newConcept.id,
+                        name: newConcept.name,
+                    });
+                }
 
                 // Save mapping
                 await db.insert(conceptMappings).values({
                     companyId: validated.companyId,
                     externalName: resolution.originalName,
-                    conceptId: newConcept.id,
-                });
-
-                createdEntities.push({
-                    type: 'CONCEPT',
-                    id: newConcept.id,
-                    name: newConcept.name,
+                    conceptId: conceptId,
                 });
             }
         }

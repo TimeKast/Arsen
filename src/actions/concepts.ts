@@ -137,21 +137,37 @@ export async function deleteConcept(id: string): Promise<{ success: boolean; err
 }
 
 // Check if a concept with the given name already exists (excluding the current concept)
-export async function checkConceptNameExists(name: string, excludeId?: string): Promise<{ exists: boolean; existingId?: string; existingType?: string }> {
+// If sourceType is provided, prioritize finding concepts of the same type
+export async function checkConceptNameExists(
+    name: string,
+    excludeId?: string,
+    sourceType?: 'INCOME' | 'COST'
+): Promise<{ exists: boolean; existingId?: string; existingType?: string }> {
     const session = await auth();
     if (!session?.user) {
         throw new Error('No autenticado');
     }
 
-    const existing = await db.query.concepts.findFirst({
-        where: eq(concepts.name, name.trim()),
-    });
+    // Find all concepts with the given name (case-insensitive)
+    const allConcepts = await db.query.concepts.findMany();
+    const matchingConcepts = allConcepts.filter(c =>
+        c.name.toLowerCase().trim() === name.toLowerCase().trim() && c.id !== excludeId
+    );
 
-    if (!existing || existing.id === excludeId) {
+    if (matchingConcepts.length === 0) {
         return { exists: false };
     }
 
-    return { exists: true, existingId: existing.id, existingType: existing.type };
+    // If sourceType is provided, prioritize concepts of the same type
+    if (sourceType) {
+        const sameTypeConcept = matchingConcepts.find(c => c.type === sourceType);
+        if (sameTypeConcept) {
+            return { exists: true, existingId: sameTypeConcept.id, existingType: sameTypeConcept.type };
+        }
+    }
+
+    // Return the first matching concept
+    return { exists: true, existingId: matchingConcepts[0].id, existingType: matchingConcepts[0].type };
 }
 
 // Get stats for a concept (count of related records)

@@ -69,7 +69,8 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
         if (!editingConcept) return;
 
         // Always check if name exists in another concept (to detect pre-existing duplicates)
-        const duplicate = await checkConceptNameExists(data.name, editingConcept.id);
+        // Pass the source type to prioritize finding concepts of the same type
+        const duplicate = await checkConceptNameExists(data.name, editingConcept.id, editingConcept.type);
         if (duplicate.exists && duplicate.existingId) {
             // Show merge modal
             const stats = await getConceptStats(editingConcept.id);
