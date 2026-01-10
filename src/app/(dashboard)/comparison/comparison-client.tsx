@@ -177,159 +177,311 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                         </div>
                     </div>
 
-                    {/* Income Table */}
+                    {/* Income Section */}
                     {data.incomeRows.length > 0 && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                            <div className="px-4 py-3 bg-green-50 dark:bg-green-900/30 border-b dark:border-gray-600">
-                                <h3 className="font-medium text-green-800 dark:text-green-200">Ingresos</h3>
+                            <div className="px-3 md:px-4 py-2 md:py-3 bg-green-50 dark:bg-green-900/30 border-b dark:border-gray-600">
+                                <h3 className="text-sm md:text-base font-medium text-green-800 dark:text-green-200">Ingresos</h3>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-gray-50 dark:bg-gray-700">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Concepto</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Presupuesto</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Real</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Diferencia</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                        {data.incomeRows.map((row) => (
-                                            <tr key={row.conceptId}>
-                                                <td className="px-4 py-2 dark:text-white">{row.conceptName}</td>
-                                                <td className="px-4 py-2 text-right">{formatCurrency(row.budget)}</td>
-                                                <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
-                                                <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
-                                                    <span className="flex items-center justify-end gap-1">
-                                                        {getDeviationIcon(row)}
-                                                        {formatCurrency(Math.abs(row.difference))}
-                                                    </span>
-                                                </td>
-                                                <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
-                                                    {formatPercent(row.percentDeviation)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                    <tfoot className="bg-gray-50 dark:bg-gray-700 font-medium">
-                                        <tr>
-                                            <td className="px-4 py-3 dark:text-white">Total Ingresos</td>
-                                            <td className="px-4 py-3 text-right">{formatCurrency(data.totals.budgetIncome)}</td>
-                                            <td className="px-4 py-3 text-right">{formatCurrency(data.totals.actualIncome)}</td>
-                                            <td className={`px-4 py-3 text-right ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
-                                                {formatCurrency(data.totals.actualIncome - data.totals.budgetIncome)}
-                                            </td>
-                                            <td className={`px-4 py-3 text-right ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
-                                                {data.totals.budgetIncome !== 0
-                                                    ? formatPercent(((data.totals.actualIncome - data.totals.budgetIncome) / data.totals.budgetIncome) * 100)
-                                                    : '-'}
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+
+                            {/* Mobile Cards */}
+                            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+                                {data.incomeRows.map((row) => (
+                                    <div key={row.conceptId} className="p-3">
+                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                            <span className="font-medium dark:text-white text-sm truncate">{row.conceptName}</span>
+                                            <span className={`flex items-center gap-1 text-xs font-medium ${getDeviationColor(row)}`}>
+                                                {getDeviationIcon(row)}
+                                                {formatPercent(row.percentDeviation)}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-1 text-xs">
+                                            <div>
+                                                <p className="text-gray-400">Presup.</p>
+                                                <p className="font-medium">${(row.budget / 1000).toFixed(0)}k</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">Real</p>
+                                                <p className="font-medium">${(row.actual / 1000).toFixed(0)}k</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">Dif.</p>
+                                                <p className={`font-medium ${getDeviationColor(row)}`}>
+                                                    {row.difference >= 0 ? '+' : '-'}${(Math.abs(row.difference) / 1000).toFixed(0)}k
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {/* Mobile Total */}
+                                <div className="p-3 bg-gray-50 dark:bg-gray-700">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                        <span className="font-bold dark:text-white text-sm">Total Ingresos</span>
+                                        <span className={`text-xs font-bold ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
+                                            {data.totals.budgetIncome !== 0
+                                                ? formatPercent(((data.totals.actualIncome - data.totals.budgetIncome) / data.totals.budgetIncome) * 100)
+                                                : '-'}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-1 text-xs">
+                                        <div>
+                                            <p className="text-gray-400">Presup.</p>
+                                            <p className="font-bold">${(data.totals.budgetIncome / 1000).toFixed(0)}k</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400">Real</p>
+                                            <p className="font-bold">${(data.totals.actualIncome / 1000).toFixed(0)}k</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400">Dif.</p>
+                                            <p className={`font-bold ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
+                                                ${((data.totals.actualIncome - data.totals.budgetIncome) / 1000).toFixed(0)}k
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* Desktop Table */}
+                            <table className="hidden md:table w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Concepto</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Presupuesto</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Real</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Diferencia</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {data.incomeRows.map((row) => (
+                                        <tr key={row.conceptId}>
+                                            <td className="px-4 py-2 dark:text-white">{row.conceptName}</td>
+                                            <td className="px-4 py-2 text-right">{formatCurrency(row.budget)}</td>
+                                            <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
+                                            <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
+                                                <span className="flex items-center justify-end gap-1">
+                                                    {getDeviationIcon(row)}
+                                                    {formatCurrency(Math.abs(row.difference))}
+                                                </span>
+                                            </td>
+                                            <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
+                                                {formatPercent(row.percentDeviation)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="bg-gray-50 dark:bg-gray-700 font-medium">
+                                    <tr>
+                                        <td className="px-4 py-3 dark:text-white">Total Ingresos</td>
+                                        <td className="px-4 py-3 text-right">{formatCurrency(data.totals.budgetIncome)}</td>
+                                        <td className="px-4 py-3 text-right">{formatCurrency(data.totals.actualIncome)}</td>
+                                        <td className={`px-4 py-3 text-right ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
+                                            {formatCurrency(data.totals.actualIncome - data.totals.budgetIncome)}
+                                        </td>
+                                        <td className={`px-4 py-3 text-right ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
+                                            {data.totals.budgetIncome !== 0
+                                                ? formatPercent(((data.totals.actualIncome - data.totals.budgetIncome) / data.totals.budgetIncome) * 100)
+                                                : '-'}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     )}
 
-                    {/* Cost Table */}
+                    {/* Cost Section */}
                     {data.costRows.length > 0 && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                            <div className="px-4 py-3 bg-red-50 dark:bg-red-900/30 border-b dark:border-gray-600">
-                                <h3 className="font-medium text-red-800 dark:text-red-200">Costos</h3>
+                            <div className="px-3 md:px-4 py-2 md:py-3 bg-red-50 dark:bg-red-900/30 border-b dark:border-gray-600">
+                                <h3 className="text-sm md:text-base font-medium text-red-800 dark:text-red-200">Costos</h3>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-gray-50 dark:bg-gray-700">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Concepto</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Presupuesto</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Real</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Diferencia</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                        {data.costRows.map((row) => (
-                                            <tr key={row.conceptId}>
-                                                <td className="px-4 py-2 dark:text-white">{row.conceptName}</td>
-                                                <td className="px-4 py-2 text-right">{formatCurrency(row.budget)}</td>
-                                                <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
-                                                <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
-                                                    <span className="flex items-center justify-end gap-1">
-                                                        {getDeviationIcon(row)}
-                                                        {formatCurrency(Math.abs(row.difference))}
-                                                    </span>
-                                                </td>
-                                                <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
-                                                    {formatPercent(row.percentDeviation)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                    <tfoot className="bg-gray-50 dark:bg-gray-700 font-medium">
-                                        <tr>
-                                            <td className="px-4 py-3 dark:text-white">Total Costos</td>
-                                            <td className="px-4 py-3 text-right">{formatCurrency(data.totals.budgetCost)}</td>
-                                            <td className="px-4 py-3 text-right">{formatCurrency(data.totals.actualCost)}</td>
-                                            <td className={`px-4 py-3 text-right ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
-                                                {formatCurrency(data.totals.budgetCost - data.totals.actualCost)}
-                                            </td>
-                                            <td className={`px-4 py-3 text-right ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
-                                                {data.totals.budgetCost !== 0
-                                                    ? formatPercent(((data.totals.budgetCost - data.totals.actualCost) / data.totals.budgetCost) * 100)
-                                                    : '-'}
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+
+                            {/* Mobile Cards */}
+                            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+                                {data.costRows.map((row) => (
+                                    <div key={row.conceptId} className="p-3">
+                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                            <span className="font-medium dark:text-white text-sm truncate">{row.conceptName}</span>
+                                            <span className={`flex items-center gap-1 text-xs font-medium ${getDeviationColor(row)}`}>
+                                                {getDeviationIcon(row)}
+                                                {formatPercent(row.percentDeviation)}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-1 text-xs">
+                                            <div>
+                                                <p className="text-gray-400">Presup.</p>
+                                                <p className="font-medium">${(row.budget / 1000).toFixed(0)}k</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">Real</p>
+                                                <p className="font-medium">${(row.actual / 1000).toFixed(0)}k</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">Dif.</p>
+                                                <p className={`font-medium ${getDeviationColor(row)}`}>
+                                                    {row.difference >= 0 ? '+' : '-'}${(Math.abs(row.difference) / 1000).toFixed(0)}k
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {/* Mobile Total */}
+                                <div className="p-3 bg-gray-50 dark:bg-gray-700">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                        <span className="font-bold dark:text-white text-sm">Total Costos</span>
+                                        <span className={`text-xs font-bold ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
+                                            {data.totals.budgetCost !== 0
+                                                ? formatPercent(((data.totals.budgetCost - data.totals.actualCost) / data.totals.budgetCost) * 100)
+                                                : '-'}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-1 text-xs">
+                                        <div>
+                                            <p className="text-gray-400">Presup.</p>
+                                            <p className="font-bold">${(data.totals.budgetCost / 1000).toFixed(0)}k</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400">Real</p>
+                                            <p className="font-bold">${(data.totals.actualCost / 1000).toFixed(0)}k</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400">Dif.</p>
+                                            <p className={`font-bold ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
+                                                ${((data.totals.budgetCost - data.totals.actualCost) / 1000).toFixed(0)}k
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* Desktop Table */}
+                            <table className="hidden md:table w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Concepto</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Presupuesto</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Real</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Diferencia</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {data.costRows.map((row) => (
+                                        <tr key={row.conceptId}>
+                                            <td className="px-4 py-2 dark:text-white">{row.conceptName}</td>
+                                            <td className="px-4 py-2 text-right">{formatCurrency(row.budget)}</td>
+                                            <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
+                                            <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
+                                                <span className="flex items-center justify-end gap-1">
+                                                    {getDeviationIcon(row)}
+                                                    {formatCurrency(Math.abs(row.difference))}
+                                                </span>
+                                            </td>
+                                            <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
+                                                {formatPercent(row.percentDeviation)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="bg-gray-50 dark:bg-gray-700 font-medium">
+                                    <tr>
+                                        <td className="px-4 py-3 dark:text-white">Total Costos</td>
+                                        <td className="px-4 py-3 text-right">{formatCurrency(data.totals.budgetCost)}</td>
+                                        <td className="px-4 py-3 text-right">{formatCurrency(data.totals.actualCost)}</td>
+                                        <td className={`px-4 py-3 text-right ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
+                                            {formatCurrency(data.totals.budgetCost - data.totals.actualCost)}
+                                        </td>
+                                        <td className={`px-4 py-3 text-right ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
+                                            {data.totals.budgetCost !== 0
+                                                ? formatPercent(((data.totals.budgetCost - data.totals.actualCost) / data.totals.budgetCost) * 100)
+                                                : '-'}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     )}
 
-                    {/* Otros Table */}
+                    {/* Otros Section */}
                     {data.otrosRows && data.otrosRows.length > 0 && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                            <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/30 border-b dark:border-gray-600">
-                                <h3 className="font-medium text-purple-800 dark:text-purple-200">Otros</h3>
+                            <div className="px-3 md:px-4 py-2 md:py-3 bg-purple-50 dark:bg-purple-900/30 border-b dark:border-gray-600">
+                                <h3 className="text-sm md:text-base font-medium text-purple-800 dark:text-purple-200">Otros</h3>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-gray-50 dark:bg-gray-700">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Concepto</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tipo</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Presupuesto</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Real</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Diferencia</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">%</th>
+
+                            {/* Mobile Cards */}
+                            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+                                {data.otrosRows.map((row, idx) => (
+                                    <div key={`${row.conceptId}-${idx}`} className="p-3">
+                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                            <div className="flex items-center gap-1 min-w-0">
+                                                <span className={`px-1 py-0.5 rounded text-xs ${row.conceptType === 'INCOME' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                    {row.conceptType === 'INCOME' ? 'I' : 'C'}
+                                                </span>
+                                                <span className="font-medium dark:text-white text-sm truncate">{row.conceptName}</span>
+                                            </div>
+                                            <span className={`flex items-center gap-1 text-xs font-medium ${getDeviationColor(row)}`}>
+                                                {getDeviationIcon(row)}
+                                                {formatPercent(row.percentDeviation)}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-1 text-xs">
+                                            <div>
+                                                <p className="text-gray-400">Presup.</p>
+                                                <p className="font-medium">${(row.budget / 1000).toFixed(0)}k</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">Real</p>
+                                                <p className="font-medium">${(row.actual / 1000).toFixed(0)}k</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">Dif.</p>
+                                                <p className={`font-medium ${getDeviationColor(row)}`}>
+                                                    {row.difference >= 0 ? '+' : '-'}${(Math.abs(row.difference) / 1000).toFixed(0)}k
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop Table */}
+                            <table className="hidden md:table w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Concepto</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tipo</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Presupuesto</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Real</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Diferencia</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {data.otrosRows.map((row, idx) => (
+                                        <tr key={`${row.conceptId}-${idx}`}>
+                                            <td className="px-4 py-2 dark:text-white">{row.conceptName}</td>
+                                            <td className="px-4 py-2">
+                                                <span className={`px-2 py-0.5 rounded text-xs ${row.conceptType === 'INCOME' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                                                    {row.conceptType === 'INCOME' ? 'I' : 'C'}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2 text-right">{formatCurrency(row.budget)}</td>
+                                            <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
+                                            <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
+                                                <span className="flex items-center justify-end gap-1">
+                                                    {getDeviationIcon(row)}
+                                                    {formatCurrency(Math.abs(row.difference))}
+                                                </span>
+                                            </td>
+                                            <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
+                                                {formatPercent(row.percentDeviation)}
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                        {data.otrosRows.map((row, idx) => (
-                                            <tr key={`${row.conceptId}-${idx}`}>
-                                                <td className="px-4 py-2 dark:text-white">{row.conceptName}</td>
-                                                <td className="px-4 py-2">
-                                                    <span className={`px-2 py-0.5 rounded text-xs ${row.conceptType === 'INCOME' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                                                        {row.conceptType === 'INCOME' ? 'I' : 'C'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-2 text-right">{formatCurrency(row.budget)}</td>
-                                                <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
-                                                <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
-                                                    <span className="flex items-center justify-end gap-1">
-                                                        {getDeviationIcon(row)}
-                                                        {formatCurrency(Math.abs(row.difference))}
-                                                    </span>
-                                                </td>
-                                                <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
-                                                    {formatPercent(row.percentDeviation)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>
