@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useSession } from 'next-auth/react';
-import { Plus, Pencil, Power, TrendingUp, TrendingDown, Trash2, Merge, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Power, TrendingUp, TrendingDown, Trash2, Merge, AlertTriangle, Sparkles } from 'lucide-react';
 import { ConceptForm } from '@/components/forms/concept-form';
 import {
     createConcept,
@@ -12,8 +12,11 @@ import {
     checkConceptNameExists,
     getConceptStats,
     mergeConcepts,
+    findDuplicateConcepts,
+    autoMergeDuplicates,
     type ConceptFormData,
     type ConceptStats,
+    type AutoMergeResult,
 } from '@/actions/concepts';
 
 interface Area {
@@ -137,6 +140,20 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
         });
     };
 
+    const handleCleanDuplicates = () => {
+        if (!confirm('¿Fusionar automáticamente todos los conceptos duplicados? Se mantendrá el más antiguo y se moverán todos los registros.')) return;
+        startTransition(async () => {
+            const result = await autoMergeDuplicates();
+            if (result.success) {
+                // Refresh the page to show updated list
+                window.location.reload();
+                alert(`Limpieza completada!\n- ${result.merged} conceptos fusionados\n- ${result.errors.length} errores\n\nDetalles:\n${result.details.map(d => `• ${d.name}: ${d.mergedCount} duplicados, ${d.budgetsMoved} presupuestos, ${d.resultsMoved} resultados`).join('\n')}`);
+            } else {
+                alert('Error: ' + result.errors.join(', '));
+            }
+        });
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
@@ -152,13 +169,24 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                         <option value="COST">Costos</option>
                     </select>
                     {canEdit && (
-                        <button
-                            onClick={() => setShowForm(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            <Plus size={20} />
-                            Nuevo Concepto
-                        </button>
+                        <>
+                            <button
+                                onClick={handleCleanDuplicates}
+                                disabled={isPending}
+                                className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                                title="Fusionar conceptos duplicados automáticamente"
+                            >
+                                <Sparkles size={20} />
+                                Limpiar Duplicados
+                            </button>
+                            <button
+                                onClick={() => setShowForm(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                <Plus size={20} />
+                                Nuevo Concepto
+                            </button>
+                        </>
                     )}
                 </div>
             </div>

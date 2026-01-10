@@ -278,3 +278,111 @@ export async function mergeConcepts(sourceId: string, targetId: string): Promise
         return { success: false, error: 'Error al fusionar conceptos. Revisa los logs.' };
     }
 }
+
+// Find all duplicate concepts (same name, different IDs)
+export interface DuplicateGroup {
+    name: string;
+    type: 'INCOME' | 'COST';
+    concepts: { id: string; name: string; createdAt: Date }[];
+}
+
+export async function findDuplicateConcepts(): Promise<DuplicateGroup[]> {
+    const session = await auth();
+    if (!session?.user) {
+        throw new Error('No autenticado');
+    }
+
+    const allConcepts = await db.query.concepts.findMany({
+        orderBy: (concepts, { asc }) => [asc(concepts.name), asc(concepts.createdAt)],
+    });
+
+    // Group by name (case-insensitive, trimmed)
+    const byName = new Map<string, typeof allConcepts>();
+    for (const concept of allConcepts) {
+        const key = concept.name.toLowerCase().trim();
+        if (!byName.has(key)) {
+            byName.set(key, []);
+        }
+        byName.get(key)!.push(concept);
+    }
+
+    // Filter to only groups with more than 1 concept
+    const duplicates: DuplicateGroup[] = [];
+    for (const [_, group] of byName) {
+        if (group.length > 1) {
+            duplicates.push({
+                name: group[0].name,
+                type: group[0].type,
+                concepts: group.map(c => ({ id: c.id, name: c.name, createdAt: c.createdAt })),
+            });
+        }
+    }
+
+    return duplicates;
+}
+
+// Auto-merge all duplicate concepts (keeps the oldest one as target)
+export interface AutoMergeResult {
+    success: boolean;
+    merged: number;
+    errors: string[];
+    details: { name: string; mergedCount: number; budgetsMoved: number; resultsMoved: number }[];
+}
+
+export async function autoMergeDuplicates(): Promise<AutoMergeResult> {
+    const session = await auth();
+    if (!session?.user || !['ADMIN', 'STAFF'].includes(session.user.role)) {
+        return { success: false, merged: 0, errors: ['No autorizado'], details: [] };
+    }
+
+    const duplicates = await findDuplicateConcepts();
+    console.log(`[AUTO-MERGE] Found ${duplicates.length} groups of duplicate concepts`);
+
+    const result: AutoMergeResult = {
+        success: true,
+        merged: 0,
+        errors: [],
+        details: [],
+    };
+
+    for (const group of duplicates) {
+        // Sort by createdAt, keep oldest as target
+        const sorted = [...group.concepts].sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+
+        const targetId = sorted[0].id;
+        const sourcesToMerge = sorted.slice(1);
+
+        console.log(`[AUTO-MERGE] Processing "${group.name}": keeping ${targetId}, merging ${sourcesToMerge.length} duplicates`);
+
+        let totalBudgets = 0;
+        let totalResults = 0;
+
+        for (const source of sourcesToMerge) {
+            const mergeResult = await mergeConcepts(source.id, targetId);
+            if (mergeResult.success) {
+                result.merged++;
+                totalBudgets += mergeResult.budgetsMoved || 0;
+                totalResults += mergeResult.resultsMoved || 0;
+            } else {
+                result.errors.push(`Error merging "${source.name}" (${source.id}): ${mergeResult.error}`);
+            }
+        }
+
+        result.details.push({
+            name: group.name,
+            mergedCount: sourcesToMerge.length,
+            budgetsMoved: totalBudgets,
+            resultsMoved: totalResults,
+        });
+    }
+
+    revalidatePath('/catalogs/concepts');
+    revalidatePath('/budgets');
+    revalidatePath('/results');
+    revalidatePath('/comparison');
+
+    console.log(`[AUTO-MERGE] Completed: ${result.merged} concepts merged, ${result.errors.length} errors`);
+    return result;
+}
