@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db, concepts, areas, results, budgets, conceptMappings } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
 import { z } from 'zod';
@@ -226,31 +226,77 @@ export async function mergeConcepts(sourceId: string, targetId: string): Promise
     console.log(`[MERGE] Starting merge: ${source.name} (${sourceId}) -> ${target.name} (${targetId})`);
 
     try {
-        // Update all references in a transaction-like manner
-        // Note: Drizzle doesn't have native transactions with Neon serverless, so we do sequential updates
+        // Import sql for raw queries
+        const { sql } = await import('drizzle-orm');
 
-        // 1. Update budgets
-        const budgetsUpdated = await db.update(budgets)
-            .set({ conceptId: targetId })
-            .where(eq(budgets.conceptId, sourceId))
-            .returning();
-        console.log(`[MERGE] Moved ${budgetsUpdated.length} budgets`);
+        // 1. Handle budgets - merge by summing amounts if there's a conflict
+        // First, get all budgets for the source concept
+        const sourceBudgets = await db.query.budgets.findMany({ where: eq(budgets.conceptId, sourceId) });
+        let budgetsMoved = 0;
 
-        // 2. Update results
-        const resultsUpdated = await db.update(results)
-            .set({ conceptId: targetId })
-            .where(eq(results.conceptId, sourceId))
-            .returning();
-        console.log(`[MERGE] Moved ${resultsUpdated.length} results`);
+        for (const sourceBudget of sourceBudgets) {
+            // Check if there's already a budget with the target conceptId for same area/project/year/month
+            const existingBudget = await db.query.budgets.findFirst({
+                where: and(
+                    eq(budgets.conceptId, targetId),
+                    eq(budgets.areaId, sourceBudget.areaId),
+                    eq(budgets.projectId, sourceBudget.projectId ?? ''),
+                    eq(budgets.year, sourceBudget.year),
+                    eq(budgets.month, sourceBudget.month),
+                    eq(budgets.companyId, sourceBudget.companyId)
+                ),
+            });
 
-        // 3. Update concept mappings
+            if (existingBudget) {
+                // Sum amounts and delete source
+                const newAmount = (parseFloat(existingBudget.amount) + parseFloat(sourceBudget.amount)).toFixed(2);
+                await db.update(budgets).set({ amount: newAmount }).where(eq(budgets.id, existingBudget.id));
+                await db.delete(budgets).where(eq(budgets.id, sourceBudget.id));
+                console.log(`[MERGE] Budget conflict resolved: summed amounts for ${source.name}`);
+            } else {
+                // No conflict, just update conceptId
+                await db.update(budgets).set({ conceptId: targetId }).where(eq(budgets.id, sourceBudget.id));
+            }
+            budgetsMoved++;
+        }
+        console.log(`[MERGE] Moved/merged ${budgetsMoved} budgets`);
+
+        // 2. Handle results - merge by summing amounts if there's a conflict
+        const sourceResults = await db.query.results.findMany({ where: eq(results.conceptId, sourceId) });
+        let resultsMoved = 0;
+
+        for (const sourceResult of sourceResults) {
+            const existingResult = await db.query.results.findFirst({
+                where: and(
+                    eq(results.conceptId, targetId),
+                    eq(results.projectId, sourceResult.projectId ?? ''),
+                    eq(results.year, sourceResult.year),
+                    eq(results.month, sourceResult.month),
+                    eq(results.source, sourceResult.source),
+                    eq(results.companyId, sourceResult.companyId)
+                ),
+            });
+
+            if (existingResult) {
+                const newAmount = (parseFloat(existingResult.amount) + parseFloat(sourceResult.amount)).toFixed(2);
+                await db.update(results).set({ amount: newAmount }).where(eq(results.id, existingResult.id));
+                await db.delete(results).where(eq(results.id, sourceResult.id));
+                console.log(`[MERGE] Result conflict resolved: summed amounts for ${source.name}`);
+            } else {
+                await db.update(results).set({ conceptId: targetId }).where(eq(results.id, sourceResult.id));
+            }
+            resultsMoved++;
+        }
+        console.log(`[MERGE] Moved/merged ${resultsMoved} results`);
+
+        // 3. Update concept mappings (no unique constraint issues here, just update)
         const mappingsUpdated = await db.update(conceptMappings)
             .set({ conceptId: targetId })
             .where(eq(conceptMappings.conceptId, sourceId))
             .returning();
         console.log(`[MERGE] Moved ${mappingsUpdated.length} mappings`);
 
-        // 4. Update reconciliations
+        // 4. Update reconciliations (no unique constraint, just update)
         const reconciliationsUpdated = await db.update(reconciliations)
             .set({ conceptId: targetId })
             .where(eq(reconciliations.conceptId, sourceId))
@@ -268,14 +314,14 @@ export async function mergeConcepts(sourceId: string, targetId: string): Promise
 
         return {
             success: true,
-            budgetsMoved: budgetsUpdated.length,
-            resultsMoved: resultsUpdated.length,
+            budgetsMoved,
+            resultsMoved,
             mappingsMoved: mappingsUpdated.length,
             reconciliationsMoved: reconciliationsUpdated.length,
         };
     } catch (error) {
         console.error('[MERGE] Error:', error);
-        return { success: false, error: 'Error al fusionar conceptos. Revisa los logs.' };
+        return { success: false, error: `Error al fusionar conceptos: ${String(error)}` };
     }
 }
 
