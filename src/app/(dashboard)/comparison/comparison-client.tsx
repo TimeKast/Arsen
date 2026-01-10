@@ -69,6 +69,10 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
         return `$${value.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
     };
 
+    const formatMobile = (value: number) => {
+        return `$${Math.round(value).toLocaleString('es-MX')}`;
+    };
+
     const formatPercent = (value: number) => {
         return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
     };
@@ -198,16 +202,16 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                         <div className="grid grid-cols-3 gap-1 text-xs">
                                             <div>
                                                 <p className="text-gray-400">Presup.</p>
-                                                <p className="font-medium">${(row.budget / 1000).toFixed(0)}k</p>
+                                                <p className="font-medium">{formatMobile(row.budget)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-400">Real</p>
-                                                <p className="font-medium">${(row.actual / 1000).toFixed(0)}k</p>
+                                                <p className="font-medium">{formatMobile(row.actual)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-400">Dif.</p>
                                                 <p className={`font-medium ${getDeviationColor(row)}`}>
-                                                    {row.difference >= 0 ? '+' : '-'}${(Math.abs(row.difference) / 1000).toFixed(0)}k
+                                                    {row.difference >= 0 ? '+' : '-'}{formatMobile(Math.abs(row.difference))}
                                                 </p>
                                             </div>
                                         </div>
@@ -226,16 +230,16 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                     <div className="grid grid-cols-3 gap-1 text-xs">
                                         <div>
                                             <p className="text-gray-400">Presup.</p>
-                                            <p className="font-bold">${(data.totals.budgetIncome / 1000).toFixed(0)}k</p>
+                                            <p className="font-bold">{formatMobile(data.totals.budgetIncome)}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-400">Real</p>
-                                            <p className="font-bold">${(data.totals.actualIncome / 1000).toFixed(0)}k</p>
+                                            <p className="font-bold">{formatMobile(data.totals.actualIncome)}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-400">Dif.</p>
                                             <p className={`font-bold ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
-                                                ${((data.totals.actualIncome - data.totals.budgetIncome) / 1000).toFixed(0)}k
+                                                {formatMobile(data.totals.actualIncome - data.totals.budgetIncome)}
                                             </p>
                                         </div>
                                     </div>
@@ -311,16 +315,16 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                         <div className="grid grid-cols-3 gap-1 text-xs">
                                             <div>
                                                 <p className="text-gray-400">Presup.</p>
-                                                <p className="font-medium">${(row.budget / 1000).toFixed(0)}k</p>
+                                                <p className="font-medium">{formatMobile(row.budget)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-400">Real</p>
-                                                <p className="font-medium">${(row.actual / 1000).toFixed(0)}k</p>
+                                                <p className="font-medium">{formatMobile(row.actual)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-400">Dif.</p>
                                                 <p className={`font-medium ${getDeviationColor(row)}`}>
-                                                    {row.difference >= 0 ? '+' : '-'}${(Math.abs(row.difference) / 1000).toFixed(0)}k
+                                                    {row.difference >= 0 ? '+' : '-'}{formatMobile(Math.abs(row.difference))}
                                                 </p>
                                             </div>
                                         </div>
@@ -339,16 +343,16 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                     <div className="grid grid-cols-3 gap-1 text-xs">
                                         <div>
                                             <p className="text-gray-400">Presup.</p>
-                                            <p className="font-bold">${(data.totals.budgetCost / 1000).toFixed(0)}k</p>
+                                            <p className="font-bold">{formatMobile(data.totals.budgetCost)}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-400">Real</p>
-                                            <p className="font-bold">${(data.totals.actualCost / 1000).toFixed(0)}k</p>
+                                            <p className="font-bold">{formatMobile(data.totals.actualCost)}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-400">Dif.</p>
                                             <p className={`font-bold ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
-                                                ${((data.totals.budgetCost - data.totals.actualCost) / 1000).toFixed(0)}k
+                                                {formatMobile(data.totals.budgetCost - data.totals.actualCost)}
                                             </p>
                                         </div>
                                     </div>
@@ -429,16 +433,16 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                         <div className="grid grid-cols-3 gap-1 text-xs">
                                             <div>
                                                 <p className="text-gray-400">Presup.</p>
-                                                <p className="font-medium">${(row.budget / 1000).toFixed(0)}k</p>
+                                                <p className="font-medium">{formatMobile(row.budget)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-400">Real</p>
-                                                <p className="font-medium">${(row.actual / 1000).toFixed(0)}k</p>
+                                                <p className="font-medium">{formatMobile(row.actual)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-400">Dif.</p>
                                                 <p className={`font-medium ${getDeviationColor(row)}`}>
-                                                    {row.difference >= 0 ? '+' : '-'}${(Math.abs(row.difference) / 1000).toFixed(0)}k
+                                                    {row.difference >= 0 ? '+' : '-'}{formatMobile(Math.abs(row.difference))}
                                                 </p>
                                             </div>
                                         </div>
