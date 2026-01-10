@@ -135,7 +135,14 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
-                            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-2">Ingresos</h3>
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-xs md:text-sm font-medium text-gray-500">Ingresos</h3>
+                                <span className={`text-xs font-bold ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
+                                    {data.totals.budgetIncome !== 0
+                                        ? formatPercent(((data.totals.actualIncome - data.totals.budgetIncome) / data.totals.budgetIncome) * 100)
+                                        : '-'}
+                                </span>
+                            </div>
                             <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
                                 <div>
                                     <p className="text-gray-400">Presupuesto</p>
@@ -150,7 +157,14 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                             </div>
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
-                            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-2">Costos</h3>
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-xs md:text-sm font-medium text-gray-500">Costos</h3>
+                                <span className={`text-xs font-bold ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
+                                    {data.totals.budgetCost !== 0
+                                        ? formatPercent(((data.totals.budgetCost - data.totals.actualCost) / data.totals.budgetCost) * 100)
+                                        : '-'}
+                                </span>
+                            </div>
                             <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
                                 <div>
                                     <p className="text-gray-400">Presupuesto</p>
@@ -165,7 +179,14 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                             </div>
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
-                            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-2">Utilidad Neta</h3>
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-xs md:text-sm font-medium text-gray-500">Utilidad Neta</h3>
+                                <span className={`text-xs font-bold ${data.totals.actualNet >= data.totals.budgetNet ? 'text-green-600' : 'text-red-600'}`}>
+                                    {data.totals.budgetNet !== 0
+                                        ? formatPercent(((data.totals.actualNet - data.totals.budgetNet) / Math.abs(data.totals.budgetNet)) * 100)
+                                        : '-'}
+                                </span>
+                            </div>
                             <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
                                 <div>
                                     <p className="text-gray-400">Presupuesto</p>
@@ -448,6 +469,39 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                         </div>
                                     </div>
                                 ))}
+                                {/* Mobile Total for Otros */}
+                                {(() => {
+                                    const otrosBudget = data.otrosRows.reduce((sum, r) => sum + r.budget, 0);
+                                    const otrosActual = data.otrosRows.reduce((sum, r) => sum + r.actual, 0);
+                                    const otrosDiff = otrosBudget - otrosActual;
+                                    const otrosPercent = otrosBudget !== 0 ? (otrosDiff / otrosBudget) * 100 : 0;
+                                    return (
+                                        <div className="p-3 bg-gray-50 dark:bg-gray-700">
+                                            <div className="flex items-center justify-between gap-2 mb-1">
+                                                <span className="font-bold dark:text-white text-sm">Total Otros</span>
+                                                <span className={`text-xs font-bold ${otrosDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {formatPercent(otrosPercent)}
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-1 text-xs">
+                                                <div>
+                                                    <p className="text-gray-400">Presup.</p>
+                                                    <p className="font-bold">{formatMobile(otrosBudget)}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-400">Real</p>
+                                                    <p className="font-bold">{formatMobile(otrosActual)}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-400">Dif.</p>
+                                                    <p className={`font-bold ${otrosDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {formatMobile(otrosDiff)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             {/* Desktop Table */}
@@ -485,6 +539,28 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                                         </tr>
                                     ))}
                                 </tbody>
+                                <tfoot className="bg-gray-50 dark:bg-gray-700 font-medium">
+                                    {(() => {
+                                        const otrosBudget = data.otrosRows.reduce((sum, r) => sum + r.budget, 0);
+                                        const otrosActual = data.otrosRows.reduce((sum, r) => sum + r.actual, 0);
+                                        const otrosDiff = otrosBudget - otrosActual;
+                                        const otrosPercent = otrosBudget !== 0 ? (otrosDiff / otrosBudget) * 100 : 0;
+                                        return (
+                                            <tr>
+                                                <td className="px-4 py-3 dark:text-white">Total Otros</td>
+                                                <td></td>
+                                                <td className="px-4 py-3 text-right">{formatCurrency(otrosBudget)}</td>
+                                                <td className="px-4 py-3 text-right">{formatCurrency(otrosActual)}</td>
+                                                <td className={`px-4 py-3 text-right ${otrosDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {formatCurrency(otrosDiff)}
+                                                </td>
+                                                <td className={`px-4 py-3 text-right ${otrosDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {formatPercent(otrosPercent)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })()}
+                                </tfoot>
                             </table>
                         </div>
                     )}
