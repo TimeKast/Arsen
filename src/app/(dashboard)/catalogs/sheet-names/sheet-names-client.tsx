@@ -104,8 +104,48 @@ export function SheetNamesClient({ sheetNames: initialSheetNames }: SheetNamesCl
                 )}
             </div>
 
-            {/* List */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            {/* Mobile Cards View */}
+            <div className="md:hidden space-y-2">
+                {sheetNames.length === 0 ? (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center text-gray-500">
+                        <FileSpreadsheet size={32} className="mx-auto mb-2 opacity-50" />
+                        <p>No hay nombres de pestañas configurados.</p>
+                        <p className="text-xs mt-1">Agrega nombres como &quot;EneR&quot;, &quot;FebR&quot;, etc.</p>
+                    </div>
+                ) : (
+                    sheetNames.map((sheet) => (
+                        <div key={sheet.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow p-3 ${!sheet.isActive ? 'opacity-50' : ''}`}>
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                    <span className="font-mono font-medium dark:text-white">{sheet.name}</span>
+                                    {sheet.description && (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{sheet.description}</p>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => handleToggle(sheet.id)}
+                                        disabled={isPending}
+                                        className={`p-1.5 rounded text-xs ${sheet.isActive ? 'text-green-600' : 'text-gray-400'}`}
+                                    >
+                                        {sheet.isActive ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(sheet.id)}
+                                        disabled={isPending}
+                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                 <table className="w-full text-sm">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -145,9 +185,9 @@ export function SheetNamesClient({ sheetNames: initialSheetNames }: SheetNamesCl
                                         <button
                                             onClick={() => handleToggle(sheet.id)}
                                             disabled={isPending}
-                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${sheet.isActive
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-gray-100 text-gray-600'
+                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${sheet.isActive
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-gray-100 text-gray-600'
                                                 }`}
                                         >
                                             {sheet.isActive ? (

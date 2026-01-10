@@ -95,13 +95,14 @@ export function ProjectsClient({ companies }: ProjectsClientProps) {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold dark:text-white">Proyectos</h1>
-                <div className="flex items-center gap-4">
+            {/* Header - responsive layout */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Proyectos</h1>
+                <div className="flex items-center gap-2">
                     <select
                         value={selectedCompanyId}
                         onChange={(e) => setSelectedCompanyId(e.target.value)}
-                        className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        className="flex-1 sm:flex-none px-2 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
                         {companies.map((company) => (
                             <option key={company.id} value={company.id}>
@@ -112,10 +113,10 @@ export function ProjectsClient({ companies }: ProjectsClientProps) {
                     {canEdit && selectedCompanyId && (
                         <button
                             onClick={() => setShowForm(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="p-2 sm:px-3 sm:py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
-                            <Plus size={20} />
-                            Nuevo Proyecto
+                            <Plus size={18} className="sm:hidden" />
+                            <span className="hidden sm:inline text-sm">+ Nuevo</span>
                         </button>
                     )}
                 </div>
@@ -128,110 +129,178 @@ export function ProjectsClient({ companies }: ProjectsClientProps) {
             ) : loading ? (
                 <div className="text-center py-8 text-gray-500">Cargando...</div>
             ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Nombre
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Codigo
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Reparto
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Estado
-                                </th>
-                                {canEdit && (
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                        Acciones
-                                    </th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {projects.map((project) => (
-                                <tr key={project.id} className={!project.isActive ? 'opacity-50' : ''}>
-                                    <td className="px-6 py-4 dark:text-white">{project.name}</td>
-                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                                        {project.code || '-'}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        {project.appliesProfitSharing ? (
-                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                                                <DollarSign size={12} className="mr-1" />
-                                                Activo
+                <>
+                    {/* Mobile Cards View */}
+                    <div className="md:hidden space-y-2">
+                        {projects.map((project) => (
+                            <div
+                                key={project.id}
+                                className={`bg-white dark:bg-gray-800 rounded-lg shadow p-3 ${!project.isActive ? 'opacity-50' : ''}`}
+                            >
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-medium dark:text-white truncate">{project.name}</span>
+                                            {project.code && <span className="text-xs text-gray-500">({project.code})</span>}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs">
+                                            {project.appliesProfitSharing && (
+                                                <span className="flex items-center gap-0.5 text-green-600">
+                                                    <DollarSign size={12} /> Reparto
+                                                </span>
+                                            )}
+                                            <span className={`px-1.5 py-0.5 rounded-full ${project.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                {project.isActive ? 'Activo' : 'Inactivo'}
                                             </span>
-                                        ) : (
-                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                                Inactivo
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span
-                                            className={`inline-flex px-2 py-1 rounded-full text-xs ${project.isActive
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                                }`}
-                                        >
-                                            {project.isActive ? 'Activo' : 'Inactivo'}
-                                        </span>
-                                    </td>
+                                        </div>
+                                    </div>
                                     {canEdit && (
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingProject(project);
-                                                        setShowForm(true);
-                                                    }}
-                                                    className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
-                                                    title="Editar"
-                                                >
-                                                    <Pencil size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleToggleProfitSharing(project.id)}
-                                                    disabled={isPending}
-                                                    className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
-                                                    title="Toggle reparto"
-                                                >
-                                                    <DollarSign size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleToggleActive(project.id)}
-                                                    disabled={isPending}
-                                                    className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
-                                                    title="Activar/Desactivar"
-                                                >
-                                                    <Power size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(project.id, project.name)}
-                                                    disabled={isPending}
-                                                    className="p-2 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => { setEditingProject(project); setShowForm(true); }}
+                                                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                            >
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleProfitSharing(project.id)}
+                                                disabled={isPending}
+                                                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                            >
+                                                <DollarSign size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleActive(project.id)}
+                                                disabled={isPending}
+                                                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                            >
+                                                <Power size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(project.id, project.name)}
+                                                disabled={isPending}
+                                                className="p-1.5 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        {projects.length === 0 && (
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center text-gray-500">
+                                No hay proyectos registrados
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Nombre
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Codigo
+                                    </th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Reparto
+                                    </th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                        Estado
+                                    </th>
+                                    {canEdit && (
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                            Acciones
+                                        </th>
                                     )}
                                 </tr>
-                            ))}
-                            {projects.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                                        No hay proyectos registrados
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {projects.map((project) => (
+                                    <tr key={project.id} className={!project.isActive ? 'opacity-50' : ''}>
+                                        <td className="px-4 py-3 dark:text-white">{project.name}</td>
+                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                                            {project.code || '-'}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            {project.appliesProfitSharing ? (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
+                                                    <DollarSign size={12} className="mr-1" />
+                                                    Activo
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
+                                                    Inactivo
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span
+                                                className={`inline-flex px-2 py-0.5 rounded-full text-xs ${project.isActive
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                                    }`}
+                                            >
+                                                {project.isActive ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </td>
+                                        {canEdit && (
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingProject(project);
+                                                            setShowForm(true);
+                                                        }}
+                                                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                                        title="Editar"
+                                                    >
+                                                        <Pencil size={15} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleToggleProfitSharing(project.id)}
+                                                        disabled={isPending}
+                                                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                                        title="Toggle reparto"
+                                                    >
+                                                        <DollarSign size={15} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleToggleActive(project.id)}
+                                                        disabled={isPending}
+                                                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                                        title="Activar/Desactivar"
+                                                    >
+                                                        <Power size={15} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(project.id, project.name)}
+                                                        disabled={isPending}
+                                                        className="p-1.5 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
+                                                        title="Eliminar"
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                                {projects.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                                            No hay proyectos registrados
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
             )}
 
             {showForm && selectedCompanyId && (
