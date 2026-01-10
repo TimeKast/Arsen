@@ -43,8 +43,8 @@
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | Next.js 14 (App Router) + TypeScript |
-| UI | shadcn/ui + Tailwind CSS |
+| Frontend | Next.js 16 (App Router) + TypeScript |
+| UI | shadcn/ui + Tailwind CSS v4 |
 | Backend | Server Actions + API Routes |
 | ORM | Drizzle ORM |
 | Base de datos | PostgreSQL (Neon) |
@@ -74,4 +74,4 @@
 
 ---
 
-*Documentación generada: 8 de enero de 2026*
+*Documentación actualizada: 9 de enero de 2026*

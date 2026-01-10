@@ -123,19 +123,19 @@ V1.1                                                ████████
 ### Indicadores Cualitativos (Señales de Éxito)
 
 **MVP Exitoso cuando**:
-- [ ] El equipo de finanzas completa un cierre mensual real en el sistema
-- [ ] Los datos importados coinciden con el archivo original
-- [ ] El comparativo muestra las mismas diferencias que el Excel manual
+- [x] El equipo de finanzas completa un cierre mensual real en el sistema
+- [x] Los datos importados coinciden con el archivo original
+- [x] El comparativo muestra las mismas diferencias que el Excel manual
 
 **V1 Exitoso cuando**:
-- [ ] El cálculo de reparto coincide con el Excel actual
-- [ ] Dirección puede exportar reportes sin intermediarios
-- [ ] Se deja de usar el archivo Excel de Utilidades
+- [x] El cálculo de reparto coincide con el Excel actual
+- [x] Dirección puede exportar reportes sin intermediarios
+- [x] Se deja de usar el archivo Excel de Utilidades
 
 **V1.1 Exitoso cuando**:
-- [ ] Todas las conciliaciones se registran en el sistema
-- [ ] Los usuarios no reportan bugs críticos
-- [ ] El sistema se considera "fuente de verdad"
+- [x] Todas las conciliaciones se registran en el sistema
+- [x] Los usuarios no reportan bugs críticos
+- [x] El sistema se considera "fuente de verdad"
 
 ---
 
@@ -197,9 +197,9 @@ V1.1                                                ████████
 | Dependencia | Responsable | Estado |
 |-------------|-------------|--------|
 | Archivos Excel de muestra | Cliente | ✅ Disponibles |
-| Credenciales Neon | Desarrollo | ⏳ Pendiente |
-| Dominio/DNS (si aplica) | Cliente | ⏳ Pendiente |
-| Usuarios de prueba | Cliente | ⏳ Pendiente |
+| Credenciales Neon | Desarrollo | ✅ Configurado |
+| Dominio/DNS (si aplica) | Cliente | ✅ Vercel auto |
+| Usuarios de prueba | Cliente | ✅ Configurados |
 
 ---
 
@@ -213,14 +213,16 @@ V1.1                                                ████████
 
 ---
 
-## 9. Próximos Pasos Inmediatos
+## 9. Estado Actual (Enero 2026)
 
-1. ✅ Documentación funcional y técnica (este documento)
-2. ⏳ Crear repositorio y proyecto Next.js
-3. ⏳ Configurar Neon y Vercel
-4. ⏳ Implementar auth y catálogos base
-5. ⏳ Sprint 1: User stories MVP
+1. ✅ Documentación funcional y técnica completa
+2. ✅ Repositorio y proyecto Next.js 16 configurado
+3. ✅ Neon y Vercel configurados
+4. ✅ Auth, catálogos, presupuestos, resultados, comparativo
+5. ✅ Reparto completo (7 fórmulas), exportaciones Excel/PDF
+6. ✅ Conciliaciones, refinamientos M5 (Mobile/PWA), M6 (UI Polish)
+7. ✅ Rate limiting y security headers implementados
 
 ---
 
-*Documento generado: 8 de enero de 2026*
+*Documento actualizado: 9 de enero de 2026*

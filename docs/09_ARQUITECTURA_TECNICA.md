@@ -10,20 +10,19 @@
 
 | Capa | Tecnología | Versión | Propósito |
 |------|------------|---------|-----------|
-| Framework | Next.js | 14.x | App Router, Server Components |
+| Framework | Next.js | 16.x | App Router, Server Components, React Compiler |
 | Lenguaje | TypeScript | 5.x | Tipado estático |
-| ORM | Drizzle ORM | Latest | Acceso a BD type-safe |
+| ORM | Drizzle ORM | 0.45+ | Acceso a BD type-safe |
 | Base de datos | PostgreSQL | 15.x | Almacenamiento relacional |
 | DB Hosting | Neon | - | PostgreSQL serverless |
 | Autenticación | NextAuth.js | 5.x | Auth.js con Credentials |
-| Validación | Zod | Latest | Validación de esquemas |
+| Validación | Zod | 4.x | Validación de esquemas |
 | UI | shadcn/ui | Latest | Componentes accesibles |
-| Estilos | Tailwind CSS | 3.x | Utility-first CSS |
-| Tablas | TanStack Table | v8 | Tablas interactivas |
-| Gráficas | Recharts | Latest | Visualización de datos |
+| Estilos | Tailwind CSS | 4.x | Utility-first CSS |
 | Excel | SheetJS (xlsx) | Latest | Parsing/exportación Excel |
-| PDF | jsPDF + html2canvas | Latest | Generación de PDF |
+| PDF | jsPDF + jspdf-autotable | Latest | Generación de PDF con tablas |
 | Estado | Zustand | Latest | Estado global mínimo |
+| Rate Limiting | @upstash/ratelimit | Latest | Protección contra brute force |
 | Hosting | Vercel | - | Deploy y CDN |
 
 ---
@@ -592,6 +591,10 @@ DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key"
 
+# Rate Limiting (Upstash Redis - opcional)
+UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="tu-token-de-upstash"
+
 # Configuración de la app
 NEXT_PUBLIC_APP_NAME="Arsen"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
@@ -683,4 +686,4 @@ vercel --prod        # Producción
 
 ---
 
-*Documento generado: 8 de enero de 2026*
+*Documento actualizado: 9 de enero de 2026*

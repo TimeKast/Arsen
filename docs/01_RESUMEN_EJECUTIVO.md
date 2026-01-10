@@ -80,8 +80,8 @@ Arsen es una plataforma web que centraliza el control presupuestal y de resultad
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | Next.js 14 (App Router) + TypeScript |
-| UI | shadcn/ui + Tailwind CSS |
+| Frontend | Next.js 16 (App Router) + TypeScript |
+| UI | shadcn/ui + Tailwind CSS v4 |
 | Backend | Next.js API Routes / Server Actions |
 | ORM | Drizzle ORM |
 | Base de datos | PostgreSQL (Neon) |

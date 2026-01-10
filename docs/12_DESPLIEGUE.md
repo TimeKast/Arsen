@@ -30,6 +30,8 @@
 
 | Variable | Descripción | Default |
 |----------|-------------|---------|
+| `UPSTASH_REDIS_REST_URL` | URL de Redis para rate limiting | (deshabilitado) |
+| `UPSTASH_REDIS_REST_TOKEN` | Token de Upstash Redis | (deshabilitado) |
 | `NEXT_PUBLIC_APP_NAME` | Nombre de la app | `Arsen` |
 | `LOG_LEVEL` | Nivel de logs | `info` |
 
@@ -42,6 +44,10 @@ DATABASE_URL="postgresql://user:password@ep-xxx.us-east-1.aws.neon.tech/arsen?ss
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="development-secret-key-min-32-characters"
+
+# Rate Limiting (opcional)
+UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="tu-token-de-upstash"
 
 # App
 NEXT_PUBLIC_APP_NAME="Arsen"
@@ -91,14 +97,29 @@ vercel env add NEXTAUTH_URL production
 
 O desde el dashboard: Project Settings → Environment Variables
 
-### 4.3 vercel.json
+### 4.3 next.config.ts (Security Headers)
 
-```json
-{
-  "buildCommand": "npm run build",
-  "framework": "nextjs",
-  "regions": ["iad1"]
-}
+```typescript
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+        ],
+      },
+    ];
+  },
+};
+
+export default nextConfig;
 ```
 
 ---
@@ -297,4 +318,4 @@ psql $DATABASE_URL < backup.sql
 
 ---
 
-*Documento generado: 8 de enero de 2026*
+*Documento actualizado: 9 de enero de 2026*
