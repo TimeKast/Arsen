@@ -68,7 +68,7 @@ export function ResultForm({ projects, concepts, initialData, onSubmit, onClose 
     const costConcepts = concepts.filter(c => c.type === 'COST');
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
                 <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
                     <h2 className="text-lg font-semibold dark:text-white">

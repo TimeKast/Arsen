@@ -35,7 +35,7 @@ export function AreaForm({ companyId, initialData, onSubmit, onClose }: AreaForm
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
             <div className="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 shadow-xl">
                 <div className="flex items-center justify-between border-b p-4 dark:border-gray-700">
                     <h2 className="text-lg font-semibold dark:text-white">

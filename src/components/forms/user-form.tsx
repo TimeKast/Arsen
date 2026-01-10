@@ -74,8 +74,8 @@ export function UserForm({ companies, areas, initialData, onSubmit, onClose }: U
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto py-8">
-            <div className="w-full max-w-lg rounded-lg bg-white dark:bg-gray-800 shadow-xl mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto py-4 px-4">
+            <div className="w-full max-w-lg rounded-lg bg-white dark:bg-gray-800 shadow-xl">
                 <div className="flex items-center justify-between border-b p-4 dark:border-gray-700">
                     <h2 className="text-lg font-semibold dark:text-white">
                         {initialData ? 'Editar Usuario' : 'Nuevo Usuario'}
@@ -92,7 +92,7 @@ export function UserForm({ companies, areas, initialData, onSubmit, onClose }: U
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Email *
@@ -119,7 +119,7 @@ export function UserForm({ companies, areas, initialData, onSubmit, onClose }: U
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Contrasena {initialData ? '(dejar vacio para mantener)' : '*'}
