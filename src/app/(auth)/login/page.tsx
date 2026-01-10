@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { loginWithRateLimit } from '@/actions/auth';
 
 function LoginForm() {
     const router = useRouter();
@@ -20,6 +21,15 @@ function LoginForm() {
         setLoading(true);
 
         try {
+            // Check rate limit first
+            const rateLimitCheck = await loginWithRateLimit(email, password);
+
+            if (rateLimitCheck.rateLimited) {
+                setError(rateLimitCheck.error || 'Demasiados intentos');
+                setLoading(false);
+                return;
+            }
+
             const result = await signIn('credentials', {
                 email,
                 password,
@@ -38,6 +48,7 @@ function LoginForm() {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="w-full max-w-md">

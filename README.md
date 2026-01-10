@@ -48,6 +48,11 @@ DATABASE_URL="postgresql://user:password@ep-xxx.neon.tech/arsen?sslmode=require"
 # NextAuth
 NEXTAUTH_SECRET="tu-secreto-seguro-aqui"
 NEXTAUTH_URL="http://localhost:3000"
+
+# Rate Limiting (Upstash Redis - opcional)
+# Si no se configuran, el rate limiting se desactiva
+UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="tu-token-de-upstash"
 ```
 
 ### 3. Inicializar base de datos
