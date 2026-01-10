@@ -3,6 +3,8 @@
 import { useState, useCallback } from 'react';
 import { Plus, Trash2, Edit2, Check, X, ToggleLeft, ToggleRight, ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/toast-provider';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import {
     getConceptTypeOverrides,
     createConceptTypeOverride,
@@ -40,6 +42,8 @@ export function ConceptTypeOverridesClient({
     const [editDescription, setEditDescription] = useState('');
 
     const [error, setError] = useState('');
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
 
     const loadOverrides = useCallback(async (companyId: string) => {
         setLoading(true);
@@ -115,9 +119,16 @@ export function ConceptTypeOverridesClient({
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Eliminar esta sobrescritura?')) return;
+        const confirmed = await confirm({
+            title: 'Eliminar sobrescritura',
+            message: '¿Eliminar esta sobrescritura de tipo?',
+            confirmText: 'Eliminar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
         await deleteConceptTypeOverride(id);
         await loadOverrides(selectedCompanyId);
+        showToast({ type: 'success', message: 'Sobrescritura eliminada' });
     };
 
     return (

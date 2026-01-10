@@ -4,6 +4,8 @@ import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Pencil, Power, Trash2 } from 'lucide-react';
 import { AreaForm } from '@/components/forms/area-form';
+import { useToast } from '@/components/ui/toast-provider';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import {
     getAreasByCompany,
     createArea,
@@ -31,6 +33,8 @@ interface AreasClientProps {
 
 export function AreasClient({ companies }: AreasClientProps) {
     const { data: session } = useSession();
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
     const canEdit = session?.user?.role === 'ADMIN' || session?.user?.role === 'STAFF';
 
     const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
@@ -71,14 +75,21 @@ export function AreasClient({ companies }: AreasClientProps) {
         });
     };
 
-    const handleDelete = (id: string, name: string) => {
-        if (!confirm(`¿Eliminar el área "${name}"? Esta acción no se puede deshacer.`)) return;
+    const handleDelete = async (id: string, name: string) => {
+        const confirmed = await confirm({
+            title: 'Eliminar área',
+            message: `¿Eliminar el área "${name}"? Esta acción no se puede deshacer.`,
+            confirmText: 'Eliminar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
         startTransition(async () => {
             const result = await deleteArea(id);
             if (result.success) {
                 setAreas((prev) => prev.filter((a) => a.id !== id));
+                showToast({ type: 'success', message: 'Área eliminada correctamente' });
             } else {
-                alert(result.error);
+                showToast({ type: 'error', message: result.error || 'Error al eliminar' });
             }
         });
     };

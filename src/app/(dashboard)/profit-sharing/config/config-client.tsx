@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Settings, Save, Trash2, Plus, X } from 'lucide-react';
 import { getProfitSharingProjects, getProjectRule, saveProjectRule, deleteProjectRule, type RuleFormData } from '@/actions/profit-sharing';
 import { getFormulaTypes, type FormulaType } from '@/lib/profit-sharing/engine';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 interface Company {
     id: string;
@@ -47,6 +48,7 @@ export function ProfitSharingConfigClient({ companies }: ProfitSharingConfigClie
     const [incrementThreshold, setIncrementThreshold] = useState<number>(0);
 
     const formulaTypes = getFormulaTypes();
+    const { confirm } = useConfirm();
 
     // Load projects when company changes
     useEffect(() => {
@@ -152,12 +154,18 @@ export function ProfitSharingConfigClient({ companies }: ProfitSharingConfigClie
 
     const handleDelete = async () => {
         if (!selectedProjectId) return;
-        if (!confirm('Eliminar la configuracion de reparto para este proyecto?')) return;
+        const confirmed = await confirm({
+            title: 'Eliminar configuración',
+            message: '¿Eliminar la configuración de reparto para este proyecto?',
+            confirmText: 'Eliminar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
 
         try {
             await deleteProjectRule(selectedProjectId);
             resetForm();
-            setMessage({ type: 'success', text: 'Configuracion eliminada' });
+            setMessage({ type: 'success', text: 'Configuración eliminada' });
         } catch (error) {
             setMessage({ type: 'error', text: 'Error al eliminar' });
         }

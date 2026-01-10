@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { ToastProvider } from "@/components/ui/toast-provider";
+import { ConfirmProvider } from "@/components/ui/confirm-modal";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -52,7 +54,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider>
-          {children}
+          <ToastProvider>
+            <ConfirmProvider>
+              {children}
+            </ConfirmProvider>
+          </ToastProvider>
         </SessionProvider>
       </body>
     </html>

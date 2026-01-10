@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload, FileSpreadsheet, AlertTriangle, AlertCircle, X, ArrowLeft, Wrench, Save, AlertOctagon, Settings } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/toast-provider';
 import {
     parseResultsSheet,
     getMonthSheets,
@@ -58,6 +59,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
     const [resolvedConflicts, setResolvedConflicts] = useState<ConflictResolution[]>([]);
     const [saving, setSaving] = useState(false);
     const [showOverwriteWarning, setShowOverwriteWarning] = useState(false);
+    const { showToast } = useToast();
     const [existingCount, setExistingCount] = useState(0);
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -352,7 +354,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                 await handleSaveConfirmed();
             }
         } catch (error) {
-            alert(error instanceof Error ? error.message : 'Error al verificar');
+            showToast({ type: 'error', message: error instanceof Error ? error.message : 'Error al verificar' });
         } finally {
             setSaving(false);
         }
@@ -678,7 +680,7 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
 
             router.push('/results');
         } catch (error) {
-            alert(error instanceof Error ? error.message : 'Error al guardar');
+            showToast({ type: 'error', message: error instanceof Error ? error.message : 'Error al guardar' });
         } finally {
             setSaving(false);
         }

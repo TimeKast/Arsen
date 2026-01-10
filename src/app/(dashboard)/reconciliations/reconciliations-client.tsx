@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { FileSpreadsheet, Plus, Search, Trash2, Filter } from 'lucide-react';
 import { getReconciliations, deleteReconciliation } from '@/actions/reconciliations';
+import { useToast } from '@/components/ui/toast-provider';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import Link from 'next/link';
 
 interface Company {
@@ -52,6 +54,8 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
     // Pagination
     const [page, setPage] = useState(1);
     const perPage = 20;
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
 
     // Load data
     const loadData = useCallback(async () => {
@@ -114,12 +118,19 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
     const paginatedData = filteredData.slice((page - 1) * perPage, page * perPage);
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Eliminar esta conciliacion?')) return;
+        const confirmed = await confirm({
+            title: 'Eliminar conciliación',
+            message: '¿Eliminar esta conciliación?',
+            confirmText: 'Eliminar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
         try {
             await deleteReconciliation(id);
             loadData();
+            showToast({ type: 'success', message: 'Conciliación eliminada' });
         } catch (error) {
-            alert('Error al eliminar');
+            showToast({ type: 'error', message: 'Error al eliminar' });
         }
     };
 

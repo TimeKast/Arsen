@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
 import {
     getAreasForBudget,
     getConceptsForArea,
@@ -49,6 +50,7 @@ export function BudgetCaptureClient({ companies, initialYear }: BudgetCaptureCli
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
+    const { showToast } = useToast();
 
     // Load areas when company changes
     const loadAreas = useCallback(async (companyId: string) => {
@@ -148,9 +150,9 @@ export function BudgetCaptureClient({ companies, initialYear }: BudgetCaptureCli
             });
 
             setHasChanges(false);
-            alert('Presupuesto guardado exitosamente');
+            showToast({ type: 'success', message: 'Presupuesto guardado exitosamente' });
         } catch (error) {
-            alert(error instanceof Error ? error.message : 'Error al guardar');
+            showToast({ type: 'error', message: error instanceof Error ? error.message : 'Error al guardar' });
         } finally {
             setSaving(false);
         }

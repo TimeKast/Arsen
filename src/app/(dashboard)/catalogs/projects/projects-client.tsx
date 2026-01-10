@@ -4,6 +4,8 @@ import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Pencil, Power, DollarSign, Trash2 } from 'lucide-react';
 import { ProjectForm } from '@/components/forms/project-form';
+import { useToast } from '@/components/ui/toast-provider';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import {
     getProjectsByCompany,
     createProject,
@@ -34,6 +36,8 @@ interface ProjectsClientProps {
 
 export function ProjectsClient({ companies }: ProjectsClientProps) {
     const { data: session } = useSession();
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
     const canEdit = session?.user?.role === 'ADMIN' || session?.user?.role === 'STAFF';
 
     const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id || '');
@@ -81,14 +85,21 @@ export function ProjectsClient({ companies }: ProjectsClientProps) {
         });
     };
 
-    const handleDelete = (id: string, name: string) => {
-        if (!confirm(`¿Eliminar el proyecto "${name}"? Esta acción no se puede deshacer.`)) return;
+    const handleDelete = async (id: string, name: string) => {
+        const confirmed = await confirm({
+            title: 'Eliminar proyecto',
+            message: `¿Eliminar el proyecto "${name}"? Esta acción no se puede deshacer.`,
+            confirmText: 'Eliminar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
         startTransition(async () => {
             const result = await deleteProject(id);
             if (result.success) {
                 setProjects((prev) => prev.filter((p) => p.id !== id));
+                showToast({ type: 'success', message: 'Proyecto eliminado correctamente' });
             } else {
-                alert(result.error);
+                showToast({ type: 'error', message: result.error || 'Error al eliminar' });
             }
         });
     };

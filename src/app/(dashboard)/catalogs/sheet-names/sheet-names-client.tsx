@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import { Plus, Trash2, FileSpreadsheet, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import {
     createValidSheetName,
     deleteValidSheetName,
@@ -19,6 +21,8 @@ export function SheetNamesClient({ sheetNames: initialSheetNames }: SheetNamesCl
     const [newDescription, setNewDescription] = useState('');
     const [error, setError] = useState('');
     const [isPending, startTransition] = useTransition();
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,12 +51,19 @@ export function SheetNamesClient({ sheetNames: initialSheetNames }: SheetNamesCl
         });
     };
 
-    const handleDelete = (id: string) => {
-        if (!confirm('¿Eliminar este nombre de pestaña?')) return;
+    const handleDelete = async (id: string) => {
+        const confirmed = await confirm({
+            title: 'Eliminar pestaña',
+            message: '¿Eliminar este nombre de pestaña?',
+            confirmText: 'Eliminar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
 
         startTransition(async () => {
             await deleteValidSheetName(id);
             setSheetNames(prev => prev.filter(s => s.id !== id));
+            showToast({ type: 'success', message: 'Pestaña eliminada' });
         });
     };
 

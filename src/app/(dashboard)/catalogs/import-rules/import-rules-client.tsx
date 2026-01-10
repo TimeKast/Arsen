@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, ArrowRight, Ban, Power, PowerOff, Edit2, Save, X } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import {
     getImportRules,
     createImportRule,
@@ -20,6 +22,8 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
 
     // Form state
     const [ruleType, setRuleType] = useState<'REDIRECT' | 'EXCLUDE'>('REDIRECT');
@@ -78,8 +82,9 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
             }
             resetForm();
             loadRules();
+            showToast({ type: 'success', message: editingId ? 'Regla actualizada' : 'Regla creada' });
         } catch (error) {
-            alert(error instanceof Error ? error.message : 'Error al guardar');
+            showToast({ type: 'error', message: error instanceof Error ? error.message : 'Error al guardar' });
         }
     };
 
@@ -100,19 +105,27 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
                 isActive: !rule.isActive,
             });
             loadRules();
+            showToast({ type: 'success', message: rule.isActive ? 'Regla desactivada' : 'Regla activada' });
         } catch (error) {
-            alert(error instanceof Error ? error.message : 'Error');
+            showToast({ type: 'error', message: error instanceof Error ? error.message : 'Error' });
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Eliminar esta regla?')) return;
+        const confirmed = await confirm({
+            title: 'Eliminar regla',
+            message: '¿Eliminar esta regla de importación?',
+            confirmText: 'Eliminar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
 
         try {
             await deleteImportRule(id);
             loadRules();
+            showToast({ type: 'success', message: 'Regla eliminada' });
         } catch (error) {
-            alert(error instanceof Error ? error.message : 'Error al eliminar');
+            showToast({ type: 'error', message: error instanceof Error ? error.message : 'Error al eliminar' });
         }
     };
 

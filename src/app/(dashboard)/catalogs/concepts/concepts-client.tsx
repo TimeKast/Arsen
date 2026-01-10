@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Pencil, Power, TrendingUp, TrendingDown, Trash2, Merge, AlertTriangle, Sparkles } from 'lucide-react';
 import { ConceptForm } from '@/components/forms/concept-form';
+import { useToast } from '@/components/ui/toast-provider';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import {
     createConcept,
     updateConcept,
@@ -40,6 +42,8 @@ interface ConceptsClientProps {
 
 export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) {
     const { data: session } = useSession();
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
     const canEdit = session?.user?.role === 'ADMIN' || session?.user?.role === 'STAFF';
 
     const [concepts, setConcepts] = useState(initialConcepts);
@@ -103,9 +107,9 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                 setMergeTargetId(null);
                 setMergeStats(null);
                 setPendingFormData(null);
-                alert(`Fusión completada! Movidos: ${result.budgetsMoved} presupuestos, ${result.resultsMoved} resultados, ${result.mappingsMoved} mappings, ${result.reconciliationsMoved} conciliaciones.`);
+                showToast({ type: 'success', message: `Fusión completada! Movidos: ${result.budgetsMoved} presupuestos, ${result.resultsMoved} resultados` });
             } else {
-                alert(result.error || 'Error al fusionar');
+                showToast({ type: 'error', message: result.error || 'Error al fusionar' });
             }
         });
     };
@@ -129,28 +133,40 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
         });
     };
 
-    const handleDelete = (id: string, name: string) => {
-        if (!confirm(`¿Eliminar el concepto "${name}"? Esta acción no se puede deshacer.`)) return;
+    const handleDelete = async (id: string, name: string) => {
+        const confirmed = await confirm({
+            title: 'Eliminar concepto',
+            message: `¿Eliminar el concepto "${name}"? Esta acción no se puede deshacer.`,
+            confirmText: 'Eliminar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
         startTransition(async () => {
             const result = await deleteConcept(id);
             if (result.success) {
                 setConcepts((prev) => prev.filter((c) => c.id !== id));
+                showToast({ type: 'success', message: 'Concepto eliminado' });
             } else {
-                alert(result.error);
+                showToast({ type: 'error', message: result.error || 'Error al eliminar' });
             }
         });
     };
 
-    const handleCleanDuplicates = () => {
-        if (!confirm('¿Fusionar automáticamente todos los conceptos duplicados? Se mantendrá el más antiguo y se moverán todos los registros.')) return;
+    const handleCleanDuplicates = async () => {
+        const confirmed = await confirm({
+            title: 'Fusionar duplicados',
+            message: '¿Fusionar automáticamente todos los conceptos duplicados? Se mantendrá el más antiguo.',
+            confirmText: 'Fusionar',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
         startTransition(async () => {
             const result = await autoMergeDuplicates();
             if (result.success) {
-                // Refresh the page to show updated list
+                showToast({ type: 'success', message: `Limpieza completada! ${result.merged} conceptos fusionados` });
                 window.location.reload();
-                alert(`Limpieza completada!\n- ${result.merged} conceptos fusionados\n- ${result.errors.length} errores\n\nDetalles:\n${result.details.map(d => `• ${d.name}: ${d.mergedCount} duplicados, ${d.budgetsMoved} presupuestos, ${d.resultsMoved} resultados`).join('\n')}`);
             } else {
-                alert('Error: ' + result.errors.join(', '));
+                showToast({ type: 'error', message: 'Error: ' + result.errors.join(', ') });
             }
         });
     };

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Check, X, Plus, Link } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
 import {
     getExistingConcepts,
     getExistingProjects,
@@ -40,6 +41,7 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
     const [resolutions, setResolutions] = useState<Record<string, ConflictResolution>>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const { showToast } = useToast();
 
     // Load existing entities
     useEffect(() => {
@@ -186,7 +188,7 @@ export function ConflictResolver({ companyId, conflicts, onResolved, onCancel }:
 
             onResolved(updatedResolutions);
         } catch (error) {
-            alert(error instanceof Error ? error.message : 'Error al guardar');
+            showToast({ type: 'error', message: error instanceof Error ? error.message : 'Error al guardar' });
         } finally {
             setSaving(false);
         }
