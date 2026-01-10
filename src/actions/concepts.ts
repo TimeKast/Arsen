@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { db, concepts, areas, results, budgets, conceptMappings } from '@/lib/db';
 import { auth } from '@/lib/auth/config';
 import { z } from 'zod';
@@ -235,16 +235,23 @@ export async function mergeConcepts(sourceId: string, targetId: string): Promise
         let budgetsMoved = 0;
 
         for (const sourceBudget of sourceBudgets) {
-            // Check if there's already a budget with the target conceptId for same area/project/year/month
+            // Build conditions array - handle null projectId correctly
+            const budgetConditions = [
+                eq(budgets.conceptId, targetId),
+                eq(budgets.areaId, sourceBudget.areaId),
+                eq(budgets.year, sourceBudget.year),
+                eq(budgets.month, sourceBudget.month),
+                eq(budgets.companyId, sourceBudget.companyId),
+            ];
+            // Handle null projectId
+            if (sourceBudget.projectId === null) {
+                budgetConditions.push(isNull(budgets.projectId));
+            } else {
+                budgetConditions.push(eq(budgets.projectId, sourceBudget.projectId));
+            }
+
             const existingBudget = await db.query.budgets.findFirst({
-                where: and(
-                    eq(budgets.conceptId, targetId),
-                    eq(budgets.areaId, sourceBudget.areaId),
-                    eq(budgets.projectId, sourceBudget.projectId ?? ''),
-                    eq(budgets.year, sourceBudget.year),
-                    eq(budgets.month, sourceBudget.month),
-                    eq(budgets.companyId, sourceBudget.companyId)
-                ),
+                where: and(...budgetConditions),
             });
 
             if (existingBudget) {
@@ -266,15 +273,23 @@ export async function mergeConcepts(sourceId: string, targetId: string): Promise
         let resultsMoved = 0;
 
         for (const sourceResult of sourceResults) {
+            // Build conditions array - handle null projectId correctly
+            const resultConditions = [
+                eq(results.conceptId, targetId),
+                eq(results.year, sourceResult.year),
+                eq(results.month, sourceResult.month),
+                eq(results.source, sourceResult.source),
+                eq(results.companyId, sourceResult.companyId),
+            ];
+            // Handle null projectId
+            if (sourceResult.projectId === null) {
+                resultConditions.push(isNull(results.projectId));
+            } else {
+                resultConditions.push(eq(results.projectId, sourceResult.projectId));
+            }
+
             const existingResult = await db.query.results.findFirst({
-                where: and(
-                    eq(results.conceptId, targetId),
-                    eq(results.projectId, sourceResult.projectId ?? ''),
-                    eq(results.year, sourceResult.year),
-                    eq(results.month, sourceResult.month),
-                    eq(results.source, sourceResult.source),
-                    eq(results.companyId, sourceResult.companyId)
-                ),
+                where: and(...resultConditions),
             });
 
             if (existingResult) {
