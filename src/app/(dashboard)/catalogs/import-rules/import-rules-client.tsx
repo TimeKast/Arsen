@@ -121,16 +121,15 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {/* Info Box */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <h3 className="font-medium text-sm text-blue-800 dark:text-blue-200 mb-1">
                     ¿Cómo funcionan las reglas?
                 </h3>
-                <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                    <li>• <strong>REDIRIGIR:</strong> Mueve valores de un concepto/proyecto a otro proyecto</li>
-                    <li>• <strong>EXCLUIR:</strong> No importa valores de ese concepto/proyecto</li>
-                    <li>• Si el proyecto origen está vacío, aplica a todos los proyectos</li>
+                <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-0.5">
+                    <li>• <strong>REDIRIGIR:</strong> Mueve valores a otro proyecto</li>
+                    <li>• <strong>EXCLUIR:</strong> No importa esos valores</li>
                 </ul>
             </div>
 
@@ -138,32 +137,32 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
             {!showForm && (
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                    <Plus size={18} />
+                    <Plus size={16} />
                     Nueva Regla
                 </button>
             )}
 
             {/* Form */}
             {showForm && (
-                <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium dark:text-white">
+                <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-sm dark:text-white">
                             {editingId ? 'Editar Regla' : 'Nueva Regla'}
                         </h3>
                         <button type="button" onClick={resetForm} className="text-gray-500 hover:text-gray-700">
-                            <X size={20} />
+                            <X size={18} />
                         </button>
                     </div>
 
                     {/* Rule Type */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Tipo de Regla
                         </label>
                         <div className="flex gap-4">
-                            <label className="flex items-center gap-2">
+                            <label className="flex items-center gap-1 text-sm">
                                 <input
                                     type="radio"
                                     value="REDIRECT"
@@ -171,10 +170,10 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
                                     onChange={(e) => setRuleType(e.target.value as 'REDIRECT')}
                                     className="text-blue-600"
                                 />
-                                <ArrowRight size={16} className="text-blue-600" />
+                                <ArrowRight size={14} className="text-blue-600" />
                                 <span className="dark:text-white">Redirigir</span>
                             </label>
-                            <label className="flex items-center gap-2">
+                            <label className="flex items-center gap-1 text-sm">
                                 <input
                                     type="radio"
                                     value="EXCLUDE"
@@ -182,16 +181,16 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
                                     onChange={(e) => setRuleType(e.target.value as 'EXCLUDE')}
                                     className="text-red-600"
                                 />
-                                <Ban size={16} className="text-red-600" />
+                                <Ban size={14} className="text-red-600" />
                                 <span className="dark:text-white">Excluir</span>
                             </label>
                         </div>
                     </div>
 
                     {/* Source */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Proyecto Origen (opcional)
                             </label>
                             <input
@@ -199,20 +198,20 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
                                 value={sourceProject}
                                 onChange={(e) => setSourceProject(e.target.value)}
                                 placeholder="Vacío = cualquier proyecto"
-                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Concepto Origen *
                             </label>
                             <input
                                 type="text"
                                 value={sourceConcept}
                                 onChange={(e) => setSourceConcept(e.target.value)}
-                                placeholder="Ej: Telefonía, Renta Variable..."
+                                placeholder="Ej: Telefonía, Renta..."
                                 required
-                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             />
                         </div>
                     </div>
@@ -220,7 +219,7 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
                     {/* Target (only for REDIRECT) */}
                     {ruleType === 'REDIRECT' && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Proyecto Destino *
                             </label>
                             <input
@@ -229,14 +228,14 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
                                 onChange={(e) => setTargetProject(e.target.value)}
                                 placeholder="Ej: Administración"
                                 required
-                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             />
                         </div>
                     )}
 
                     {/* Description */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Descripción (opcional)
                         </label>
                         <input
@@ -244,23 +243,23 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Nota explicativa..."
-                            className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-2 pt-2">
                         <button
                             type="submit"
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                         >
-                            <Save size={18} />
-                            {editingId ? 'Guardar Cambios' : 'Crear Regla'}
+                            <Save size={14} />
+                            {editingId ? 'Guardar' : 'Crear'}
                         </button>
                         <button
                             type="button"
                             onClick={resetForm}
-                            className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                            className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                         >
                             Cancelar
                         </button>
@@ -270,89 +269,87 @@ export default function ImportRulesClient({ companyId, companyName }: Props) {
 
             {/* Rules List */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                    <h3 className="font-medium dark:text-white">
-                        Reglas Configuradas ({rules.length})
+                <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                    <h3 className="font-medium text-sm dark:text-white">
+                        Reglas ({rules.length})
                     </h3>
                 </div>
 
                 {rules.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">
-                        No hay reglas configuradas. Las reglas permiten transformar automáticamente los datos durante la importación.
+                    <div className="p-4 text-center text-xs text-gray-500">
+                        No hay reglas configuradas.
                     </div>
                 ) : (
                     <div className="divide-y dark:divide-gray-700">
                         {rules.map((rule) => (
                             <div
                                 key={rule.id}
-                                className={`p-4 ${!rule.isActive ? 'opacity-50' : ''}`}
+                                className={`p-3 ${!rule.isActive ? 'opacity-50' : ''}`}
                             >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start gap-2 min-w-0">
                                         {/* Type Icon */}
                                         {rule.ruleType === 'REDIRECT' ? (
-                                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                                <ArrowRight size={20} className="text-blue-600" />
+                                            <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded shrink-0">
+                                                <ArrowRight size={14} className="text-blue-600" />
                                             </div>
                                         ) : (
-                                            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                                                <Ban size={20} className="text-red-600" />
+                                            <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded shrink-0">
+                                                <Ban size={14} className="text-red-600" />
                                             </div>
                                         )}
 
                                         {/* Rule Details */}
-                                        <div>
-                                            <div className="flex items-center gap-2 dark:text-white">
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-1 text-sm dark:text-white">
                                                 {rule.sourceProjectName && (
                                                     <>
-                                                        <span className="font-medium">{rule.sourceProjectName}</span>
+                                                        <span className="font-medium truncate">{rule.sourceProjectName}</span>
                                                         <span className="text-gray-400">+</span>
                                                     </>
                                                 )}
-                                                <span className="font-medium">{rule.sourceConceptName}</span>
+                                                <span className="font-medium truncate">{rule.sourceConceptName}</span>
 
                                                 {rule.ruleType === 'REDIRECT' && (
                                                     <>
-                                                        <ArrowRight size={16} className="text-gray-400" />
-                                                        <span className="text-blue-600 font-medium">
+                                                        <ArrowRight size={12} className="text-gray-400 shrink-0" />
+                                                        <span className="text-blue-600 font-medium truncate">
                                                             {rule.targetProjectName}
                                                         </span>
                                                     </>
                                                 )}
 
                                                 {rule.ruleType === 'EXCLUDE' && (
-                                                    <span className="text-red-600 text-sm ml-2">(se ignora)</span>
+                                                    <span className="text-red-600 text-xs">(excluido)</span>
                                                 )}
                                             </div>
                                             {rule.description && (
-                                                <p className="text-sm text-gray-500">{rule.description}</p>
+                                                <p className="text-xs text-gray-500 truncate">{rule.description}</p>
                                             )}
                                         </div>
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1 shrink-0">
                                         <button
                                             onClick={() => handleToggleActive(rule)}
-                                            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${rule.isActive ? 'text-green-600' : 'text-gray-400'
+                                            className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${rule.isActive ? 'text-green-600' : 'text-gray-400'
                                                 }`}
                                             title={rule.isActive ? 'Desactivar' : 'Activar'}
                                         >
-                                            {rule.isActive ? <Power size={18} /> : <PowerOff size={18} />}
+                                            {rule.isActive ? <Power size={14} /> : <PowerOff size={14} />}
                                         </button>
                                         <button
                                             onClick={() => handleEdit(rule)}
-                                            className="p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded"
-                                            title="Editar"
+                                            className="p-1 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded"
                                         >
-                                            <Edit2 size={18} />
+                                            <Edit2 size={14} />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(rule.id)}
-                                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                                            title="Eliminar"
+                                            className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </div>

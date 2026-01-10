@@ -105,26 +105,26 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
     };
 
     return (
-        <div>
-            <div className="flex items-center gap-3 mb-6">
+        <div className="space-y-4">
+            <div className="flex items-center gap-2">
                 <Link href="/reconciliations" className="text-gray-500 hover:text-gray-700">
-                    <ArrowLeft size={24} />
+                    <ArrowLeft size={18} />
                 </Link>
-                <FileSpreadsheet className="text-blue-600" size={28} />
-                <h1 className="text-2xl font-bold dark:text-white">Nueva Conciliacion</h1>
+                <FileSpreadsheet className="text-blue-600" size={22} />
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Nueva Conciliación</h1>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {/* Company */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Empresa *
                         </label>
                         <select
                             value={companyId}
                             onChange={(e) => setCompanyId(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             required
                         >
                             {companies.map((c) => (
@@ -135,13 +135,13 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
 
                     {/* Project */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyecto
                         </label>
                         <select
                             value={projectId}
                             onChange={(e) => setProjectId(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
                             <option value="">Sin proyecto</option>
                             {filteredProjects.map((p) => (
@@ -152,115 +152,115 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
 
                     {/* Concept */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Concepto
                         </label>
                         <select
                             value={conceptId}
                             onChange={(e) => setConceptId(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
                             <option value="">Sin concepto</option>
                             {concepts.map((c) => (
-                                <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
+                                <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                         </select>
                     </div>
 
                     {/* Date */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Fecha *
                         </label>
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             required
                         />
                     </div>
 
                     {/* Reference */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Referencia
                         </label>
                         <input
                             type="text"
                             value={reference}
                             onChange={(e) => setReference(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Numero de referencia"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Num. referencia"
                         />
                     </div>
 
                     {/* Invoice */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Factura
                         </label>
                         <input
                             type="text"
                             value={invoice}
                             onChange={(e) => setInvoice(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Numero de factura"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Num. factura"
                         />
                     </div>
 
                     {/* Policy */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Poliza
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Póliza
                         </label>
                         <input
                             type="text"
                             value={policy}
                             onChange={(e) => setPolicy(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Numero de poliza"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Num. póliza"
                         />
                     </div>
 
                     {/* Check Number */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Cheque
                         </label>
                         <input
                             type="text"
                             value={checkNumber}
                             onChange={(e) => setCheckNumber(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Numero de cheque"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Num. cheque"
                         />
                     </div>
 
                     {/* Supplier */}
                     <div className="md:col-span-2 lg:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proveedor
                         </label>
                         <input
                             type="text"
                             value={supplier}
                             onChange={(e) => setSupplier(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             placeholder="Nombre del proveedor"
                         />
                     </div>
 
                     {/* Subtotal */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Subtotal
                         </label>
                         <input
                             type="number"
                             value={subtotal}
                             onChange={(e) => setSubtotal(parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             min="0"
                             step="0.01"
                         />
@@ -268,14 +268,14 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
 
                     {/* Tax */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             IVA
                         </label>
                         <input
                             type="number"
                             value={tax}
                             onChange={(e) => setTax(parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             min="0"
                             step="0.01"
                         />
@@ -283,14 +283,14 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
 
                     {/* Total */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Total *
                         </label>
                         <input
                             type="number"
                             value={total}
                             onChange={(e) => setTotal(parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white font-bold"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white font-bold"
                             min="0"
                             step="0.01"
                             required
@@ -300,32 +300,32 @@ export function ReconciliationNewClient({ companies, projects, concepts }: Recon
 
                 {/* Error */}
                 {error && (
-                    <div className="mt-4 p-3 bg-red-100 text-red-800 rounded">
+                    <div className="mt-3 p-2 bg-red-100 text-red-800 text-sm rounded">
                         {error}
                     </div>
                 )}
 
                 {/* Success */}
                 {success && (
-                    <div className="mt-4 p-3 bg-green-100 text-green-800 rounded">
-                        Conciliacion guardada correctamente
+                    <div className="mt-3 p-2 bg-green-100 text-green-800 text-sm rounded">
+                        Conciliación guardada
                     </div>
                 )}
 
                 {/* Actions */}
-                <div className="mt-6 flex justify-end gap-4">
+                <div className="mt-4 flex justify-end gap-2">
                     <Link
                         href="/reconciliations"
-                        className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
                     >
                         Cancelar
                     </Link>
                     <button
                         type="submit"
                         disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                     >
-                        <Save size={16} />
+                        <Save size={14} />
                         {saving ? 'Guardando...' : 'Guardar'}
                     </button>
                 </div>

@@ -193,23 +193,23 @@ export function ProfitSharingConfigClient({ companies }: ProfitSharingConfigClie
     };
 
     return (
-        <div>
-            <div className="flex items-center gap-3 mb-6">
-                <Settings className="text-blue-600" size={28} />
-                <h1 className="text-2xl font-bold dark:text-white">Configuracion de Reparto</h1>
+        <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+                <Settings className="text-blue-600" size={22} />
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Configuración de Reparto</h1>
             </div>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <div className="flex flex-wrap gap-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Empresa
                         </label>
                         <select
                             value={selectedCompanyId}
                             onChange={(e) => setSelectedCompanyId(e.target.value)}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
                             {companies.map((company) => (
                                 <option key={company.id} value={company.id}>
@@ -219,13 +219,13 @@ export function ProfitSharingConfigClient({ companies }: ProfitSharingConfigClie
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyecto
                         </label>
                         <select
                             value={selectedProjectId}
                             onChange={(e) => setSelectedProjectId(e.target.value)}
-                            className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px]"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             disabled={projects.length === 0}
                         >
                             <option value="">Seleccionar proyecto...</option>
@@ -238,45 +238,45 @@ export function ProfitSharingConfigClient({ companies }: ProfitSharingConfigClie
                     </div>
                 </div>
                 {projects.length === 0 && !loading && (
-                    <p className="text-sm text-amber-600 mt-2">
-                        No hay proyectos con reparto de utilidades activo en esta empresa
+                    <p className="text-xs text-amber-600 mt-2">
+                        No hay proyectos con reparto activo
                     </p>
                 )}
             </div>
 
             {selectedProjectId && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
                     {/* Formula Type Selector */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tipo de Formula
+                    <div className="mb-4">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Tipo de Fórmula
                         </label>
                         <select
                             value={formulaType}
                             onChange={(e) => setFormulaType(e.target.value as FormulaType)}
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
                             {formulaTypes.map((ft) => (
                                 <option key={ft.type} value={ft.type}>
-                                    {ft.label} - {ft.description}
+                                    {ft.label}
                                 </option>
                             ))}
                         </select>
                     </div>
 
                     {/* Dynamic fields based on formula type */}
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {/* FIXED_ONLY, FIXED_PLUS_PERCENT */}
                         {(formulaType === 'FIXED_ONLY' || formulaType === 'FIXED_PLUS_PERCENT') && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Monto Fijo ($)
                                 </label>
                                 <input
                                     type="number"
                                     value={fixedAmount}
                                     onChange={(e) => setFixedAmount(parseFloat(e.target.value) || 0)}
-                                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     min="0"
                                     step="100"
                                 />
@@ -286,14 +286,14 @@ export function ProfitSharingConfigClient({ companies }: ProfitSharingConfigClie
                         {/* PERCENT_SIMPLE, FIXED_PLUS_PERCENT, SPECIAL_FORMULA */}
                         {(formulaType === 'PERCENT_SIMPLE' || formulaType === 'FIXED_PLUS_PERCENT' || formulaType === 'SPECIAL_FORMULA') && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Porcentaje (%)
                                 </label>
                                 <input
                                     type="number"
                                     value={percentRate}
                                     onChange={(e) => setPercentRate(parseFloat(e.target.value) || 0)}
-                                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     min="0"
                                     max="100"
                                     step="0.5"
@@ -303,34 +303,34 @@ export function ProfitSharingConfigClient({ companies }: ProfitSharingConfigClie
 
                         {/* SPECIAL_FORMULA */}
                         {formulaType === 'SPECIAL_FORMULA' && (
-                            <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Utilidad Minima ($)
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Utilidad Mínima ($)
                                     </label>
                                     <input
                                         type="number"
                                         value={minimumProfit}
                                         onChange={(e) => setMinimumProfit(parseFloat(e.target.value) || 0)}
-                                        className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         min="0"
                                         step="1000"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Tope Maximo ($)
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Tope Máximo ($)
                                     </label>
                                     <input
                                         type="number"
                                         value={maximumShare}
                                         onChange={(e) => setMaximumShare(parseFloat(e.target.value) || 0)}
-                                        className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         min="0"
                                         step="1000"
                                     />
                                 </div>
-                            </>
+                            </div>
                         )}
 
                         {/* TIERED */}

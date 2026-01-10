@@ -685,38 +685,38 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
+        <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={() => router.push('/results')}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                        className="p-1 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
                     >
-                        <ArrowLeft size={20} />
+                        <ArrowLeft size={18} />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold dark:text-white">Importar Resultados</h1>
-                        <p className="text-sm text-gray-500">{companyName}</p>
+                        <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Importar Resultados</h1>
+                        <p className="text-xs text-gray-500">{companyName}</p>
                     </div>
                     {/* Import Rules Indicator */}
                     <Link
                         href="/catalogs/import-rules"
-                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs ${importRules.length > 0
+                        className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${importRules.length > 0
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                             : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
                             }`}
                         title="Configurar reglas de importación"
                     >
-                        <Settings size={12} />
+                        <Settings size={10} />
                         {importRules.length} reglas
                     </Link>
                 </div>
                 {parsedData && (
                     <button
                         onClick={handleCancel}
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 border rounded-lg hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 border rounded hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                     >
-                        <X size={20} />
+                        <X size={16} />
                         Cancelar
                     </button>
                 )}
@@ -729,20 +729,20 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${dragActive
+                    className={`border-2 border-dashed rounded-lg p-8 md:p-12 text-center transition-colors ${dragActive
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                         }`}
                 >
-                    <Upload size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
-                        Arrastra el archivo Excel aqui
+                    <Upload size={40} className="mx-auto text-gray-400 mb-3" />
+                    <p className="text-base text-gray-600 dark:text-gray-300 mb-2">
+                        Arrastra el archivo Excel aquí
                     </p>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p className="text-xs text-gray-500 mb-3">
                         o
                     </p>
                     <label className="cursor-pointer">
-                        <span className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <span className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
                             Seleccionar archivo
                         </span>
                         <input
@@ -752,8 +752,8 @@ export function ImportPreviewClient({ companyId: defaultCompanyId, companyName: 
                             className="hidden"
                         />
                     </label>
-                    <p className="text-xs text-gray-400 mt-4">
-                        Formatos aceptados: .xlsx, .xls
+                    <p className="text-xs text-gray-400 mt-3">
+                        Formatos: .xlsx, .xls
                     </p>
                 </div>
             )}
