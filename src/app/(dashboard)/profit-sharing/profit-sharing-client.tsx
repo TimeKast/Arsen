@@ -57,9 +57,9 @@ export function ProfitSharingViewClient({ companies, initialYear }: ProfitSharin
 
     return (
         <div>
-            <div className="flex items-center gap-3 mb-6">
-                <Calculator className="text-blue-600" size={28} />
-                <h1 className="text-2xl font-bold dark:text-white">Reparto de Utilidades</h1>
+            <div className="flex items-center gap-2 mb-4">
+                <Calculator className="text-blue-600" size={24} />
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Reparto de Utilidades</h1>
             </div>
 
             {/* No local filters needed - Company and Period are controlled by global header */}
@@ -72,46 +72,78 @@ export function ProfitSharingViewClient({ companies, initialYear }: ProfitSharin
                     <p className="text-sm mt-2">Verifica que los proyectos tengan reparto configurado y que se hayan importado resultados.</p>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                                    <DollarSign className="text-blue-600" size={24} />
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                    <DollarSign className="text-blue-600" size={18} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Utilidad Total</p>
-                                    <p className="text-xl font-bold text-blue-600">{formatCurrency(totalProfit)}</p>
+                                    <p className="text-xs text-gray-500">Utilidad</p>
+                                    <p className="text-sm sm:text-xl font-bold text-blue-600">{formatCurrency(totalProfit)}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
-                                    <Calculator className="text-amber-600" size={24} />
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="p-1.5 sm:p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
+                                    <Calculator className="text-amber-600" size={18} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Honorario (Reparto)</p>
-                                    <p className="text-xl font-bold text-amber-600">{formatCurrency(totalShare)}</p>
+                                    <p className="text-xs text-gray-500">Honorario</p>
+                                    <p className="text-sm sm:text-xl font-bold text-amber-600">{formatCurrency(totalShare)}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                                    <DollarSign className="text-green-600" size={24} />
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                                    <DollarSign className="text-green-600" size={18} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Utilidad Cliente</p>
-                                    <p className="text-xl font-bold text-green-600">{formatCurrency(clientShare)}</p>
+                                    <p className="text-xs text-gray-500">Cliente</p>
+                                    <p className="text-sm sm:text-xl font-bold text-green-600">{formatCurrency(clientShare)}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Results Table */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                    {/* Mobile Cards View */}
+                    <div className="md:hidden space-y-2">
+                        {data.map((row) => (
+                            <div key={row.projectId} className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                    <span className="font-medium dark:text-white truncate">{row.projectName}</span>
+                                    <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 rounded">{row.formulaType}</span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                    <div>
+                                        <p className="text-gray-500">Utilidad</p>
+                                        <p className="text-blue-600 font-medium">{formatCurrency(row.netProfit)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500">Honorario</p>
+                                        <p className="text-amber-600 font-medium">{formatCurrency(row.totalShare)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500">Cliente</p>
+                                        <p className="text-green-600 font-medium">{formatCurrency(row.netProfit - row.totalShare)}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedProject(row)}
+                                    className="mt-2 text-blue-600 text-xs underline"
+                                >
+                                    Ver detalle
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
@@ -128,7 +160,7 @@ export function ProfitSharingViewClient({ companies, initialYear }: ProfitSharin
                                     <tr key={row.projectId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td className="px-4 py-3 font-medium dark:text-white">{row.projectName}</td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-600">
+                                            <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-600">
                                                 {row.formulaType}
                                             </span>
                                         </td>

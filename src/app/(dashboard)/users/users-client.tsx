@@ -84,34 +84,93 @@ export function UsersClient({ initialUsers, companies, areas }: UsersClientProps
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold dark:text-white">Usuarios</h1>
+            {/* Header - responsive layout */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Usuarios</h1>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="p-2 sm:px-3 sm:py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 self-end sm:self-auto"
                 >
-                    <Plus size={20} />
-                    Nuevo Usuario
+                    <Plus size={18} className="sm:hidden" />
+                    <span className="hidden sm:inline text-sm">+ Nuevo</span>
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            {/* Mobile Cards View */}
+            <div className="md:hidden space-y-2">
+                {users.map((user) => (
+                    <div
+                        key={user.id}
+                        className={`bg-white dark:bg-gray-800 rounded-lg shadow p-3 ${!user.isActive ? 'opacity-50' : ''}`}
+                    >
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium dark:text-white truncate">{user.name}</span>
+                                    <span className={`px-1.5 py-0.5 rounded-full text-xs ${roleColors[user.role]}`}>
+                                        {roleLabels[user.role]}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                                {user.area && (
+                                    <p className="text-xs text-gray-400">Área: {user.area.name}</p>
+                                )}
+                                {user.companies.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {user.companies.slice(0, 2).map((uc) => (
+                                            <span key={uc.company.id} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                                {uc.company.name}
+                                            </span>
+                                        ))}
+                                        {user.companies.length > 2 && (
+                                            <span className="text-xs text-gray-400">+{user.companies.length - 2}</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => { setEditingUser(user); setShowForm(true); }}
+                                    className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                >
+                                    <Pencil size={14} />
+                                </button>
+                                <button
+                                    onClick={() => handleToggleActive(user.id)}
+                                    disabled={isPending}
+                                    className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                >
+                                    <Power size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {users.length === 0 && (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center text-gray-500">
+                        No hay usuarios registrados
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                 <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Usuario
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Rol
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Empresas
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Estado
                             </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Acciones
                             </th>
                         </tr>
@@ -119,22 +178,22 @@ export function UsersClient({ initialUsers, companies, areas }: UsersClientProps
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {users.map((user) => (
                             <tr key={user.id} className={!user.isActive ? 'opacity-50' : ''}>
-                                <td className="px-6 py-4">
+                                <td className="px-4 py-3">
                                     <div>
                                         <div className="font-medium dark:text-white">{user.name}</div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
                                         {user.area && (
-                                            <div className="text-xs text-gray-400">Area: {user.area.name}</div>
+                                            <div className="text-xs text-gray-400">Área: {user.area.name}</div>
                                         )}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-center">
-                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${roleColors[user.role]}`}>
+                                <td className="px-4 py-3 text-center">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${roleColors[user.role]}`}>
                                         <Shield size={12} className="mr-1" />
                                         {roleLabels[user.role]}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-4 py-3">
                                     <div className="flex flex-wrap gap-1">
                                         {user.companies.map((uc) => (
                                             <span
@@ -146,35 +205,35 @@ export function UsersClient({ initialUsers, companies, areas }: UsersClientProps
                                         ))}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-4 py-3 text-center">
                                     <span
-                                        className={`inline-flex px-2 py-1 rounded-full text-xs ${user.isActive
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
+                                        className={`inline-flex px-2 py-0.5 rounded-full text-xs ${user.isActive
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
                                             }`}
                                     >
                                         {user.isActive ? 'Activo' : 'Inactivo'}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end gap-2">
+                                <td className="px-4 py-3 text-right">
+                                    <div className="flex justify-end gap-1">
                                         <button
                                             onClick={() => {
                                                 setEditingUser(user);
                                                 setShowForm(true);
                                             }}
-                                            className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
                                             title="Editar"
                                         >
-                                            <Pencil size={16} />
+                                            <Pencil size={15} />
                                         </button>
                                         <button
                                             onClick={() => handleToggleActive(user.id)}
                                             disabled={isPending}
-                                            className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
                                             title="Activar/Desactivar"
                                         >
-                                            <Power size={16} />
+                                            <Power size={15} />
                                         </button>
                                     </div>
                                 </td>
@@ -182,7 +241,7 @@ export function UsersClient({ initialUsers, companies, areas }: UsersClientProps
                         ))}
                         {users.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
                                     No hay usuarios registrados
                                 </td>
                             </tr>

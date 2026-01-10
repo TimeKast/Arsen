@@ -138,23 +138,23 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <FileSpreadsheet className="text-blue-600" size={28} />
-                    <h1 className="text-2xl font-bold dark:text-white">Conciliaciones</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="text-blue-600" size={24} />
+                    <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Conciliaciones</h1>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 self-end sm:self-auto">
                     <Link
                         href="/reconciliations/import"
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-200"
+                        className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-200"
                     >
                         Importar
                     </Link>
                     <Link
                         href="/reconciliations/new"
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                     >
-                        <Plus size={16} /> Nueva
+                        <Plus size={14} /> Nueva
                     </Link>
                 </div>
             </div>
@@ -239,7 +239,7 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
                 </div>
             </div>
 
-            {/* Table */}
+            {/* Content */}
             {loading ? (
                 <div className="text-center py-8 text-gray-500">Cargando...</div>
             ) : paginatedData.length === 0 ? (
@@ -247,53 +247,93 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
                     No hay conciliaciones para mostrar
                 </div>
             ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-50 dark:bg-gray-700">
-                                <tr>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Fecha</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Referencia</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Proveedor</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">U. Negocio</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cuenta</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Entradas</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Salidas</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Saldo</th>
-                                    <th className="px-3 py-2"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                                {paginatedData.map((row) => (
-                                    <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="px-3 py-2">{formatDate(row.date)}</td>
-                                        <td className="px-3 py-2">{row.reference || '-'}</td>
-                                        <td className="px-3 py-2">{row.supplier || '-'}</td>
-                                        <td className="px-3 py-2">{row.businessUnit || '-'}</td>
-                                        <td className="px-3 py-2">{row.account || '-'}</td>
-                                        <td className="px-3 py-2 text-right text-green-600">{formatCurrency(row.entries)}</td>
-                                        <td className="px-3 py-2 text-right text-red-600">{formatCurrency(row.withdrawals)}</td>
-                                        <td className="px-3 py-2 text-right font-medium">{formatCurrency(row.balance)}</td>
-                                        <td className="px-3 py-2">
-                                            <button
-                                                onClick={() => handleDelete(row.id)}
-                                                className="text-red-500 hover:text-red-700"
-                                                title="Eliminar"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </td>
+                <>
+                    {/* Mobile Cards View */}
+                    <div className="md:hidden space-y-2">
+                        {paginatedData.map((row) => (
+                            <div key={row.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs text-gray-500">{formatDate(row.date)}</span>
+                                            {row.reference && (
+                                                <span className="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{row.reference}</span>
+                                            )}
+                                        </div>
+                                        <p className="font-medium dark:text-white text-sm truncate">{row.supplier || 'Sin proveedor'}</p>
+                                        {row.businessUnit && (
+                                            <p className="text-xs text-gray-500 truncate">{row.businessUnit}</p>
+                                        )}
+                                        <div className="flex items-center gap-3 mt-2 text-xs">
+                                            {row.entries && parseFloat(row.entries) > 0 && (
+                                                <span className="text-green-600">+{formatCurrency(row.entries)}</span>
+                                            )}
+                                            {row.withdrawals && parseFloat(row.withdrawals) > 0 && (
+                                                <span className="text-red-600">-{formatCurrency(row.withdrawals)}</span>
+                                            )}
+                                            <span className="font-medium dark:text-white">{formatCurrency(row.balance)}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDelete(row.id)}
+                                        className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Fecha</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Referencia</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Proveedor</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">U. Negocio</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Cuenta</th>
+                                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Entradas</th>
+                                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Salidas</th>
+                                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Saldo</th>
+                                        <th className="px-3 py-2"></th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                                    {paginatedData.map((row) => (
+                                        <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                            <td className="px-3 py-2">{formatDate(row.date)}</td>
+                                            <td className="px-3 py-2">{row.reference || '-'}</td>
+                                            <td className="px-3 py-2">{row.supplier || '-'}</td>
+                                            <td className="px-3 py-2">{row.businessUnit || '-'}</td>
+                                            <td className="px-3 py-2">{row.account || '-'}</td>
+                                            <td className="px-3 py-2 text-right text-green-600">{formatCurrency(row.entries)}</td>
+                                            <td className="px-3 py-2 text-right text-red-600">{formatCurrency(row.withdrawals)}</td>
+                                            <td className="px-3 py-2 text-right font-medium">{formatCurrency(row.balance)}</td>
+                                            <td className="px-3 py-2">
+                                                <button
+                                                    onClick={() => handleDelete(row.id)}
+                                                    className="text-red-500 hover:text-red-700"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
+                        <div className="mt-4 px-4 py-3 bg-white dark:bg-gray-800 rounded-lg shadow flex justify-between items-center">
                             <span className="text-sm text-gray-500">
-                                Pagina {page} de {totalPages}
+                                Página {page} de {totalPages}
                             </span>
                             <div className="flex gap-2">
                                 <button
@@ -313,7 +353,7 @@ export function ReconciliationsClient({ companies, projects }: ReconciliationsCl
                             </div>
                         </div>
                     )}
-                </div>
+                </>
             )}
         </div>
     );
