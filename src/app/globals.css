@@ -123,3 +123,45 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile Optimization - Prevent horizontal overflow */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  .text-2xl {
+    font-size: 1.375rem;
+    line-height: 1.75rem;
+  }
+  .text-xl {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* Safe area support for PWA */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Smooth transitions for layout changes */
+.transition-layout {
+  transition: margin-left 0.3s ease, padding 0.3s ease;
+}
+
+/* Mobile drawer overlay */
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 35;
+  backdrop-filter: blur(2px);
+}

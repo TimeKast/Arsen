@@ -22,7 +22,8 @@ import {
     Layers,
     FileSpreadsheet,
     Shuffle,
-    Scale
+    Scale,
+    X
 } from 'lucide-react';
 
 interface NavItem {
@@ -60,9 +61,12 @@ const navItems: NavItem[] = [
 interface SidebarProps {
     collapsed: boolean;
     onToggle: () => void;
+    isMobile?: boolean;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, isMobile = false, isOpen = false, onClose }: SidebarProps) {
     const pathname = usePathname();
     const { data: session } = useSession();
     const userRole = session?.user?.role || 'READONLY';
@@ -73,10 +77,122 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         return item.roles.includes(userRole);
     });
 
+    // Mobile drawer mode
+    if (isMobile) {
+        return (
+            <>
+                {/* Overlay */}
+                {isOpen && (
+                    <div
+                        className="mobile-overlay"
+                        onClick={onClose}
+                        aria-hidden="true"
+                    />
+                )}
+                {/* Drawer */}
+                <aside
+                    className={cn(
+                        'fixed left-0 top-0 z-40 h-screen w-64 bg-gray-900 text-white transition-transform duration-300 ease-in-out',
+                        isOpen ? 'translate-x-0' : '-translate-x-full'
+                    )}
+                >
+                    {/* Header with close button */}
+                    <div className="flex h-16 items-center justify-between px-4 border-b border-gray-800">
+                        <span className="text-xl font-bold">Arsen</span>
+                        <button
+                            onClick={onClose}
+                            className="rounded p-1.5 hover:bg-gray-800"
+                            aria-label="Cerrar menú"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Navigation */}
+                    <nav className="mt-4 px-2 overflow-y-auto max-h-[calc(100vh-4rem)]">
+                        <ul className="space-y-1">
+                            {visibleItems.map((item) => {
+                                const isActive = pathname === item.href ||
+                                    (item.href !== '/' && pathname.startsWith(item.href));
+                                const hasSubItems = item.subItems && item.subItems.length > 0;
+
+                                if (hasSubItems) {
+                                    return (
+                                        <li key={item.href}>
+                                            <button
+                                                onClick={() => setCatalogsExpanded(!catalogsExpanded)}
+                                                className={cn(
+                                                    'w-full flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors',
+                                                    isActive
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                                )}
+                                            >
+                                                {item.icon}
+                                                <span className="flex-1 text-left">{item.label}</span>
+                                                <ChevronDown
+                                                    size={16}
+                                                    className={cn('transition-transform', catalogsExpanded && 'rotate-180')}
+                                                />
+                                            </button>
+                                            {catalogsExpanded && (
+                                                <ul className="mt-1 ml-4 space-y-1 border-l border-gray-700 pl-3">
+                                                    {item.subItems!.map((subItem) => {
+                                                        const isSubActive = pathname === subItem.href;
+                                                        return (
+                                                            <li key={subItem.href}>
+                                                                <Link
+                                                                    href={subItem.href}
+                                                                    onClick={onClose}
+                                                                    className={cn(
+                                                                        'flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors',
+                                                                        isSubActive
+                                                                            ? 'bg-blue-600 text-white'
+                                                                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                                                    )}
+                                                                >
+                                                                    {subItem.icon}
+                                                                    <span>{subItem.label}</span>
+                                                                </Link>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            )}
+                                        </li>
+                                    );
+                                }
+
+                                return (
+                                    <li key={item.href}>
+                                        <Link
+                                            href={item.href}
+                                            onClick={onClose}
+                                            className={cn(
+                                                'flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors',
+                                                isActive
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                            )}
+                                        >
+                                            {item.icon}
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </nav>
+                </aside>
+            </>
+        );
+    }
+
+    // Desktop sidebar (unchanged behavior)
     return (
         <aside
             className={cn(
-                'fixed left-0 top-0 z-40 h-screen bg-gray-900 text-white transition-all duration-300',
+                'fixed left-0 top-0 z-40 h-screen bg-gray-900 text-white transition-all duration-300 hidden md:block',
                 collapsed ? 'w-16' : 'w-64'
             )}
         >

@@ -82,16 +82,16 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
     return (
         <div>
             {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold dark:text-white">Bienvenido, {userName}</h1>
-                <p className="text-gray-500">
+            <div className="mb-4 md:mb-6">
+                <h1 className="text-xl md:text-2xl font-bold dark:text-white">Bienvenido, {userName}</h1>
+                <p className="text-sm md:text-base text-gray-500">
                     {selectedCompany} - {monthDisplay} {selectedYear}
                 </p>
             </div>
 
             {/* Filters - Project (Company and Period are in global header) */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <div className="flex flex-wrap gap-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-4 md:mb-6">
+                <div className="flex flex-wrap gap-3 md:gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyectos
@@ -112,52 +112,52 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
                     <p>No hay datos disponibles para este periodo.</p>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                     {/* KPI Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                                    <DollarSign className="text-green-600" size={24} />
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <div className="p-1.5 md:p-2 bg-green-100 dark:bg-green-900 rounded-lg flex-shrink-0">
+                                    <DollarSign className="text-green-600 w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Ingresos</p>
-                                    <p className="text-xl font-bold text-green-600">{formatCurrency(kpis.totalIncome)}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-                                    <TrendingDown className="text-red-600" size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Costos</p>
-                                    <p className="text-xl font-bold text-red-600">{formatCurrency(kpis.totalCost)}</p>
+                                <div className="min-w-0">
+                                    <p className="text-xs md:text-sm text-gray-500">Ingresos</p>
+                                    <p className="text-base md:text-xl font-bold text-green-600 truncate">{formatCurrency(kpis.totalIncome)}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${kpis.netProfit >= 0 ? 'bg-blue-100 dark:bg-blue-900' : 'bg-amber-100 dark:bg-amber-900'}`}>
-                                    <TrendingUp className={kpis.netProfit >= 0 ? 'text-blue-600' : 'text-amber-600'} size={24} />
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <div className="p-1.5 md:p-2 bg-red-100 dark:bg-red-900 rounded-lg flex-shrink-0">
+                                    <TrendingDown className="text-red-600 w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Utilidad</p>
-                                    <p className={`text-xl font-bold ${kpis.netProfit >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
+                                <div className="min-w-0">
+                                    <p className="text-xs md:text-sm text-gray-500">Costos</p>
+                                    <p className="text-base md:text-xl font-bold text-red-600 truncate">{formatCurrency(kpis.totalCost)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 ${kpis.netProfit >= 0 ? 'bg-blue-100 dark:bg-blue-900' : 'bg-amber-100 dark:bg-amber-900'}`}>
+                                    <TrendingUp className={`w-5 h-5 md:w-6 md:h-6 ${kpis.netProfit >= 0 ? 'text-blue-600' : 'text-amber-600'}`} />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs md:text-sm text-gray-500">Utilidad</p>
+                                    <p className={`text-base md:text-xl font-bold truncate ${kpis.netProfit >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
                                         {formatCurrency(kpis.netProfit)}
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${kpis.budgetDeviation >= 0 ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
-                                    <Target className={kpis.budgetDeviation >= 0 ? 'text-green-600' : 'text-red-600'} size={24} />
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 ${kpis.budgetDeviation >= 0 ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
+                                    <Target className={`w-5 h-5 md:w-6 md:h-6 ${kpis.budgetDeviation >= 0 ? 'text-green-600' : 'text-red-600'}`} />
                                 </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">vs Presupuesto</p>
-                                    <p className={`text-xl font-bold ${kpis.budgetDeviation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                <div className="min-w-0">
+                                    <p className="text-xs md:text-sm text-gray-500 truncate">vs Presupuesto</p>
+                                    <p className={`text-base md:text-xl font-bold ${kpis.budgetDeviation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatPercent(kpis.budgetDeviationPercent)}
                                     </p>
                                 </div>
@@ -165,7 +165,7 @@ export function DashboardClient({ companies, projects, initialYear, userName }: 
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                         {/* Top Projects */}
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
                             <div className="px-4 py-3 border-b dark:border-gray-700 flex items-center gap-2">
