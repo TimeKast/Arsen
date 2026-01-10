@@ -157,13 +157,14 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold dark:text-white">Conceptos</h1>
-                <div className="flex items-center gap-4">
+            {/* Header - responsive layout */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Conceptos</h1>
+                <div className="flex items-center gap-2">
                     <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value as 'ALL' | 'INCOME' | 'COST')}
-                        className="px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        className="flex-1 sm:flex-none px-2 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
                         <option value="ALL">Todos</option>
                         <option value="INCOME">Ingresos</option>
@@ -174,42 +175,101 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                             <button
                                 onClick={handleCleanDuplicates}
                                 disabled={isPending}
-                                className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                                className="p-2 sm:px-3 sm:py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
                                 title="Fusionar conceptos duplicados automáticamente"
                             >
-                                <Sparkles size={20} />
-                                Limpiar Duplicados
+                                <Sparkles size={18} className="sm:hidden" />
+                                <span className="hidden sm:inline text-sm">Limpiar</span>
                             </button>
                             <button
                                 onClick={() => setShowForm(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="p-2 sm:px-3 sm:py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                             >
-                                <Plus size={20} />
-                                Nuevo Concepto
+                                <Plus size={18} className="sm:hidden" />
+                                <span className="hidden sm:inline text-sm">+ Nuevo</span>
                             </button>
                         </>
                     )}
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            {/* Mobile Cards View */}
+            <div className="md:hidden space-y-2">
+                {filteredConcepts.map((concept) => (
+                    <div
+                        key={concept.id}
+                        className={`bg-white dark:bg-gray-800 rounded-lg shadow p-3 ${!concept.isActive ? 'opacity-50' : ''}`}
+                    >
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium dark:text-white truncate">{concept.name}</span>
+                                    {concept.type === 'INCOME' ? (
+                                        <TrendingUp size={14} className="flex-shrink-0 text-green-600" />
+                                    ) : (
+                                        <TrendingDown size={14} className="flex-shrink-0 text-red-600" />
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                    {concept.area?.name && <span>{concept.area.name}</span>}
+                                    <span className={`px-1.5 py-0.5 rounded-full ${concept.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {concept.isActive ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                </div>
+                            </div>
+                            {canEdit && (
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => { setEditingConcept(concept); setShowForm(true); }}
+                                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                    >
+                                        <Pencil size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleToggleActive(concept.id)}
+                                        disabled={isPending}
+                                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                    >
+                                        <Power size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(concept.id, concept.name)}
+                                        disabled={isPending}
+                                        className="p-1.5 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+                {filteredConcepts.length === 0 && (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center text-gray-500">
+                        No hay conceptos registrados
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                 <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Nombre
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Tipo
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Area
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                 Estado
                             </th>
                             {canEdit && (
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                                     Acciones
                                 </th>
                             )}
@@ -218,26 +278,26 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {filteredConcepts.map((concept) => (
                             <tr key={concept.id} className={!concept.isActive ? 'opacity-50' : ''}>
-                                <td className="px-6 py-4 dark:text-white">{concept.name}</td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-4 py-3 dark:text-white">{concept.name}</td>
+                                <td className="px-4 py-3 text-center">
                                     {concept.type === 'INCOME' ? (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
                                             <TrendingUp size={12} className="mr-1" />
                                             Ingreso
                                         </span>
                                     ) : (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
                                             <TrendingDown size={12} className="mr-1" />
                                             Costo
                                         </span>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
                                     {concept.area?.name || '-'}
                                 </td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-4 py-3 text-center">
                                     <span
-                                        className={`inline-flex px-2 py-1 rounded-full text-xs ${concept.isActive
+                                        className={`inline-flex px-2 py-0.5 rounded-full text-xs ${concept.isActive
                                             ? 'bg-green-100 text-green-800'
                                             : 'bg-red-100 text-red-800'
                                             }`}
@@ -246,33 +306,33 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                                     </span>
                                 </td>
                                 {canEdit && (
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex justify-end gap-1">
                                             <button
                                                 onClick={() => {
                                                     setEditingConcept(concept);
                                                     setShowForm(true);
                                                 }}
-                                                className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
                                                 title="Editar"
                                             >
-                                                <Pencil size={16} />
+                                                <Pencil size={15} />
                                             </button>
                                             <button
                                                 onClick={() => handleToggleActive(concept.id)}
                                                 disabled={isPending}
-                                                className="p-2 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                                                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
                                                 title="Activar/Desactivar"
                                             >
-                                                <Power size={16} />
+                                                <Power size={15} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(concept.id, concept.name)}
                                                 disabled={isPending}
-                                                className="p-2 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
+                                                className="p-1.5 text-red-600 hover:bg-red-100 rounded dark:text-red-400 dark:hover:bg-red-900/20"
                                                 title="Eliminar"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={15} />
                                             </button>
                                         </div>
                                     </td>
@@ -281,7 +341,7 @@ export function ConceptsClient({ initialConcepts, areas }: ConceptsClientProps) 
                         ))}
                         {filteredConcepts.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
                                     No hay conceptos registrados
                                 </td>
                             </tr>
