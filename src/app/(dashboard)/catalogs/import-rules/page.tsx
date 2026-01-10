@@ -30,14 +30,16 @@ export default async function ImportRulesPage() {
     });
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold dark:text-white">Reglas de Importación</h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                    Configura reglas automáticas para transformar datos durante la importación de Excel.
-                </p>
+        <>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Reglas de Importación</h1>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Configura reglas automáticas para transformar datos al importar.
+                    </p>
+                </div>
             </div>
             <ImportRulesClient companyId={companyId} companyName={company?.name || 'Company'} />
-        </div>
+        </>
     );
 }
