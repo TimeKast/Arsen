@@ -51,8 +51,10 @@ export async function getResultsForPeriod(
         },
     });
 
-    // Group by project
+    // Group by project, and aggregate concepts by conceptId+source
     const projectMap = new Map<string | null, ProjectResult>();
+    // Track concept aggregation per project: Map<projectId, Map<conceptId+source, aggregated data>>
+    const conceptAggMap = new Map<string | null, Map<string, ConceptResult>>();
 
     for (const result of periodResults) {
         const projectId = result.projectId;
@@ -67,11 +69,14 @@ export async function getResultsForPeriod(
                 netResult: 0,
                 concepts: [],
             });
+            conceptAggMap.set(projectId, new Map());
         }
 
         const projectData = projectMap.get(projectId)!;
+        const projectConcepts = conceptAggMap.get(projectId)!;
         const amount = parseFloat(result.amount) || 0;
         const conceptType = result.concept?.type || 'COST';
+        const source = (result.source as 'O' | 'M') || 'M';
 
         if (conceptType === 'INCOME') {
             projectData.totalIncome += amount;
@@ -79,13 +84,24 @@ export async function getResultsForPeriod(
             projectData.totalCost += amount;
         }
 
-        projectData.concepts.push({
-            conceptId: result.conceptId,
-            conceptName: result.concept?.name || 'Desconocido',
-            conceptType,
-            amount,
-            source: (result.source as 'O' | 'M') || 'M',
-        });
+        // Aggregate by conceptId + source
+        const conceptKey = `${result.conceptId}|${source}`;
+        if (!projectConcepts.has(conceptKey)) {
+            projectConcepts.set(conceptKey, {
+                conceptId: result.conceptId,
+                conceptName: result.concept?.name || 'Desconocido',
+                conceptType,
+                amount: 0,
+                source,
+            });
+        }
+        projectConcepts.get(conceptKey)!.amount += amount;
+    }
+
+    // Convert concept maps to arrays
+    for (const [projectId, conceptMap] of conceptAggMap) {
+        const projectData = projectMap.get(projectId)!;
+        projectData.concepts = Array.from(conceptMap.values());
     }
 
     // Calculate net result for each project
