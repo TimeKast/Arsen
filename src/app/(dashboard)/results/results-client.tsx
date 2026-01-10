@@ -103,22 +103,22 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold dark:text-white">Resultados</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
+                <h1 className="text-xl md:text-2xl font-bold dark:text-white">Resultados</h1>
                 {canEdit && (
                     <div className="flex gap-2">
                         <button
                             onClick={() => { setEditingResult(null); setShowForm(true); }}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm md:text-base"
                         >
-                            <Plus size={20} />
+                            <Plus size={18} />
                             Agregar
                         </button>
                         <Link
                             href="/results/import"
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm md:text-base"
                         >
-                            <Upload size={20} />
+                            <Upload size={18} />
                             Importar
                         </Link>
                     </div>
@@ -126,10 +126,10 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
             </div>
 
             {/* Filters - Project (Period is in global header) */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <div className="flex flex-wrap gap-4 items-end">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-4 md:mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-start sm:items-end">
+                    <div className="flex-1 min-w-0">
+                        <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyectos
                         </label>
                         <MultiProjectSelector
@@ -138,7 +138,7 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                             onChange={setSelectedProjectIds}
                         />
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs md:text-sm text-gray-500">
                         Mostrando resultados para {monthDisplay} {selectedYear}
                     </div>
                 </div>
@@ -156,115 +156,117 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                     )}
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                     {/* Totals Summary */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                        <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                        <div className="grid grid-cols-3 gap-2 md:gap-4 text-center">
                             <div>
-                                <p className="text-2xl font-bold text-green-600">
+                                <p className="text-sm md:text-2xl font-bold text-green-600">
                                     ${totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                 </p>
-                                <p className="text-sm text-gray-500">Ingresos</p>
+                                <p className="text-xs md:text-sm text-gray-500">Ingresos</p>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-red-600">
+                                <p className="text-sm md:text-2xl font-bold text-red-600">
                                     ${totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                 </p>
-                                <p className="text-sm text-gray-500">Costos</p>
+                                <p className="text-xs md:text-sm text-gray-500">Costos</p>
                             </div>
                             <div>
-                                <p className={`text-2xl font-bold ${totalNet >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                <p className={`text-sm md:text-2xl font-bold ${totalNet >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                     ${totalNet.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                 </p>
-                                <p className="text-sm text-gray-500">Utilidad</p>
+                                <p className="text-xs md:text-sm text-gray-500">Utilidad</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Projects Table */}
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                            <h3 className="font-medium dark:text-white">Resultados por Proyecto</h3>
+                        <div className="px-3 md:px-4 py-2 md:py-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                            <h3 className="text-sm md:text-base font-medium dark:text-white">Resultados por Proyecto</h3>
                         </div>
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-50 dark:bg-gray-700">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                        Proyecto
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                        Ingresos
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                        Costos
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                        Utilidad
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {projectResults.map((project) => {
-                                    const isExpanded = expandedProjects.has(project.projectId || 'admin');
-                                    return (
-                                        <React.Fragment key={project.projectId || project.projectName}>
-                                            <tr
-                                                onClick={() => toggleProject(project.projectId || 'admin')}
-                                                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                                            >
-                                                <td className="px-4 py-3 dark:text-white">
-                                                    <div className="flex items-center gap-2">
-                                                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                                        {project.projectName}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-right text-green-600">
-                                                    ${project.totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="px-4 py-3 text-right text-red-600">
-                                                    ${project.totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                </td>
-                                                <td className={`px-4 py-3 text-right font-medium ${project.netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                    ${project.netResult.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                </td>
-                                            </tr>
-                                            {isExpanded && project.concepts.map((concept) => (
-                                                <tr key={`${project.projectId}-${concept.conceptId}`} className="bg-gray-50 dark:bg-gray-900">
-                                                    <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
-                                                        {/* Source badge - O for Otros, M for Monthly */}
-                                                        <span className={`inline-flex px-1 py-0.5 rounded text-xs mr-1 ${concept.source === 'O'
-                                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                                                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                                                            }`}>
-                                                            {concept.source || 'M'}
-                                                        </span>
-                                                        {/* Type badge - I for Income, C for Cost */}
-                                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.source === 'O'
-                                                            ? (concept.conceptType === 'INCOME'
-                                                                ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
-                                                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200')
-                                                            : (concept.conceptType === 'INCOME'
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : 'bg-red-100 text-red-800')
-                                                            }`}>
-                                                            {concept.conceptType === 'INCOME' ? 'I' : 'C'}
-                                                        </span>
-                                                        {concept.conceptName}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm min-w-[500px]">
+                                <thead className="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                            Proyecto
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                            Ingresos
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                            Costos
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                            Utilidad
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {projectResults.map((project) => {
+                                        const isExpanded = expandedProjects.has(project.projectId || 'admin');
+                                        return (
+                                            <React.Fragment key={project.projectId || project.projectName}>
+                                                <tr
+                                                    onClick={() => toggleProject(project.projectId || 'admin')}
+                                                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                                                >
+                                                    <td className="px-4 py-3 dark:text-white">
+                                                        <div className="flex items-center gap-2">
+                                                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                            {project.projectName}
+                                                        </div>
                                                     </td>
-                                                    <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">
-                                                        {concept.conceptType === 'INCOME' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
+                                                    <td className="px-4 py-3 text-right text-green-600">
+                                                        ${project.totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                                     </td>
-                                                    <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">
-                                                        {concept.conceptType === 'COST' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
+                                                    <td className="px-4 py-3 text-right text-red-600">
+                                                        ${project.totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                                     </td>
-                                                    <td></td>
+                                                    <td className={`px-4 py-3 text-right font-medium ${project.netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        ${project.netResult.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                    </td>
                                                 </tr>
-                                            ))}
-                                        </React.Fragment>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                                {isExpanded && project.concepts.map((concept) => (
+                                                    <tr key={`${project.projectId}-${concept.conceptId}`} className="bg-gray-50 dark:bg-gray-900">
+                                                        <td className="px-4 py-2 pl-12 text-gray-600 dark:text-gray-400">
+                                                            {/* Source badge - O for Otros, M for Monthly */}
+                                                            <span className={`inline-flex px-1 py-0.5 rounded text-xs mr-1 ${concept.source === 'O'
+                                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                                                }`}>
+                                                                {concept.source || 'M'}
+                                                            </span>
+                                                            {/* Type badge - I for Income, C for Cost */}
+                                                            <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.source === 'O'
+                                                                ? (concept.conceptType === 'INCOME'
+                                                                    ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                                                                    : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200')
+                                                                : (concept.conceptType === 'INCOME'
+                                                                    ? 'bg-green-100 text-green-800'
+                                                                    : 'bg-red-100 text-red-800')
+                                                                }`}>
+                                                                {concept.conceptType === 'INCOME' ? 'I' : 'C'}
+                                                            </span>
+                                                            {concept.conceptName}
+                                                        </td>
+                                                        <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">
+                                                            {concept.conceptType === 'INCOME' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
+                                                        </td>
+                                                        <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400">
+                                                            {concept.conceptType === 'COST' ? `$${concept.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : ''}
+                                                        </td>
+                                                        <td></td>
+                                                    </tr>
+                                                ))}
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Admin Section */}
@@ -286,8 +288,8 @@ export function ResultsClient({ companies, projects, concepts, initialYear, user
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {adminResults.concepts.map((concept) => (
-                                        <tr key={concept.conceptId}>
+                                    {adminResults.concepts.map((concept, idx) => (
+                                        <tr key={`${concept.conceptId}-${idx}`}>
                                             <td className="px-4 py-2 dark:text-white">
                                                 <span className={`inline-flex px-2 py-0.5 rounded text-xs mr-2 ${concept.conceptType === 'INCOME'
                                                     ? 'bg-green-100 text-green-800'

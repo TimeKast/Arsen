@@ -102,13 +102,13 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
 
     return (
         <div>
-            <h1 className="text-2xl font-bold dark:text-white mb-6">Comparativo Real vs Presupuesto</h1>
+            <h1 className="text-xl md:text-2xl font-bold dark:text-white mb-4 md:mb-6">Comparativo Real vs Presupuesto</h1>
 
             {/* Filters - Project (Company and Period are in global header) */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <div className="flex flex-wrap gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-4 md:mb-6">
+                <div className="flex flex-wrap gap-3 md:gap-4">
+                    <div className="flex-1 min-w-0 max-w-sm">
+                        <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Proyectos
                         </label>
                         <MultiProjectSelector
@@ -127,49 +127,49 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                     <p>No hay datos para comparar en este periodo.</p>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <h3 className="text-sm font-medium text-gray-500 mb-2">Ingresos</h3>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-2">Ingresos</h3>
+                            <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
                                 <div>
                                     <p className="text-gray-400">Presupuesto</p>
-                                    <p className="text-lg font-bold">{formatCurrency(data.totals.budgetIncome)}</p>
+                                    <p className="text-base md:text-lg font-bold truncate">{formatCurrency(data.totals.budgetIncome)}</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-400">Real</p>
-                                    <p className={`text-lg font-bold ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
+                                    <p className={`text-base md:text-lg font-bold truncate ${data.totals.actualIncome >= data.totals.budgetIncome ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatCurrency(data.totals.actualIncome)}
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <h3 className="text-sm font-medium text-gray-500 mb-2">Costos</h3>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-2">Costos</h3>
+                            <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
                                 <div>
                                     <p className="text-gray-400">Presupuesto</p>
-                                    <p className="text-lg font-bold">{formatCurrency(data.totals.budgetCost)}</p>
+                                    <p className="text-base md:text-lg font-bold truncate">{formatCurrency(data.totals.budgetCost)}</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-400">Real</p>
-                                    <p className={`text-lg font-bold ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
+                                    <p className={`text-base md:text-lg font-bold truncate ${data.totals.actualCost <= data.totals.budgetCost ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatCurrency(data.totals.actualCost)}
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <h3 className="text-sm font-medium text-gray-500 mb-2">Utilidad Neta</h3>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4">
+                            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-2">Utilidad Neta</h3>
+                            <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
                                 <div>
                                     <p className="text-gray-400">Presupuesto</p>
-                                    <p className="text-lg font-bold">{formatCurrency(data.totals.budgetNet)}</p>
+                                    <p className="text-base md:text-lg font-bold truncate">{formatCurrency(data.totals.budgetNet)}</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-400">Real</p>
-                                    <p className={`text-lg font-bold ${data.totals.actualNet >= data.totals.budgetNet ? 'text-green-600' : 'text-red-600'}`}>
+                                    <p className={`text-base md:text-lg font-bold truncate ${data.totals.actualNet >= data.totals.budgetNet ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatCurrency(data.totals.actualNet)}
                                     </p>
                                 </div>

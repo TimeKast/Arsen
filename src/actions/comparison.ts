@@ -93,64 +93,100 @@ export async function getComparisonData(
         },
     });
 
-    // Group results by concept + source (to separate Otros)
-    const resultsByKey = new Map<string, { amount: number; isOtros: boolean }>();
+    console.log(`[COMPARISON] Query: company=${companyId}, year=${year}, month=${month}, budgets=${periodBudgets.length}, results=${periodResults.length}`);
+
+    // Group results by CONCEPT NAME (not ID) - to handle duplicate concepts with same name
+    const resultsByName = new Map<string, { amount: number; hasOtrosSource: boolean; conceptId: string; conceptType: 'INCOME' | 'COST' }>();
     for (const result of periodResults) {
-        const isOtros = result.source === 'O';
-        const key = `${result.conceptId}|${isOtros ? 'O' : 'R'}`;
-        if (!resultsByKey.has(key)) {
-            resultsByKey.set(key, { amount: 0, isOtros });
+        const conceptName = result.concept?.name || 'Desconocido';
+        if (!resultsByName.has(conceptName)) {
+            resultsByName.set(conceptName, {
+                amount: 0,
+                hasOtrosSource: false,
+                conceptId: result.conceptId,
+                conceptType: result.concept?.type || 'COST'
+            });
         }
-        resultsByKey.get(key)!.amount += parseFloat(result.amount) || 0;
+        const entry = resultsByName.get(conceptName)!;
+        entry.amount += parseFloat(result.amount) || 0;
+        if (result.source === 'O') {
+            entry.hasOtrosSource = true;
+        }
     }
 
-    // Build comparison rows from budgets
-    const rowMap = new Map<string, ComparisonRow>();
+    // Group budgets by CONCEPT NAME - track if concept has ANY non-Otros budget
+    const budgetsByName = new Map<string, {
+        amount: number;
+        hasOtrosBudget: boolean;
+        hasNonOtrosBudget: boolean;
+        conceptId: string;
+        conceptType: 'INCOME' | 'COST';
+        areaName?: string;
+    }>();
 
     for (const budget of periodBudgets) {
-        const conceptId = budget.conceptId;
+        const conceptName = budget.concept?.name || 'Desconocido';
         const budgetAmount = parseFloat(budget.amount) || 0;
-        const budgetIsOtros = isOtrosArea(budget.area?.name);
-        const key = `${conceptId}|${budgetIsOtros ? 'O' : 'R'}`;
+        const isFromOtrosArea = isOtrosArea(budget.area?.name);
 
-        if (!rowMap.has(key)) {
-            rowMap.set(key, {
-                conceptId,
-                conceptName: budget.concept?.name || 'Desconocido',
+        if (!budgetsByName.has(conceptName)) {
+            budgetsByName.set(conceptName, {
+                amount: 0,
+                hasOtrosBudget: false,
+                hasNonOtrosBudget: false,
+                conceptId: budget.conceptId,
                 conceptType: budget.concept?.type || 'COST',
                 areaName: budget.area?.name,
-                isOtros: budgetIsOtros,
-                budget: 0,
-                actual: 0,
-                difference: 0,
-                percentDeviation: 0,
             });
         }
 
-        const row = rowMap.get(key)!;
-        row.budget += budgetAmount;
+        const entry = budgetsByName.get(conceptName)!;
+        entry.amount += budgetAmount;
+        if (isFromOtrosArea) {
+            entry.hasOtrosBudget = true;
+        } else {
+            entry.hasNonOtrosBudget = true;
+        }
+    }
+
+    // Build final rows - each CONCEPT NAME appears exactly once
+    const rowMap = new Map<string, ComparisonRow>();
+
+    // First, add all concepts that have budgets
+    for (const [conceptName, budgetData] of budgetsByName) {
+        // Concept is "Otros" only if it has Otros budget AND no non-Otros budget
+        const isOtros = budgetData.hasOtrosBudget && !budgetData.hasNonOtrosBudget;
+
+        rowMap.set(conceptName, {
+            conceptId: budgetData.conceptId,
+            conceptName,
+            conceptType: budgetData.conceptType,
+            areaName: budgetData.areaName,
+            isOtros,
+            budget: budgetData.amount,
+            actual: 0,
+            difference: 0,
+            percentDeviation: 0,
+        });
     }
 
     // Add actual values from results
-    for (const [key, data] of resultsByKey) {
-        const [conceptId] = key.split('|');
-
-        if (!rowMap.has(key)) {
-            // Concept exists in results but not in budget
-            const result = periodResults.find(r => r.conceptId === conceptId);
-            rowMap.set(key, {
-                conceptId,
-                conceptName: result?.concept?.name || 'Desconocido',
-                conceptType: result?.concept?.type || 'COST',
-                isOtros: data.isOtros,
+    for (const [conceptName, resultData] of resultsByName) {
+        if (!rowMap.has(conceptName)) {
+            // Concept only in results (no budget) - it's "Otros" if all its results are from source 'O'
+            rowMap.set(conceptName, {
+                conceptId: resultData.conceptId,
+                conceptName,
+                conceptType: resultData.conceptType,
+                isOtros: resultData.hasOtrosSource,
                 budget: 0,
-                actual: data.amount,
-                difference: -data.amount,
+                actual: resultData.amount,
+                difference: -resultData.amount,
                 percentDeviation: -100,
             });
         } else {
-            const row = rowMap.get(key)!;
-            row.actual = data.amount;
+            const row = rowMap.get(conceptName)!;
+            row.actual = resultData.amount;
         }
     }
 
@@ -164,7 +200,11 @@ export async function getComparisonData(
         }
     }
 
+    // Debug log
+    console.log(`[COMPARISON] Total unique concepts (by name): ${rowMap.size}`);
+
     // Separate into income, cost, and otros rows
+    // A concept goes to otrosRows if its budget is from Otros area
     const incomeRows = Array.from(rowMap.values())
         .filter(r => r.conceptType === 'INCOME' && !r.isOtros)
         .sort((a, b) => a.conceptName.localeCompare(b.conceptName));
@@ -179,6 +219,36 @@ export async function getComparisonData(
             if (a.conceptType !== b.conceptType) return a.conceptType === 'INCOME' ? -1 : 1;
             return a.conceptName.localeCompare(b.conceptName);
         });
+
+    // Debug: Check for any concept appearing in multiple arrays (should be impossible)
+    const incomeIds = new Set(incomeRows.map(r => r.conceptId));
+    const costIds = new Set(costRows.map(r => r.conceptId));
+    const otrosIds = new Set(otrosRows.map(r => r.conceptId));
+
+    console.log(`[COMPARISON] Income rows: ${incomeRows.length}, Cost rows: ${costRows.length}, Otros rows: ${otrosRows.length}`);
+
+    // Check for duplicates within each array
+    const checkDuplicates = (arr: ComparisonRow[], name: string) => {
+        const seen = new Set<string>();
+        for (const r of arr) {
+            if (seen.has(r.conceptId)) {
+                console.error(`[COMPARISON] DUPLICATE in ${name}: ${r.conceptId} - ${r.conceptName}`);
+            }
+            seen.add(r.conceptId);
+        }
+    };
+    checkDuplicates(incomeRows, 'incomeRows');
+    checkDuplicates(costRows, 'costRows');
+    checkDuplicates(otrosRows, 'otrosRows');
+
+    // Check for overlap between arrays
+    for (const id of incomeIds) {
+        if (costIds.has(id)) console.error(`[COMPARISON] Concept ${id} in BOTH income AND cost!`);
+        if (otrosIds.has(id)) console.error(`[COMPARISON] Concept ${id} in BOTH income AND otros!`);
+    }
+    for (const id of costIds) {
+        if (otrosIds.has(id)) console.error(`[COMPARISON] Concept ${id} in BOTH cost AND otros!`);
+    }
 
     // Calculate totals (including Otros in the appropriate category)
     const allRows = Array.from(rowMap.values());
