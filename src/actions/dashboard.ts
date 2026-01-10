@@ -41,12 +41,14 @@ export async function getDashboardKPIs(
         throw new Error('No autenticado');
     }
 
-    // Build conditions
+    // Build conditions - month=0 means all months
     const resultConditions = [
         eq(results.companyId, companyId),
         eq(results.year, year),
-        eq(results.month, month)
     ];
+    if (month > 0) {
+        resultConditions.push(eq(results.month, month));
+    }
     if (projectId) {
         resultConditions.push(eq(results.projectId, projectId));
     }
@@ -59,12 +61,14 @@ export async function getDashboardKPIs(
         },
     });
 
-    // Build budget conditions
+    // Build budget conditions - month=0 means all months
     const budgetConditions = [
         eq(budgets.companyId, companyId),
         eq(budgets.year, year),
-        eq(budgets.month, month)
     ];
+    if (month > 0) {
+        budgetConditions.push(eq(budgets.month, month));
+    }
     if (projectId) {
         budgetConditions.push(eq(budgets.projectId, projectId));
     }
@@ -131,12 +135,14 @@ export async function getTopProjects(
         throw new Error('No autenticado');
     }
 
-    // Build conditions
+    // Build conditions - month=0 means all months
     const conditions = [
         eq(results.companyId, companyId),
         eq(results.year, year),
-        eq(results.month, month)
     ];
+    if (month > 0) {
+        conditions.push(eq(results.month, month));
+    }
     if (projectId) {
         conditions.push(eq(results.projectId, projectId));
     }
@@ -186,7 +192,7 @@ export async function getTopProjects(
         .slice(0, 5);
 }
 
-// Get trend data for last 6 months
+// Get trend data - when month=0, show all 12 months; otherwise show last 6 months
 export async function getTrendData(
     companyId: string,
     year: number,
@@ -201,16 +207,29 @@ export async function getTrendData(
     const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     const trendData: TrendDataPoint[] = [];
 
-    // Get last 6 months
-    for (let i = 5; i >= 0; i--) {
-        let targetMonth = month - i;
-        let targetYear = year;
+    // Determine which months to show
+    const monthsToShow: { targetYear: number; targetMonth: number }[] = [];
 
-        while (targetMonth <= 0) {
-            targetMonth += 12;
-            targetYear--;
+    if (month === 0) {
+        // Show all 12 months of the selected year
+        for (let m = 1; m <= 12; m++) {
+            monthsToShow.push({ targetYear: year, targetMonth: m });
         }
+    } else {
+        // Show last 6 months relative to selected month
+        for (let i = 5; i >= 0; i--) {
+            let targetMonth = month - i;
+            let targetYear = year;
 
+            while (targetMonth <= 0) {
+                targetMonth += 12;
+                targetYear--;
+            }
+            monthsToShow.push({ targetYear, targetMonth });
+        }
+    }
+
+    for (const { targetYear, targetMonth } of monthsToShow) {
         // Build conditions
         const conditions = [
             eq(results.companyId, companyId),
