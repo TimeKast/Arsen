@@ -286,6 +286,52 @@ export function ComparisonClient({ companies, projects, initialYear }: Compariso
                             </div>
                         </div>
                     )}
+
+                    {/* Otros Table */}
+                    {data.otrosRows && data.otrosRows.length > 0 && (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                            <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/30 border-b dark:border-gray-600">
+                                <h3 className="font-medium text-purple-800 dark:text-purple-200">Otros</h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-50 dark:bg-gray-700">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Concepto</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tipo</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Presupuesto</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Real</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Diferencia</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                        {data.otrosRows.map((row, idx) => (
+                                            <tr key={`${row.conceptId}-${idx}`}>
+                                                <td className="px-4 py-2 dark:text-white">{row.conceptName}</td>
+                                                <td className="px-4 py-2">
+                                                    <span className={`px-2 py-0.5 rounded text-xs ${row.conceptType === 'INCOME' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                                                        {row.conceptType === 'INCOME' ? 'I' : 'C'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-2 text-right">{formatCurrency(row.budget)}</td>
+                                                <td className="px-4 py-2 text-right">{formatCurrency(row.actual)}</td>
+                                                <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
+                                                    <span className="flex items-center justify-end gap-1">
+                                                        {getDeviationIcon(row)}
+                                                        {formatCurrency(Math.abs(row.difference))}
+                                                    </span>
+                                                </td>
+                                                <td className={`px-4 py-2 text-right ${getDeviationColor(row)}`}>
+                                                    {formatPercent(row.percentDeviation)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

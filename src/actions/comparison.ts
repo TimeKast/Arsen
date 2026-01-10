@@ -9,6 +9,7 @@ export interface ComparisonRow {
     conceptName: string;
     conceptType: 'INCOME' | 'COST';
     areaName?: string;
+    isOtros: boolean; // True if from "Otros" area or source
     budget: number;
     actual: number;
     difference: number;
@@ -18,6 +19,7 @@ export interface ComparisonRow {
 export interface ComparisonData {
     incomeRows: ComparisonRow[];
     costRows: ComparisonRow[];
+    otrosRows: ComparisonRow[]; // Separate array for Otros items
     totals: {
         budgetIncome: number;
         actualIncome: number;
@@ -27,6 +29,13 @@ export interface ComparisonData {
         actualNet: number;
     };
 }
+
+// Helper to detect "Otros" area name
+const isOtrosArea = (areaName: string | undefined): boolean => {
+    if (!areaName) return false;
+    const normalized = areaName.toLowerCase().trim();
+    return normalized === 'otros' || normalized.endsWith('otros') || /\(\d+\)\s*otros/i.test(areaName);
+};
 
 // Get comparison data for a company/period
 export async function getComparisonData(
@@ -45,7 +54,6 @@ export async function getComparisonData(
         eq(budgets.companyId, companyId),
         eq(budgets.year, year),
     ];
-    // Only filter by month if specific month selected (not 0 = all months)
     if (month > 0) {
         budgetConditions.push(eq(budgets.month, month));
     }
@@ -63,14 +71,13 @@ export async function getComparisonData(
     });
 
     console.log(`[COMPARISON] Query: companyId=${companyId}, year=${year}, month=${month === 0 ? 'ALL' : month}, projectId=${projectId || 'all'}`);
-    console.log(`[COMPARISON] Found ${periodBudgets.length} budgets, ${periodBudgets.slice(0, 3).map(b => b.conceptId).join(', ')}`);
+    console.log(`[COMPARISON] Found ${periodBudgets.length} budgets`);
 
     // Build result conditions - month=0 means all months
     const resultConditions = [
         eq(results.companyId, companyId),
         eq(results.year, year),
     ];
-    // Only filter by month if specific month selected (not 0 = all months)
     if (month > 0) {
         resultConditions.push(eq(results.month, month));
     }
@@ -78,7 +85,7 @@ export async function getComparisonData(
         resultConditions.push(eq(results.projectId, projectId));
     }
 
-    // Get all results for the period (sum by concept)
+    // Get all results for the period
     const periodResults = await db.query.results.findMany({
         where: and(...resultConditions),
         with: {
@@ -86,11 +93,15 @@ export async function getComparisonData(
         },
     });
 
-    // Group results by concept
-    const resultsByConceptId = new Map<string, number>();
+    // Group results by concept + source (to separate Otros)
+    const resultsByKey = new Map<string, { amount: number; isOtros: boolean }>();
     for (const result of periodResults) {
-        const current = resultsByConceptId.get(result.conceptId) || 0;
-        resultsByConceptId.set(result.conceptId, current + (parseFloat(result.amount) || 0));
+        const isOtros = result.source === 'O';
+        const key = `${result.conceptId}|${isOtros ? 'O' : 'R'}`;
+        if (!resultsByKey.has(key)) {
+            resultsByKey.set(key, { amount: 0, isOtros });
+        }
+        resultsByKey.get(key)!.amount += parseFloat(result.amount) || 0;
     }
 
     // Build comparison rows from budgets
@@ -99,13 +110,16 @@ export async function getComparisonData(
     for (const budget of periodBudgets) {
         const conceptId = budget.conceptId;
         const budgetAmount = parseFloat(budget.amount) || 0;
+        const budgetIsOtros = isOtrosArea(budget.area?.name);
+        const key = `${conceptId}|${budgetIsOtros ? 'O' : 'R'}`;
 
-        if (!rowMap.has(conceptId)) {
-            rowMap.set(conceptId, {
+        if (!rowMap.has(key)) {
+            rowMap.set(key, {
                 conceptId,
                 conceptName: budget.concept?.name || 'Desconocido',
                 conceptType: budget.concept?.type || 'COST',
                 areaName: budget.area?.name,
+                isOtros: budgetIsOtros,
                 budget: 0,
                 actual: 0,
                 difference: 0,
@@ -113,27 +127,30 @@ export async function getComparisonData(
             });
         }
 
-        const row = rowMap.get(conceptId)!;
+        const row = rowMap.get(key)!;
         row.budget += budgetAmount;
     }
 
-    // Add actual values and calculate deviations
-    for (const [conceptId, actualAmount] of resultsByConceptId) {
-        if (!rowMap.has(conceptId)) {
+    // Add actual values from results
+    for (const [key, data] of resultsByKey) {
+        const [conceptId] = key.split('|');
+
+        if (!rowMap.has(key)) {
             // Concept exists in results but not in budget
             const result = periodResults.find(r => r.conceptId === conceptId);
-            rowMap.set(conceptId, {
+            rowMap.set(key, {
                 conceptId,
                 conceptName: result?.concept?.name || 'Desconocido',
                 conceptType: result?.concept?.type || 'COST',
+                isOtros: data.isOtros,
                 budget: 0,
-                actual: actualAmount,
-                difference: -actualAmount,
+                actual: data.amount,
+                difference: -data.amount,
                 percentDeviation: -100,
             });
         } else {
-            const row = rowMap.get(conceptId)!;
-            row.actual = actualAmount;
+            const row = rowMap.get(key)!;
+            row.actual = data.amount;
         }
     }
 
@@ -143,30 +160,38 @@ export async function getComparisonData(
         if (row.budget !== 0) {
             row.percentDeviation = ((row.budget - row.actual) / row.budget) * 100;
         } else if (row.actual !== 0) {
-            row.percentDeviation = -100; // Over budget
+            row.percentDeviation = -100;
         }
     }
 
-    // Separate into income and cost rows
+    // Separate into income, cost, and otros rows
     const incomeRows = Array.from(rowMap.values())
-        .filter(r => r.conceptType === 'INCOME')
+        .filter(r => r.conceptType === 'INCOME' && !r.isOtros)
         .sort((a, b) => a.conceptName.localeCompare(b.conceptName));
 
     const costRows = Array.from(rowMap.values())
-        .filter(r => r.conceptType === 'COST')
+        .filter(r => r.conceptType === 'COST' && !r.isOtros)
         .sort((a, b) => a.conceptName.localeCompare(b.conceptName));
 
-    // Calculate totals
+    const otrosRows = Array.from(rowMap.values())
+        .filter(r => r.isOtros)
+        .sort((a, b) => {
+            if (a.conceptType !== b.conceptType) return a.conceptType === 'INCOME' ? -1 : 1;
+            return a.conceptName.localeCompare(b.conceptName);
+        });
+
+    // Calculate totals (including Otros in the appropriate category)
+    const allRows = Array.from(rowMap.values());
     const totals = {
-        budgetIncome: incomeRows.reduce((sum, r) => sum + r.budget, 0),
-        actualIncome: incomeRows.reduce((sum, r) => sum + r.actual, 0),
-        budgetCost: costRows.reduce((sum, r) => sum + r.budget, 0),
-        actualCost: costRows.reduce((sum, r) => sum + r.actual, 0),
+        budgetIncome: allRows.filter(r => r.conceptType === 'INCOME').reduce((sum, r) => sum + r.budget, 0),
+        actualIncome: allRows.filter(r => r.conceptType === 'INCOME').reduce((sum, r) => sum + r.actual, 0),
+        budgetCost: allRows.filter(r => r.conceptType === 'COST').reduce((sum, r) => sum + r.budget, 0),
+        actualCost: allRows.filter(r => r.conceptType === 'COST').reduce((sum, r) => sum + r.actual, 0),
         budgetNet: 0,
         actualNet: 0,
     };
     totals.budgetNet = totals.budgetIncome - totals.budgetCost;
     totals.actualNet = totals.actualIncome - totals.actualCost;
 
-    return { incomeRows, costRows, totals };
+    return { incomeRows, costRows, otrosRows, totals };
 }

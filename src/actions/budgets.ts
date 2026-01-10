@@ -168,6 +168,7 @@ export interface ProjectBudget {
         conceptName: string;
         conceptType: 'INCOME' | 'COST';
         amount: number;
+        isOtros: boolean; // True if from "Otros" area
     }[];
 }
 
@@ -178,7 +179,7 @@ export async function getBudgetsByProject(companyId: string, year: number, areaI
         throw new Error('No autenticado');
     }
 
-    // Build where conditions
+    // Build where conditions - month=0 means all months
     const conditions = [
         eq(budgets.companyId, companyId),
         eq(budgets.year, year)
@@ -186,7 +187,7 @@ export async function getBudgetsByProject(companyId: string, year: number, areaI
     if (areaId) {
         conditions.push(eq(budgets.areaId, areaId));
     }
-    if (month) {
+    if (month && month > 0) {
         conditions.push(eq(budgets.month, month));
     }
 
@@ -195,33 +196,49 @@ export async function getBudgetsByProject(companyId: string, year: number, areaI
         where: and(...conditions),
     });
 
-    // Get all concepts and projects for lookup
+    // Get all concepts, projects, and areas for lookup
     const allConcepts = await db.select().from(concepts);
     const conceptMap = new Map(allConcepts.map(c => [c.id, { name: c.name, type: c.type }]));
 
     const allProjects = await db.select().from(projects).where(eq(projects.companyId, companyId));
     const projectMap = new Map(allProjects.map(p => [p.id, p.name]));
 
-    // Group by project
+    const allAreas = await db.select().from(areas).where(eq(areas.companyId, companyId));
+    const areaMap = new Map(allAreas.map(a => [a.id, a.name]));
+
+    // Detect "Otros" area (could be "Otros", "(07) Otros", etc.)
+    const isOtrosArea = (areaName: string) => {
+        const normalized = areaName.toLowerCase().trim();
+        return normalized === 'otros' || normalized.endsWith('otros') || /\(\d+\)\s*otros/i.test(areaName);
+    };
+
+    // Group by project, tracking area for each concept
     const projectGroups = new Map<string, {
         projectName: string;
-        conceptAmounts: Map<string, number>;
+        conceptData: Map<string, { amount: number; isOtros: boolean }>;
     }>();
 
     for (const budget of budgetData) {
         const projectKey = budget.projectId || 'admin';
         const projectName = budget.projectId ? (projectMap.get(budget.projectId) || 'Proyecto Desconocido') : 'Gastos de Administración';
+        const areaName = areaMap.get(budget.areaId) || '';
+        const budgetIsOtros = isOtrosArea(areaName);
 
         if (!projectGroups.has(projectKey)) {
             projectGroups.set(projectKey, {
                 projectName,
-                conceptAmounts: new Map(),
+                conceptData: new Map(),
             });
         }
 
         const group = projectGroups.get(projectKey)!;
-        const currentAmount = group.conceptAmounts.get(budget.conceptId) || 0;
-        group.conceptAmounts.set(budget.conceptId, currentAmount + Number(budget.amount));
+        // Key by conceptId + isOtros to separate regular from Otros
+        const conceptKey = `${budget.conceptId}|${budgetIsOtros ? 'O' : 'R'}`;
+
+        if (!group.conceptData.has(conceptKey)) {
+            group.conceptData.set(conceptKey, { amount: 0, isOtros: budgetIsOtros });
+        }
+        group.conceptData.get(conceptKey)!.amount += Number(budget.amount);
     }
 
     // Convert to result array
@@ -232,7 +249,8 @@ export async function getBudgetsByProject(companyId: string, year: number, areaI
         let totalIncome = 0;
         let totalCost = 0;
 
-        for (const [conceptId, amount] of group.conceptAmounts) {
+        for (const [conceptKey, data] of group.conceptData) {
+            const [conceptId] = conceptKey.split('|');
             const conceptInfo = conceptMap.get(conceptId);
             if (!conceptInfo) continue;
 
@@ -240,19 +258,24 @@ export async function getBudgetsByProject(companyId: string, year: number, areaI
                 conceptId,
                 conceptName: conceptInfo.name,
                 conceptType: conceptInfo.type,
-                amount,
+                amount: data.amount,
+                isOtros: data.isOtros,
             });
 
             if (conceptInfo.type === 'INCOME') {
-                totalIncome += amount;
+                totalIncome += data.amount;
             } else {
-                totalCost += amount;
+                totalCost += data.amount;
             }
         }
 
-        // Sort concepts by type then name
+        // Sort concepts: Regular INCOME, Regular COST, then Otros (by type, then name)
         conceptsList.sort((a, b) => {
+            // First: Regular items before Otros
+            if (a.isOtros !== b.isOtros) return a.isOtros ? 1 : -1;
+            // Then by type: INCOME before COST
             if (a.conceptType !== b.conceptType) return a.conceptType === 'INCOME' ? -1 : 1;
+            // Then by name
             return a.conceptName.localeCompare(b.conceptName);
         });
 
