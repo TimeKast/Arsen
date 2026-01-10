@@ -57,50 +57,48 @@ export function SheetNamesClient({ sheetNames: initialSheetNames }: SheetNamesCl
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold dark:text-white">Nombres de Pestañas Válidas</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Configura los nombres exactos de las pestañas de Excel que el importador reconocerá.
-                    </p>
-                </div>
+        <div className="space-y-4">
+            <div className="mb-4">
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Nombres de Pestañas</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Configura los nombres de pestañas de Excel que el importador reconocerá.
+                </p>
             </div>
 
             {/* Add Form */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                <h2 className="text-lg font-semibold mb-4 dark:text-white">Agregar Nuevo</h2>
-                <form onSubmit={handleCreate} className="flex flex-wrap gap-3">
-                    <div className="flex-1 min-w-[200px]">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
+                <h2 className="text-sm font-semibold mb-2 dark:text-white">Agregar Nuevo</h2>
+                <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex-1">
                         <input
                             type="text"
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
-                            placeholder="Nombre exacto de la pestaña (ej: EneR, Desglose de Ingresos)"
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Nombre exacto (ej: EneR)"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             required
                         />
                     </div>
-                    <div className="flex-1 min-w-[200px]">
+                    <div className="flex-1">
                         <input
                             type="text"
                             value={newDescription}
                             onChange={(e) => setNewDescription(e.target.value)}
                             placeholder="Descripción (opcional)"
-                            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-2 py-1.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={isPending || !newName.trim()}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                     >
-                        <Plus size={18} />
+                        <Plus size={14} />
                         Agregar
                     </button>
                 </form>
                 {error && (
-                    <p className="mt-2 text-sm text-red-600">{error}</p>
+                    <p className="mt-2 text-xs text-red-600">{error}</p>
                 )}
             </div>
 
